@@ -21,6 +21,24 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public IReadOnlyList<EffectRef> Effects => effects;
         public int Weight => weight;
         public int SequenceIndex => sequenceIndex;
+
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
+        public void SetDebugData(
+            string newId,
+            string newName,
+            string newDescription,
+            List<EffectRef> newEffects,
+            int newWeight = 1,
+            int newSequenceIndex = -1)
+        {
+            id = newId;
+            moveName = newName;
+            description = newDescription;
+            effects = newEffects ?? new List<EffectRef>();
+            weight = newWeight;
+            sequenceIndex = newSequenceIndex;
+        }
+#endif
     }
 }
 

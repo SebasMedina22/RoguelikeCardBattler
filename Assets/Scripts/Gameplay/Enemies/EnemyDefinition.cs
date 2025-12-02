@@ -21,6 +21,26 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public EnemyAIPattern AIPattern => aiPattern;
         public IReadOnlyList<string> Tags => tags;
         public IReadOnlyList<EnemyMove> Moves => moves;
+
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
+        public void SetDebugData(
+            string newId,
+            string newName,
+            int newMaxHP,
+            int newBaseBlock,
+            EnemyAIPattern newPattern,
+            List<string> newTags,
+            List<EnemyMove> newMoves)
+        {
+            id = newId;
+            enemyName = newName;
+            maxHP = Mathf.Max(1, newMaxHP);
+            baseBlock = Mathf.Max(0, newBaseBlock);
+            aiPattern = newPattern;
+            tags = newTags ?? new List<string>();
+            moves = newMoves ?? new List<EnemyMove>();
+        }
+#endif
     }
 }
 
