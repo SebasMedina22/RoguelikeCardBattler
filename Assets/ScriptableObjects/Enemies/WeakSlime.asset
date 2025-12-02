@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 338b6c04c3364f30af226f884a2d4f1d, type: 3}
+  m_Name: WeakSlime
+  m_EditorClassIdentifier: 
+  id: weak_slime
+  enemyName: Slime Débil
+  maxHP: 30
+  baseBlock: 0
+  aiPattern: 0
+  tags:
+  - Basic
+  - Slime
+  moves:
+  - id: slime_tackle
+    moveName: Golpe Baboso
+    description: Inflige 7 de daño.
+    effects:
+    - effectType: 0
+      value: 7
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 60
+    sequenceIndex: -1
+  - id: slime_harden
+    moveName: Reforzar Babas
+    description: Gana 6 de bloque.
+    effects:
+    - effectType: 1
+      value: 6
+      target: 0
+      statusType: 0
+      extraParams: []
+    weight: 40
+    sequenceIndex: -1
+
