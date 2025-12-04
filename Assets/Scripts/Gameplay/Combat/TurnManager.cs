@@ -20,6 +20,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField, Min(1)] private int startingHandSize = 5;
         [SerializeField, Min(1)] private int cardsPerTurn = 5;
 
+        public enum WorldSide
+        {
+            A,
+            B
+        }
+
         private PlayerCombatActor _player;
         private EnemyCombatActor _enemy;
         private ActionQueue _actionQueue;
@@ -28,6 +34,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private readonly System.Random _random = new System.Random();
         private int _enemySequenceCursor;
         private EnemyMove _plannedEnemyMove;
+        [SerializeField] private WorldSide currentWorld = WorldSide.A;
 
         public enum CombatPhase
         {
@@ -53,6 +60,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public EnemyMove PlannedEnemyMove => _plannedEnemyMove;
         public EnemyIntentType PlannedEnemyIntentType => _plannedEnemyMove?.IntentType ?? EnemyIntentType.Unknown;
         public int PlannedEnemyIntentValue => CalculateIntentValue(_plannedEnemyMove);
+        public WorldSide CurrentWorld => currentWorld;
 
         private void Start()
         {
@@ -337,6 +345,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private void PlanNextEnemyMove()
         {
             _plannedEnemyMove = SelectEnemyMove();
+        }
+
+        public void ToggleWorldForDebug()
+        {
+            currentWorld = currentWorld == WorldSide.A ? WorldSide.B : WorldSide.A;
         }
 
         private int CalculateIntentValue(EnemyMove move)

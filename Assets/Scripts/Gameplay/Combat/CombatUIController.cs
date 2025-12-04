@@ -22,12 +22,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Text _drawPileText;
         private Text _discardPileText;
         private Text _enemyIntentText;
+        private Text _worldLabel;
         private Button _endTurnButton;
+        private Button _changeWorldButton;
         private RectTransform _handContainer;
         private Image _playerAvatarImage;
         private Image _enemyAvatarImage;
         private Color _playerAvatarBaseColor;
         private Color _enemyAvatarBaseColor;
+        private Image _skyBackgroundImage;
+        private Image _groundBackgroundImage;
+        [SerializeField] private Color worldASkyColor = new Color(0.07f, 0.12f, 0.3f, 1f);
+        [SerializeField] private Color worldAGroundColor = new Color(0.02f, 0.07f, 0.09f, 1f);
+        [SerializeField] private Color worldBSkyColor = new Color(0.2f, 0.05f, 0.05f, 1f);
+        [SerializeField] private Color worldBGroundColor = new Color(0.09f, 0.02f, 0.04f, 1f);
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDefinition> _handCache = new List<CardDefinition>();
@@ -118,6 +126,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Color(0.03f, 0.03f, 0.05f, 0.75f));
             _playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.MiddleCenter);
 
+            RectTransform worldPanel = CreatePanel(
+                "WorldPanel",
+                canvasRect,
+                new Vector2(0.42f, 0.82f),
+                new Vector2(0.58f, 0.95f),
+                new Color(0.03f, 0.03f, 0.05f, 0.75f));
+            _worldLabel = CreateText("WorldLabel", worldPanel, "World: A", 26, TextAnchor.MiddleCenter);
+
             RectTransform handPanel = CreatePanel(
                 "HandPanel",
                 canvasRect,
@@ -164,6 +180,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.97f, 0.97f),
                 "End Turn");
             _endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
+
+            _changeWorldButton = CreateButton(
+                "ChangeWorldButton",
+                canvasRect,
+                new Vector2(0.64f, 0.88f),
+                new Vector2(0.8f, 0.97f),
+                "Change World");
+            _changeWorldButton.onClick.AddListener(OnChangeWorldButtonClicked);
         }
         private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, string label)
         {
@@ -202,16 +226,18 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 canvasRect,
                 new Vector2(0, 0.45f),
                 new Vector2(1, 1),
-                new Color(0.07f, 0.12f, 0.3f, 1f));
+                worldASkyColor);
             sky.SetAsFirstSibling();
+            _skyBackgroundImage = sky.GetComponent<Image>();
 
             RectTransform ground = CreatePanel(
                 "BackgroundGround",
                 canvasRect,
                 new Vector2(0, 0),
                 new Vector2(1, 0.45f),
-                new Color(0.02f, 0.07f, 0.09f, 1f));
+                worldAGroundColor);
             ground.SetSiblingIndex(1);
+            _groundBackgroundImage = ground.GetComponent<Image>();
         }
 
         private RectTransform CreatePanel(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, Color? background = null)
@@ -352,6 +378,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _drawPileText.text = $"Draw: {turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();
+            UpdateWorldVisuals();
 
             bool playerTurn = turnManager.IsPlayerTurn();
             _endTurnButton.interactable = playerTurn && !turnManager.IsCombatFinished;
@@ -467,6 +494,41 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 EnemyIntentType.Defend => "DEFEND",
                 _ => "?"
             };
+        }
+
+        private void OnChangeWorldButtonClicked()
+        {
+            if (turnManager == null)
+            {
+                return;
+            }
+
+            turnManager.ToggleWorldForDebug();
+            UpdateWorldVisuals();
+        }
+
+        private void UpdateWorldVisuals()
+        {
+            if (turnManager == null || _worldLabel == null)
+            {
+                return;
+            }
+
+            string worldLabel = turnManager.CurrentWorld == TurnManager.WorldSide.A ? "A" : "B";
+            _worldLabel.text = $"World: {worldLabel}";
+
+            Color targetSky = turnManager.CurrentWorld == TurnManager.WorldSide.A ? worldASkyColor : worldBSkyColor;
+            Color targetGround = turnManager.CurrentWorld == TurnManager.WorldSide.A ? worldAGroundColor : worldBGroundColor;
+
+            if (_skyBackgroundImage != null)
+            {
+                _skyBackgroundImage.color = targetSky;
+            }
+
+            if (_groundBackgroundImage != null)
+            {
+                _groundBackgroundImage.color = targetGround;
+            }
         }
     }
 }
