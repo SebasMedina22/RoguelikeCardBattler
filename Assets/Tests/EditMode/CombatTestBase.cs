@@ -58,7 +58,8 @@ namespace RoguelikeCardBattler.Tests.EditMode
             string description,
             List<EffectRef> effects,
             int weight = 1,
-            int sequenceIndex = -1)
+            int sequenceIndex = -1,
+            EnemyIntentType intentType = EnemyIntentType.Unknown)
         {
             var move = new EnemyMove();
             move.SetDebugData(
@@ -67,7 +68,8 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 description,
                 effects ?? new List<EffectRef>(),
                 weight,
-                sequenceIndex);
+                sequenceIndex,
+                intentType);
             return move;
         }
 

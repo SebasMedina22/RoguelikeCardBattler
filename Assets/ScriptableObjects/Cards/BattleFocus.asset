@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: BattleFocus
   m_EditorClassIdentifier: 
   id: battle_focus
-  cardName: Foco de Batalla
-  description: Roba 2 cartas adicionales en este turno.
+  cardName: Battle Focus
+  description: Draw 2 additional cards this turn.
   cost: 1
   type: 1
   rarity: 1

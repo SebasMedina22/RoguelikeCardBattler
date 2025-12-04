@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using RoguelikeCardBattler.Gameplay.Cards;
+using RoguelikeCardBattler.Gameplay.Enemies;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
@@ -15,9 +16,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Font uiFont;
 
         private Canvas _canvas;
-        private Text _playerInfoText;
-        private Text _enemyInfoText;
-        private Text _deckInfoText;
+        private Text _playerEnergyText;
+        private Text _playerHpLabel;
+        private Text _enemyHpLabel;
+        private Text _drawPileText;
+        private Text _discardPileText;
+        private Text _enemyIntentText;
         private Button _endTurnButton;
         private RectTransform _handContainer;
         private Image _playerAvatarImage;
@@ -106,20 +110,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 "Slime");
             _enemyAvatarBaseColor = _enemyAvatarImage.color;
 
-            RectTransform infoPanel = CreatePanel(
-                "InfoPanel",
+            RectTransform energyPanel = CreatePanel(
+                "EnergyPanel",
                 canvasRect,
-                new Vector2(0.02f, 0.73f),
-                new Vector2(0.35f, 0.97f),
+                new Vector2(0.02f, 0.82f),
+                new Vector2(0.17f, 0.95f),
                 new Color(0.03f, 0.03f, 0.05f, 0.75f));
-            VerticalLayoutGroup infoLayout = infoPanel.gameObject.AddComponent<VerticalLayoutGroup>();
-            infoLayout.childAlignment = TextAnchor.UpperLeft;
-            infoLayout.spacing = 8f;
-            infoLayout.padding = new RectOffset(12, 12, 12, 12);
-
-            _playerInfoText = CreateText("PlayerInfo", infoPanel, "Player\nHP: 0/0\nEnergy: 0/0", 28);
-            _enemyInfoText = CreateText("EnemyInfo", infoPanel, "Enemy\nHP: 0/0", 28);
-            _deckInfoText = CreateText("DeckInfo", infoPanel, "Draw: 0  Discard: 0  Hand: 0", 24);
+            _playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.MiddleCenter);
 
             RectTransform handPanel = CreatePanel(
                 "HandPanel",
@@ -136,14 +133,49 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             layout.childForceExpandWidth = false;
             _handContainer = handPanel;
 
+            _playerHpLabel = CreateText("PlayerHpLabel", _playerAvatarImage.rectTransform, "0/0", 24, TextAnchor.LowerCenter);
+            RectTransform playerHpRect = _playerHpLabel.GetComponent<RectTransform>();
+            playerHpRect.anchorMin = new Vector2(0.1f, -0.15f);
+            playerHpRect.anchorMax = new Vector2(0.9f, -0.02f);
+            playerHpRect.offsetMin = Vector2.zero;
+            playerHpRect.offsetMax = Vector2.zero;
+
+            _enemyHpLabel = CreateText("EnemyHpLabel", _enemyAvatarImage.rectTransform, "0/0", 24, TextAnchor.LowerCenter);
+            RectTransform enemyHpRect = _enemyHpLabel.GetComponent<RectTransform>();
+            enemyHpRect.anchorMin = new Vector2(0.1f, -0.15f);
+            enemyHpRect.anchorMax = new Vector2(0.9f, -0.02f);
+            enemyHpRect.offsetMin = Vector2.zero;
+            enemyHpRect.offsetMax = Vector2.zero;
+
+            _enemyIntentText = CreateText("EnemyIntent", _enemyAvatarImage.rectTransform, "?", 26, TextAnchor.LowerCenter);
+            RectTransform intentRect = _enemyIntentText.GetComponent<RectTransform>();
+            intentRect.anchorMin = new Vector2(0.1f, 1.02f);
+            intentRect.anchorMax = new Vector2(0.9f, 1.18f);
+            intentRect.offsetMin = Vector2.zero;
+            intentRect.offsetMax = Vector2.zero;
+
+            _drawPileText = CreateCornerCounter(canvasRect, new Vector2(0.02f, 0.02f), "Draw: 0");
+            _discardPileText = CreateCornerCounter(canvasRect, new Vector2(0.82f, 0.02f), "Discard: 0");
+
             _endTurnButton = CreateButton(
                 "EndTurnButton",
                 canvasRect,
-                new Vector2(0.78f, 0.73f),
-                new Vector2(0.97f, 0.9f),
-                "END TURN");
+                new Vector2(0.83f, 0.88f),
+                new Vector2(0.97f, 0.97f),
+                "End Turn");
             _endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
         }
+        private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, string label)
+        {
+            RectTransform panel = CreatePanel(
+                label + "_Panel",
+                parent,
+                anchorMin,
+                anchorMin + new Vector2(0.15f, 0.09f),
+                new Color(0.03f, 0.03f, 0.05f, 0.65f));
+            return CreateText(label + "_Text", panel, label, 22, TextAnchor.MiddleCenter);
+        }
+
 
         private Canvas CreateCanvas(string name)
         {
@@ -314,14 +346,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void UpdateInfoTexts()
         {
-            _playerInfoText.text =
-                $"PLAYER\nHP: {turnManager.PlayerHP}/{turnManager.PlayerMaxHP}\nEnergy: {turnManager.PlayerEnergy}/{turnManager.PlayerMaxEnergy}";
-
-            _enemyInfoText.text =
-                $"ENEMY\nHP: {turnManager.EnemyHP}/{turnManager.EnemyMaxHP}";
-
-            _deckInfoText.text =
-                $"Draw: {turnManager.PlayerDrawPileCount}  Discard: {turnManager.PlayerDiscardPileCount}  Hand: {turnManager.PlayerHandCount}";
+            _playerEnergyText.text = $"Energy {turnManager.PlayerEnergy}/{turnManager.PlayerMaxEnergy}";
+            _playerHpLabel.text = $"{turnManager.PlayerHP}/{turnManager.PlayerMaxHP}";
+            _enemyHpLabel.text = $"{turnManager.EnemyHP}/{turnManager.EnemyMaxHP}";
+            _drawPileText.text = $"Draw: {turnManager.PlayerDrawPileCount}";
+            _discardPileText.text = $"Discard: {turnManager.PlayerDiscardPileCount}";
+            _enemyIntentText.text = BuildEnemyIntentLabel();
 
             bool playerTurn = turnManager.IsPlayerTurn();
             _endTurnButton.interactable = playerTurn && !turnManager.IsCombatFinished;
@@ -422,6 +452,21 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             return $"{card.CardName} (Cost {card.Cost})\n{card.Description}";
+        }
+
+        private string BuildEnemyIntentLabel()
+        {
+            EnemyIntentType intentType = turnManager?.PlannedEnemyIntentType ?? EnemyIntentType.Unknown;
+            int value = turnManager?.PlannedEnemyIntentValue ?? 0;
+
+            return intentType switch
+            {
+                EnemyIntentType.Attack when value > 0 => $"ATTACK {value}",
+                EnemyIntentType.Defend when value > 0 => $"DEFEND {value}",
+                EnemyIntentType.Attack => "ATTACK",
+                EnemyIntentType.Defend => "DEFEND",
+                _ => "?"
+            };
         }
     }
 }

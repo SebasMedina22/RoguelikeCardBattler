@@ -27,6 +27,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private bool _initialized;
         private readonly System.Random _random = new System.Random();
         private int _enemySequenceCursor;
+        private EnemyMove _plannedEnemyMove;
 
         public enum CombatPhase
         {
@@ -49,6 +50,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int EnemyMaxHP => _enemy?.MaxHP ?? enemyDefinition?.MaxHP ?? 0;
         public CombatPhase CurrentPhase => _phase;
         public bool IsCombatFinished => _phase == CombatPhase.Victory || _phase == CombatPhase.Defeat;
+        public EnemyMove PlannedEnemyMove => _plannedEnemyMove;
+        public EnemyIntentType PlannedEnemyIntentType => _plannedEnemyMove?.IntentType ?? EnemyIntentType.Unknown;
+        public int PlannedEnemyIntentValue => CalculateIntentValue(_plannedEnemyMove);
 
         private void Start()
         {
@@ -92,6 +96,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _enemySequenceCursor = 0;
             _initialized = true;
 
+            PlanNextEnemyMove();
             BeginPlayerTurn(useStartingHand: true);
         }
 
@@ -164,7 +169,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             ClearBlock(_enemy);
 
-            EnemyMove move = SelectEnemyMove();
+            EnemyMove move = _plannedEnemyMove ?? SelectEnemyMove();
+            _plannedEnemyMove = null;
             if (move != null)
             {
                 QueueEffects(move.Effects, _enemy, _player);
@@ -175,6 +181,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             if (!IsCombatFinished)
             {
+                PlanNextEnemyMove();
                 BeginPlayerTurn();
             }
         }
@@ -326,6 +333,40 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         }
 
         public bool IsPlayerTurn() => _phase == CombatPhase.PlayerTurn;
+
+        private void PlanNextEnemyMove()
+        {
+            _plannedEnemyMove = SelectEnemyMove();
+        }
+
+        private int CalculateIntentValue(EnemyMove move)
+        {
+            if (move == null || move.Effects == null)
+            {
+                return 0;
+            }
+
+            int total = 0;
+            foreach (EffectRef effect in move.Effects)
+            {
+                if (effect == null)
+                {
+                    continue;
+                }
+
+                switch (move.IntentType)
+                {
+                    case EnemyIntentType.Attack when effect.effectType == EffectType.Damage:
+                        total += effect.value;
+                        break;
+                    case EnemyIntentType.Defend when effect.effectType == EffectType.Block:
+                        total += effect.value;
+                        break;
+                }
+            }
+
+            return total;
+        }
     }
 }
 

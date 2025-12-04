@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DefendBasic
   m_EditorClassIdentifier: 
   id: defend_basic
-  cardName: Defensa
-  description: Gana 5 de bloque.
+  cardName: Defend
+  description: Gain 5 Block.
   cost: 1
   type: 1
   rarity: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WeakSlime
   m_EditorClassIdentifier: 
   id: weak_slime
-  enemyName: Slime Débil
+  enemyName: Weak Slime
   maxHP: 30
   baseBlock: 0
   aiPattern: 0
@@ -21,26 +21,64 @@ MonoBehaviour:
   - Basic
   - Slime
   moves:
-  - id: slime_tackle
-    moveName: Golpe Baboso
-    description: Inflige 7 de daño.
+  - id: slime_attack_8
+    moveName: Goo Jab
+    description: Deals 8 damage.
     effects:
     - effectType: 0
-      value: 7
+      value: 8
       target: 1
       statusType: 0
       extraParams: []
-    weight: 60
+    weight: 40
     sequenceIndex: -1
-  - id: slime_harden
-    moveName: Reforzar Babas
-    description: Gana 6 de bloque.
+    intentType: 1
+  - id: slime_attack_12
+    moveName: Sticky Slam
+    description: Deals 12 damage.
+    effects:
+    - effectType: 0
+      value: 12
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 35
+    sequenceIndex: -1
+    intentType: 1
+  - id: slime_attack_15
+    moveName: Acid Burst
+    description: Deals 15 damage.
+    effects:
+    - effectType: 0
+      value: 15
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 25
+    sequenceIndex: -1
+    intentType: 1
+  - id: slime_defend_6
+    moveName: Harden Goo
+    description: Gains 6 Block.
     effects:
     - effectType: 1
       value: 6
       target: 0
       statusType: 0
       extraParams: []
-    weight: 40
+    weight: 20
     sequenceIndex: -1
+    intentType: 2
+  - id: slime_defend_8
+    moveName: Reinforce Goo
+    description: Gains 8 Block.
+    effects:
+    - effectType: 1
+      value: 8
+      target: 0
+      statusType: 0
+      extraParams: []
+    weight: 15
+    sequenceIndex: -1
+    intentType: 2
 

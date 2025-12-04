@@ -5,6 +5,13 @@ using UnityEngine;
 
 namespace RoguelikeCardBattler.Gameplay.Enemies
 {
+    public enum EnemyIntentType
+    {
+        Unknown,
+        Attack,
+        Defend
+    }
+
     [Serializable]
     public class EnemyMove
     {
@@ -14,6 +21,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         [SerializeField] private List<EffectRef> effects = new List<EffectRef>();
         [SerializeField] private int weight = 1;
         [SerializeField] private int sequenceIndex = -1;
+        [SerializeField] private EnemyIntentType intentType = EnemyIntentType.Unknown;
 
         public string Id => id;
         public string MoveName => moveName;
@@ -21,6 +29,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public IReadOnlyList<EffectRef> Effects => effects;
         public int Weight => weight;
         public int SequenceIndex => sequenceIndex;
+        public EnemyIntentType IntentType => intentType;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public void SetDebugData(
@@ -29,7 +38,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             string newDescription,
             List<EffectRef> newEffects,
             int newWeight = 1,
-            int newSequenceIndex = -1)
+            int newSequenceIndex = -1,
+            EnemyIntentType newIntentType = EnemyIntentType.Unknown)
         {
             id = newId;
             moveName = newName;
@@ -37,6 +47,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             effects = newEffects ?? new List<EffectRef>();
             weight = newWeight;
             sequenceIndex = newSequenceIndex;
+            intentType = newIntentType;
         }
 #endif
     }
