@@ -13,6 +13,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         [SerializeField] private EnemyAIPattern aiPattern = EnemyAIPattern.RandomWeighted;
         [SerializeField] private List<string> tags = new List<string>();
         [SerializeField] private List<EnemyMove> moves = new List<EnemyMove>();
+        [SerializeField] private float avatarScale = 1f;
+        [SerializeField] private Vector2 avatarOffset = Vector2.zero;
 
         public string Id => id;
         public string EnemyName => enemyName;
@@ -21,6 +23,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public EnemyAIPattern AIPattern => aiPattern;
         public IReadOnlyList<string> Tags => tags;
         public IReadOnlyList<EnemyMove> Moves => moves;
+        public float AvatarScale => avatarScale;
+        public Vector2 AvatarOffset => avatarOffset;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public void SetDebugData(
@@ -30,7 +34,9 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             int newBaseBlock,
             EnemyAIPattern newPattern,
             List<string> newTags,
-            List<EnemyMove> newMoves)
+            List<EnemyMove> newMoves,
+            float newAvatarScale = 1f,
+            Vector2? newAvatarOffset = null)
         {
             id = newId;
             enemyName = newName;
@@ -39,6 +45,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             aiPattern = newPattern;
             tags = newTags ?? new List<string>();
             moves = newMoves ?? new List<EnemyMove>();
+            avatarScale = Mathf.Max(0.1f, newAvatarScale);
+            avatarOffset = newAvatarOffset ?? Vector2.zero;
         }
 #endif
     }

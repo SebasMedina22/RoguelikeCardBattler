@@ -8,7 +8,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
 {
     public class PlayerCombatActorTests : CombatTestBase
     {
-        private PlayerCombatActor CreatePlayer(List<CardDefinition> deck)
+        private PlayerCombatActor CreatePlayer(List<CardDeckEntry> deck)
         {
             return new PlayerCombatActor(
                 "player",
@@ -22,7 +22,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test]
         public void DamageConsumesBlockBeforeHP()
         {
-            var deck = new List<CardDefinition>();
+            var deck = new List<CardDeckEntry>();
             var player = CreatePlayer(deck);
 
             player.GainBlock(5);
@@ -42,7 +42,11 @@ namespace RoguelikeCardBattler.Tests.EditMode
             var cardA = CreateCard("cardA", CardType.Skill, CardTarget.Self, cost: 1, drawEffect);
             var cardB = CreateCard("cardB", CardType.Skill, CardTarget.Self, cost: 1, drawEffect);
 
-            var deck = new List<CardDefinition> { cardA, cardB };
+            var deck = new List<CardDeckEntry>
+            {
+                CreateSingleCardEntry(cardA),
+                CreateSingleCardEntry(cardB)
+            };
             var player = CreatePlayer(deck);
 
             player.DrawCards(1);

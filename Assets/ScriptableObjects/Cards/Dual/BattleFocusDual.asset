@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0eb1640bc24b4b829427517f98158f3c, type: 3}
+  m_Name: BattleFocusDual
+  m_EditorClassIdentifier: 
+  id: dual_battle_focus
+  displayName: Dual Battle Focus
+  sideA: {fileID: 11400000, guid: 3d528c055ad84181a6d0bfaae6a0c97c, type: 2}
+  sideB: {fileID: 11400000, guid: 6e322cf20c6d48bba2c54c35ef361829, type: 2}
+

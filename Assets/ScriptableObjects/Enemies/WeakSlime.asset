@@ -20,6 +20,8 @@ MonoBehaviour:
   tags:
   - Basic
   - Slime
+  avatarScale: 0.85
+  avatarOffset: {x: 0, y: -25}
   moves:
   - id: slime_attack_8
     moveName: Goo Jab

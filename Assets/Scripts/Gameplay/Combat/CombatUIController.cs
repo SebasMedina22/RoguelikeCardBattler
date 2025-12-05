@@ -14,11 +14,22 @@ namespace RoguelikeCardBattler.Gameplay.Combat
     {
         [SerializeField] private TurnManager turnManager;
         [SerializeField] private Font uiFont;
+        [SerializeField] private Sprite playerSprite;
+        [SerializeField] private Sprite enemySprite;
+        [SerializeField] private bool showPlayerBackground = true;
+        [SerializeField] private bool showEnemyBackground = true;
+        [SerializeField] private float playerSpriteScale = 1f;
+        [SerializeField] private float enemySpriteScale = 0.8f;
+        [SerializeField] private float playerSpriteYOffset = -40f;
+        [SerializeField] private float enemySpriteYOffset = -20f;
+        [SerializeField] private Color blockOverlayColor = new Color(0.2f, 0.6f, 1f, 0.35f);
 
         private Canvas _canvas;
         private Text _playerEnergyText;
         private Text _playerHpLabel;
         private Text _enemyHpLabel;
+        private Text _playerBlockText;
+        private Text _enemyBlockText;
         private Text _drawPileText;
         private Text _discardPileText;
         private Text _enemyIntentText;
@@ -30,6 +41,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Image _enemyAvatarImage;
         private Color _playerAvatarBaseColor;
         private Color _enemyAvatarBaseColor;
+        private Image _playerBlockOverlay;
+        private Image _enemyBlockOverlay;
         private Image _skyBackgroundImage;
         private Image _groundBackgroundImage;
         [SerializeField] private Color worldASkyColor = new Color(0.07f, 0.12f, 0.3f, 1f);
@@ -38,11 +51,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Color worldBGroundColor = new Color(0.09f, 0.02f, 0.04f, 1f);
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
-        private readonly List<CardDefinition> _handCache = new List<CardDefinition>();
+        private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
 
         private class CardButtonBinding
         {
-            public CardDefinition Card;
+            public CardDeckEntry CardEntry;
             public Button Button;
             public Text Label;
         }
@@ -106,8 +119,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.05f, 0.1f),
                 new Vector2(0.3f, 0.9f),
                 new Color(0.2f, 0.55f, 0.9f),
-                "Pilot");
+                "Pilot",
+                playerSprite,
+                showPlayerBackground,
+                playerSpriteScale,
+                new Vector2(0f, playerSpriteYOffset));
             _playerAvatarBaseColor = _playerAvatarImage.color;
+
+            Vector2 enemyOffset = new Vector2(0f, enemySpriteYOffset);
+            float enemyScale = enemySpriteScale;
+            if (turnManager != null)
+            {
+                enemyOffset += turnManager.CurrentEnemyAvatarOffset;
+                enemyScale = turnManager.CurrentEnemyAvatarScale;
+            }
 
             _enemyAvatarImage = CreateAvatar(
                 "EnemyAvatar",
@@ -115,7 +140,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.7f, 0.1f),
                 new Vector2(0.95f, 0.9f),
                 new Color(0.95f, 0.4f, 0.4f),
-                "Slime");
+                "Slime",
+                enemySprite,
+                showEnemyBackground,
+                enemyScale,
+                enemyOffset);
             _enemyAvatarBaseColor = _enemyAvatarImage.color;
 
             RectTransform energyPanel = CreatePanel(
@@ -155,6 +184,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             playerHpRect.anchorMax = new Vector2(0.9f, -0.02f);
             playerHpRect.offsetMin = Vector2.zero;
             playerHpRect.offsetMax = Vector2.zero;
+            CreateBlockUI(_playerAvatarImage.rectTransform, "Player", out _playerBlockOverlay, out _playerBlockText);
 
             _enemyHpLabel = CreateText("EnemyHpLabel", _enemyAvatarImage.rectTransform, "0/0", 24, TextAnchor.LowerCenter);
             RectTransform enemyHpRect = _enemyHpLabel.GetComponent<RectTransform>();
@@ -162,11 +192,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             enemyHpRect.anchorMax = new Vector2(0.9f, -0.02f);
             enemyHpRect.offsetMin = Vector2.zero;
             enemyHpRect.offsetMax = Vector2.zero;
+            CreateBlockUI(_enemyAvatarImage.rectTransform, "Enemy", out _enemyBlockOverlay, out _enemyBlockText);
 
             _enemyIntentText = CreateText("EnemyIntent", _enemyAvatarImage.rectTransform, "?", 26, TextAnchor.LowerCenter);
             RectTransform intentRect = _enemyIntentText.GetComponent<RectTransform>();
-            intentRect.anchorMin = new Vector2(0.1f, 1.02f);
-            intentRect.anchorMax = new Vector2(0.9f, 1.18f);
+            intentRect.anchorMin = new Vector2(0.05f, 1.02f);
+            intentRect.anchorMax = new Vector2(0.95f, 1.2f);
             intentRect.offsetMin = Vector2.zero;
             intentRect.offsetMax = Vector2.zero;
 
@@ -188,6 +219,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.8f, 0.97f),
                 "Change World");
             _changeWorldButton.onClick.AddListener(OnChangeWorldButtonClicked);
+
+            UpdateWorldVisuals();
         }
         private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, string label)
         {
@@ -259,11 +292,40 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             return rect;
         }
 
-        private Image CreateAvatar(string name, RectTransform parent, Vector2 anchorMin, Vector2 anchorMax, Color tint, string label)
+        private Image CreateAvatar(
+            string name,
+            RectTransform parent,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Color tint,
+            string label,
+            Sprite sprite,
+            bool showBackground,
+            float spriteScale,
+            Vector2 spriteOffset)
         {
             RectTransform rect = CreatePanel(name, parent, anchorMin, anchorMax, tint);
             Image image = rect.GetComponent<Image>();
-            image.color = tint;
+            image.color = showBackground ? tint : new Color(tint.r, tint.g, tint.b, 0f);
+
+            if (sprite != null)
+            {
+                GameObject spriteGO = new GameObject(name + "_Sprite", typeof(RectTransform), typeof(Image));
+                spriteGO.transform.SetParent(rect, false);
+                RectTransform spriteRect = spriteGO.GetComponent<RectTransform>();
+                spriteRect.anchorMin = new Vector2(0.1f, 0.1f);
+                spriteRect.anchorMax = new Vector2(0.9f, 0.9f);
+                spriteRect.offsetMin = Vector2.zero;
+                spriteRect.offsetMax = Vector2.zero;
+
+                Image spriteImage = spriteGO.GetComponent<Image>();
+                spriteImage.sprite = sprite;
+                spriteImage.preserveAspect = true;
+                spriteImage.raycastTarget = false;
+                spriteImage.color = Color.white;
+                spriteRect.localScale = Vector3.one * Mathf.Max(0.1f, spriteScale);
+                spriteRect.anchoredPosition += spriteOffset;
+            }
 
             Text caption = CreateText(name + "_Label", rect, label, 30, TextAnchor.UpperCenter);
             caption.fontStyle = FontStyle.Bold;
@@ -319,9 +381,34 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             return button;
         }
 
-        private Button CreateCardButton(CardDefinition card, Transform parent)
+        private void CreateBlockUI(RectTransform parent, string prefix, out Image overlay, out Text blockText)
         {
-            GameObject buttonGO = new GameObject(card.name + "_Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            GameObject overlayGO = new GameObject(prefix + "_BlockOverlay", typeof(RectTransform), typeof(Image));
+            overlayGO.transform.SetParent(parent, false);
+            RectTransform overlayRect = overlayGO.GetComponent<RectTransform>();
+            overlayRect.anchorMin = new Vector2(0.05f, 0.05f);
+            overlayRect.anchorMax = new Vector2(0.95f, 0.95f);
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+
+            overlay = overlayGO.GetComponent<Image>();
+            overlay.color = new Color(blockOverlayColor.r, blockOverlayColor.g, blockOverlayColor.b, 0f);
+            overlay.raycastTarget = false;
+
+            blockText = CreateText(prefix + "_BlockText", parent, "Block 0", 20, TextAnchor.MiddleCenter);
+            RectTransform blockRect = blockText.GetComponent<RectTransform>();
+            blockRect.anchorMin = new Vector2(0.15f, -0.32f);
+            blockRect.anchorMax = new Vector2(0.85f, -0.18f);
+            blockRect.offsetMin = Vector2.zero;
+            blockRect.offsetMax = Vector2.zero;
+        }
+
+        private Button CreateCardButton(CardDeckEntry entry, Transform parent)
+        {
+            CardDefinition activeCard = turnManager.GetActiveCardDefinition(entry);
+            string label = activeCard != null ? activeCard.name : "Card";
+
+            GameObject buttonGO = new GameObject(label + "_Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             buttonGO.transform.SetParent(parent, false);
 
             RectTransform rect = buttonGO.GetComponent<RectTransform>();
@@ -336,10 +423,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             Button button = buttonGO.GetComponent<Button>();
 
-            Text labelText = CreateText("Label", rect, BuildCardLabel(card), 20, TextAnchor.MiddleCenter);
+            Text labelText = CreateText("Label", rect, BuildCardLabel(entry), 20, TextAnchor.MiddleCenter);
             labelText.fontStyle = FontStyle.Bold;
 
-            button.onClick.AddListener(() => OnCardButtonClicked(card));
+            button.onClick.AddListener(() => OnCardButtonClicked(entry));
 
             return button;
         }
@@ -354,14 +441,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             turnManager.EndPlayerTurn();
         }
 
-        private void OnCardButtonClicked(CardDefinition card)
+        private void OnCardButtonClicked(CardDeckEntry entry)
         {
-            if (turnManager == null || card == null)
+            if (turnManager == null || entry == null)
             {
                 return;
             }
 
-            bool played = turnManager.PlayCard(card);
+            bool played = turnManager.PlayCard(entry);
             if (!played)
             {
                 return;
@@ -378,6 +465,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _drawPileText.text = $"Draw: {turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();
+            UpdateBlockVisuals(_playerBlockText, _playerBlockOverlay, turnManager.PlayerBlock);
+            UpdateBlockVisuals(_enemyBlockText, _enemyBlockOverlay, turnManager.EnemyBlock);
             UpdateWorldVisuals();
 
             bool playerTurn = turnManager.IsPlayerTurn();
@@ -409,6 +498,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void SyncHandButtons(bool forceRebuild = false)
         {
+            if (turnManager == null)
+            {
+                return;
+            }
+
             if (forceRebuild || !IsHandCacheValid())
             {
                 RebuildHandButtons();
@@ -418,15 +512,21 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int currentEnergy = turnManager.PlayerEnergy;
             foreach (CardButtonBinding binding in _cardButtons)
             {
-                bool enoughEnergy = binding.Card != null && currentEnergy >= binding.Card.Cost;
+                CardDefinition activeCard = turnManager.GetActiveCardDefinition(binding.CardEntry);
+                bool enoughEnergy = activeCard != null && currentEnergy >= activeCard.Cost;
                 binding.Button.interactable = canInteract && enoughEnergy;
-                binding.Label.text = BuildCardLabel(binding.Card);
+                binding.Label.text = BuildCardLabel(binding.CardEntry);
             }
         }
 
         private bool IsHandCacheValid()
         {
-            IReadOnlyList<CardDefinition> hand = turnManager.PlayerHand;
+            if (turnManager == null)
+            {
+                return false;
+            }
+
+            IReadOnlyList<CardDeckEntry> hand = turnManager.PlayerHand;
             if (hand.Count != _handCache.Count)
             {
                 return false;
@@ -456,29 +556,42 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _cardButtons.Clear();
             _handCache.Clear();
 
-            IReadOnlyList<CardDefinition> hand = turnManager.PlayerHand;
-            foreach (CardDefinition card in hand)
+            IReadOnlyList<CardDeckEntry> hand = turnManager.PlayerHand;
+            foreach (CardDeckEntry entry in hand)
             {
-                Button button = CreateCardButton(card, _handContainer);
+                Button button = CreateCardButton(entry, _handContainer);
                 Text label = button.GetComponentInChildren<Text>();
                 _cardButtons.Add(new CardButtonBinding
                 {
-                    Card = card,
+                    CardEntry = entry,
                     Button = button,
                     Label = label
                 });
-                _handCache.Add(card);
+                _handCache.Add(entry);
             }
         }
 
-        private string BuildCardLabel(CardDefinition card)
+        private string BuildCardLabel(CardDeckEntry entry)
         {
-            if (card == null)
+            if (entry == null)
             {
                 return "Unknown Card";
             }
 
-            return $"{card.CardName} (Cost {card.Cost})\n{card.Description}";
+            CardDefinition activeCard = turnManager != null ? turnManager.GetActiveCardDefinition(entry) : null;
+            if (activeCard == null)
+            {
+                return "Unknown Card";
+            }
+
+            string prefix = string.Empty;
+            if (entry.DualCard != null)
+            {
+                prefix = turnManager.CurrentWorld == TurnManager.WorldSide.A ? "[A] " : "[B] ";
+            }
+
+            string title = string.IsNullOrEmpty(prefix) ? activeCard.CardName : $"{prefix}{activeCard.CardName}";
+            return $"{title} (Cost {activeCard.Cost})\n{activeCard.Description}";
         }
 
         private string BuildEnemyIntentLabel()
@@ -496,6 +609,23 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             };
         }
 
+        private void UpdateBlockVisuals(Text label, Image overlay, int blockValue)
+        {
+            if (label != null)
+            {
+                label.text = $"Block {blockValue}";
+            }
+
+            if (overlay != null)
+            {
+                overlay.color = new Color(
+                    blockOverlayColor.r,
+                    blockOverlayColor.g,
+                    blockOverlayColor.b,
+                    blockValue > 0 ? blockOverlayColor.a : 0f);
+            }
+        }
+
         private void OnChangeWorldButtonClicked()
         {
             if (turnManager == null)
@@ -505,6 +635,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             turnManager.ToggleWorldForDebug();
             UpdateWorldVisuals();
+            SyncHandButtons(forceRebuild: true);
         }
 
         private void UpdateWorldVisuals()

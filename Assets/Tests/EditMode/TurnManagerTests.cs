@@ -37,8 +37,15 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 new List<EnemyMove> { move });
         }
 
+        private CardDeckEntry CreateDeckEntry(CardDefinition card)
+        {
+            var entry = new CardDeckEntry();
+            entry.SetSingleCard(card);
+            return entry;
+        }
+
         private TurnManager CreateTurnManager(
-            List<CardDefinition> deck,
+            List<CardDeckEntry> deck,
             EnemyDefinition enemy,
             int playerHp = 30,
             int energyPerTurn = 3,
@@ -55,9 +62,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test]
         public void InitializeCombatSetsPlayerTurnAndResources()
         {
-            var deck = new List<CardDefinition>
+            var deck = new List<CardDeckEntry>
             {
-                CreateDamageCard("strike", 5)
+                CreateDeckEntry(CreateDamageCard("strike", 5))
             };
 
             var enemy = CreateEnemy(hp: 20, damagePerAttack: 3);
@@ -73,10 +80,10 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test]
         public void EndPlayerTurnRunsEnemyAndReturnsToPlayer()
         {
-            var deck = new List<CardDefinition>
+            var deck = new List<CardDeckEntry>
             {
-                CreateDamageCard("strike", 5),
-                CreateDamageCard("strike2", 5)
+                CreateDeckEntry(CreateDamageCard("strike", 5)),
+                CreateDeckEntry(CreateDamageCard("strike2", 5))
             };
             var enemy = CreateEnemy(hp: 30, damagePerAttack: 2);
             var manager = CreateTurnManager(deck, enemy, playerHp: 25, energyPerTurn: 3, startingHand: 2, cardsPerTurn: 2);
@@ -93,7 +100,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         public void DefeatingEnemyEndsCombatWithVictory()
         {
             var finisher = CreateDamageCard("finisher", damage: 999, cost: 0);
-            var deck = new List<CardDefinition> { finisher };
+            var deck = new List<CardDeckEntry> { CreateDeckEntry(finisher) };
             var enemy = CreateEnemy(hp: 10, damagePerAttack: 1);
             var manager = CreateTurnManager(deck, enemy, playerHp: 20, energyPerTurn: 1, startingHand: 1, cardsPerTurn: 1);
 
@@ -110,9 +117,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test]
         public void EnemyKillingPlayerTriggersDefeat()
         {
-            var deck = new List<CardDefinition>
+            var deck = new List<CardDeckEntry>
             {
-                CreateDamageCard("strike", 5)
+                CreateDeckEntry(CreateDamageCard("strike", 5))
             };
             var enemy = CreateEnemy(hp: 20, damagePerAttack: 999);
             var manager = CreateTurnManager(deck, enemy, playerHp: 5, energyPerTurn: 2, startingHand: 1, cardsPerTurn: 1);

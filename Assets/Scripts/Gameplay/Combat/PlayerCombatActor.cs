@@ -6,9 +6,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 {
     public class PlayerCombatActor : ICombatActor
     {
-        private readonly List<CardDefinition> _drawPile = new List<CardDefinition>();
-        private readonly List<CardDefinition> _discardPile = new List<CardDefinition>();
-        private readonly List<CardDefinition> _hand = new List<CardDefinition>();
+        private readonly List<CardDeckEntry> _drawPile = new List<CardDeckEntry>();
+        private readonly List<CardDeckEntry> _discardPile = new List<CardDeckEntry>();
+        private readonly List<CardDeckEntry> _hand = new List<CardDeckEntry>();
         private readonly Random _random;
 
         public string Id { get; }
@@ -19,7 +19,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int CurrentEnergy { get; private set; }
         public int MaxEnergy { get; }
 
-        public IReadOnlyList<CardDefinition> Hand => _hand;
+        public IReadOnlyList<CardDeckEntry> Hand => _hand;
         public int DrawPileCount => _drawPile.Count;
         public int DiscardPileCount => _discardPile.Count;
         public int HandCount => _hand.Count;
@@ -29,7 +29,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             string displayName,
             int maxHP,
             int baseEnergy,
-            IEnumerable<CardDefinition> startingDeck,
+            IEnumerable<CardDeckEntry> startingDeck,
             Random random)
         {
             Id = id;
@@ -125,7 +125,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             for (int i = 0; i < amount; i++)
             {
-                CardDefinition card = DrawSingleCard();
+                CardDeckEntry card = DrawSingleCard();
                 if (card == null)
                 {
                     break;
@@ -135,9 +135,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
         }
 
-        public bool IsCardInHand(CardDefinition card) => card != null && _hand.Contains(card);
+        public bool IsCardInHand(CardDeckEntry card) => card != null && _hand.Contains(card);
 
-        public bool RemoveCardFromHand(CardDefinition card)
+        public bool RemoveCardFromHand(CardDeckEntry card)
         {
             if (card == null)
             {
@@ -147,7 +147,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             return _hand.Remove(card);
         }
 
-        public void DiscardCard(CardDefinition card)
+        public void DiscardCard(CardDeckEntry card)
         {
             if (card == null)
             {
@@ -180,7 +180,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Shuffle(_drawPile);
         }
 
-        private CardDefinition DrawSingleCard()
+        private CardDeckEntry DrawSingleCard()
         {
             if (_drawPile.Count == 0)
             {
@@ -193,12 +193,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             int lastIndex = _drawPile.Count - 1;
-            CardDefinition card = _drawPile[lastIndex];
+            CardDeckEntry card = _drawPile[lastIndex];
             _drawPile.RemoveAt(lastIndex);
             return card;
         }
 
-        private void Shuffle(List<CardDefinition> list)
+        private void Shuffle(List<CardDeckEntry> list)
         {
             for (int i = list.Count - 1; i > 0; i--)
             {

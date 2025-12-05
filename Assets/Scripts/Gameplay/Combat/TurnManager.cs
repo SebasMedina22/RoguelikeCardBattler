@@ -10,7 +10,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
     public class TurnManager : MonoBehaviour
     {
         [Header("Setup")]
-        [SerializeField] private List<CardDefinition> starterDeck = new List<CardDefinition>();
+        [SerializeField] private List<CardDeckEntry> starterDeck = new List<CardDeckEntry>();
         [SerializeField] private EnemyDefinition enemyDefinition;
 
         [Header("Player Settings")]
@@ -45,7 +45,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Defeat
         }
 
-        public IReadOnlyList<CardDefinition> PlayerHand => _player?.Hand ?? Array.Empty<CardDefinition>();
+        public IReadOnlyList<CardDeckEntry> PlayerHand => _player?.Hand ?? Array.Empty<CardDeckEntry>();
         public int PlayerEnergy => _player?.CurrentEnergy ?? 0;
         public int PlayerHP => _player?.CurrentHP ?? 0;
         public int PlayerMaxHP => _player?.MaxHP ?? playerMaxHP;
@@ -53,14 +53,18 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int PlayerDrawPileCount => _player?.DrawPileCount ?? 0;
         public int PlayerDiscardPileCount => _player?.DiscardPileCount ?? 0;
         public int PlayerHandCount => _player?.HandCount ?? 0;
+        public int PlayerBlock => _player?.Block ?? 0;
         public int EnemyHP => _enemy?.CurrentHP ?? 0;
         public int EnemyMaxHP => _enemy?.MaxHP ?? enemyDefinition?.MaxHP ?? 0;
+        public int EnemyBlock => _enemy?.Block ?? 0;
         public CombatPhase CurrentPhase => _phase;
         public bool IsCombatFinished => _phase == CombatPhase.Victory || _phase == CombatPhase.Defeat;
         public EnemyMove PlannedEnemyMove => _plannedEnemyMove;
         public EnemyIntentType PlannedEnemyIntentType => _plannedEnemyMove?.IntentType ?? EnemyIntentType.Unknown;
         public int PlannedEnemyIntentValue => CalculateIntentValue(_plannedEnemyMove);
         public WorldSide CurrentWorld => currentWorld;
+        public float CurrentEnemyAvatarScale => enemyDefinition != null ? Mathf.Max(0.1f, enemyDefinition.AvatarScale) : 1f;
+        public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
 
         private void Start()
         {
@@ -68,7 +72,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         }
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
-        public void SetTestData(List<CardDefinition> deck, EnemyDefinition enemy)
+        public void SetTestData(List<CardDeckEntry> deck, EnemyDefinition enemy)
         {
             starterDeck = deck;
             enemyDefinition = enemy;
@@ -108,31 +112,38 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             BeginPlayerTurn(useStartingHand: true);
         }
 
-        public bool PlayCard(CardDefinition card, ICombatActor explicitTarget = null)
+        public bool PlayCard(CardDeckEntry cardEntry, ICombatActor explicitTarget = null)
         {
-            if (!_initialized || _phase != CombatPhase.PlayerTurn || card == null)
+            if (!_initialized || _phase != CombatPhase.PlayerTurn || cardEntry == null)
             {
                 return false;
             }
 
-            if (!_player.IsCardInHand(card))
+            if (!_player.IsCardInHand(cardEntry))
             {
-                Debug.LogWarning($"Card {card.name} not in hand.");
+                Debug.LogWarning("Card not in hand.");
                 return false;
             }
 
-            if (!_player.SpendEnergy(card.Cost))
+            CardDefinition activeCard = GetActiveCardDefinition(cardEntry);
+            if (activeCard == null)
+            {
+                Debug.LogWarning("Active card definition missing.");
+                return false;
+            }
+
+            if (!_player.SpendEnergy(activeCard.Cost))
             {
                 Debug.LogWarning("Not enough energy to play card.");
                 return false;
             }
 
-            _player.RemoveCardFromHand(card);
+            _player.RemoveCardFromHand(cardEntry);
 
             ICombatActor target = explicitTarget ?? GetDefaultOpponent(_player);
-            QueueEffects(card.Effects, _player, target);
+            QueueEffects(activeCard.Effects, _player, target);
             _actionQueue.ProcessAll();
-            _player.DiscardCard(card);
+            _player.DiscardCard(cardEntry);
 
             CheckCombatEndConditions();
             return true;
@@ -350,6 +361,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public void ToggleWorldForDebug()
         {
             currentWorld = currentWorld == WorldSide.A ? WorldSide.B : WorldSide.A;
+        }
+
+        public CardDefinition GetActiveCardDefinition(CardDeckEntry entry)
+        {
+            return entry?.GetActiveCard(CurrentWorld);
         }
 
         private int CalculateIntentValue(EnemyMove move)

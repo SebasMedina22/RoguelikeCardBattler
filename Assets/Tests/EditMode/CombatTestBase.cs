@@ -42,6 +42,13 @@ namespace RoguelikeCardBattler.Tests.EditMode
             return card;
         }
 
+        protected CardDeckEntry CreateSingleCardEntry(CardDefinition card)
+        {
+            var entry = new CardDeckEntry();
+            entry.SetSingleCard(card);
+            return entry;
+        }
+
         protected EffectRef CreateEffect(EffectType type, int value, EffectTarget target)
         {
             return new EffectRef

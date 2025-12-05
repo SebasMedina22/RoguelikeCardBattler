@@ -358,6 +358,64 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &876543211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876543210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d06715af9bc46528725353298e87224, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  starterDeck:
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: 9adafdc7d3964a2ba54afa9b5740d5af, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: 9adafdc7d3964a2ba54afa9b5740d5af, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: ce1ce5bd21da4478861f66b51d98d240, type: 2}
+  - singleCard: {fileID: 0}
+    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
+  enemyDefinition: {fileID: 11400000, guid: a5f86b9e5ecb4de5bf5dfbcfbcff3577, type: 2}
+  playerDisplayName: Test Pilot
+  playerMaxHP: 60
+  energyPerTurn: 3
+  startingHandSize: 5
+  cardsPerTurn: 5
+  currentWorld: 0
+--- !u!114 &876543212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876543210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357df0dfd8c04b1b94ba37f6dafc3028, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  turnManager: {fileID: 876543211}
+  uiFont: {fileID: 0}
+  playerSprite: {fileID: 21300000, guid: c5d04ef5ae5d47a4a705435dffde04d9, type: 3}
+  enemySprite: {fileID: 21300000, guid: 7d2dc69688834d0397b28f2a710479c6, type: 3}
+  showPlayerBackground: 0
+  showEnemyBackground: 0
+  playerSpriteScale: 1
+  enemySpriteScale: 0.8
+  worldASkyColor: {r: 0.07, g: 0.12, b: 0.3, a: 1}
+  worldAGroundColor: {r: 0.02, g: 0.07, b: 0.09, a: 1}
+  worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}
+  worldBGroundColor: {r: 0.09, g: 0.02, b: 0.04, a: 1}
 --- !u!4 &876543213
 Transform:
   m_ObjectHideFlags: 0
@@ -373,45 +431,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &876543211
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 876543210}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d06715af9bc46528725353298e87224, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  starterDeck:
-  - {fileID: 11400000, guid: 5b9df57273c14a28b3c2be7f194cda1a, type: 2}
-  - {fileID: 11400000, guid: 5b9df57273c14a28b3c2be7f194cda1a, type: 2}
-  - {fileID: 11400000, guid: 5b9df57273c14a28b3c2be7f194cda1a, type: 2}
-  - {fileID: 11400000, guid: 4ebf4e5b65d24c0bbd546c82c87c81ae, type: 2}
-  - {fileID: 11400000, guid: 4ebf4e5b65d24c0bbd546c82c87c81ae, type: 2}
-  - {fileID: 11400000, guid: 3d528c055ad84181a6d0bfaae6a0c97c, type: 2}
-  enemyDefinition: {fileID: 11400000, guid: a5f86b9e5ecb4de5bf5dfbcfbcff3577, type: 2}
-  playerDisplayName: Test Pilot
-  playerMaxHP: 60
-  energyPerTurn: 3
-  startingHandSize: 5
-  cardsPerTurn: 5
---- !u!114 &876543212
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 876543210}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 357df0dfd8c04b1b94ba37f6dafc3028, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  turnManager: {fileID: 876543211}
-  uiFont: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -419,4 +438,3 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 876543213}
-
