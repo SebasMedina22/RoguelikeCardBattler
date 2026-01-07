@@ -35,6 +35,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private int _enemySequenceCursor;
         private EnemyMove _plannedEnemyMove;
         [SerializeField] private WorldSide currentWorld = WorldSide.A;
+        private int _freePlays;
 
         public enum CombatPhase
         {
@@ -66,6 +67,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public float CurrentEnemyAvatarScale => enemyDefinition != null ? Mathf.Max(0.1f, enemyDefinition.AvatarScale) : 1f;
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
+        public int FreePlays => _freePlays;
 
         private void Start()
         {
@@ -85,6 +87,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             energyPerTurn = Mathf.Max(0, energy);
             startingHandSize = Mathf.Max(1, startingHand);
             cardsPerTurn = Mathf.Max(1, cardsPerTurnCount);
+        }
+
+        public void SetFreePlaysForTest(int value)
+        {
+            _freePlays = Mathf.Max(0, value);
         }
 #endif
 
@@ -107,6 +114,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _actionQueue = new ActionQueue();
             _phase = CombatPhase.None;
             _enemySequenceCursor = 0;
+            _freePlays = 0;
             _initialized = true;
 
             PlanNextEnemyMove();
@@ -133,7 +141,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return false;
             }
 
-            if (!_player.SpendEnergy(activeCard.Cost))
+            if (_freePlays > 0)
+            {
+                _freePlays--;
+            }
+            else if (!_player.SpendEnergy(activeCard.Cost))
             {
                 Debug.LogWarning("Not enough energy to play card.");
                 return false;
@@ -326,7 +338,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             };
 
             int adjusted = Mathf.RoundToInt(baseAmount * multiplier);
-            return Math.Max(0, adjusted);
+            int finalAmount = Math.Max(0, adjusted);
+
+            if (effectiveness == Effectiveness.SuperEficaz && finalAmount > 0)
+            {
+                _freePlays++;
+                Debug.Log("ONE MORE: Free Play +1");
+            }
+
+            return finalAmount;
         }
 
         private ICombatActor GetDefaultOpponent(ICombatActor source)

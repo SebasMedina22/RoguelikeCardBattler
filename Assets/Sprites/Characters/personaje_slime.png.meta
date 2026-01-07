@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ff8f6125ed858bb4f93c70e81af421ea
+guid: 8e4db1288f1d13e499b530f650ec7824
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8373370086103218013
-    second: CyberSlime_0
+      213: -5749342644988343902
+    second: personaje_slime_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: CyberSlime_0
+      name: personaje_slime_0
       rect:
         serializedVersion: 2
-        x: 102
-        y: 88
-        width: 798
-        height: 795
+        x: 9
+        y: 8
+        width: 600
+        height: 355
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3a88fec4540dbcb80800000000000000
-      internalID: -8373370086103218013
+      spriteID: 2a90771635b3630b0800000000000000
+      internalID: -5749342644988343902
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      CyberSlime_0: -8373370086103218013
+      personaje_slime_0: -5749342644988343902
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -26,6 +26,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private Canvas _canvas;
         private Text _playerEnergyText;
+        private Text _freePlaysText;
         private Text _playerHpLabel;
         private Text _enemyHpLabel;
         private Text _enemyTypeLabel;
@@ -68,6 +69,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 turnManager = GetComponent<TurnManager>();
             }
 
+            CaptureExistingAvatarSprites();
             if (uiFont == null)
             {
                 // Unity 6 reemplazó Arial por LegacyRuntime como built-in
@@ -98,6 +100,45 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             GameObject eventSystemGO = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             DontDestroyOnLoad(eventSystemGO);
+        }
+
+        /// <summary>
+        /// Si ya existen instancias de UI en escena (por ejemplo, con sprites asignados en editor),
+        /// preserva esos sprites y limpia la UI previa para que BuildUI regenere con esos sprites.
+        /// </summary>
+        private void CaptureExistingAvatarSprites()
+        {
+            Transform existingCanvas = transform.Find("CombatCanvas");
+            if (existingCanvas == null)
+            {
+                return;
+            }
+
+            Transform battlefield = existingCanvas.Find("BattlefieldPanel");
+            if (battlefield != null)
+            {
+                Transform playerAvatar = battlefield.Find("PlayerAvatar");
+                if (playerAvatar != null)
+                {
+                    Image img = playerAvatar.GetComponent<Image>();
+                    if (img != null && img.sprite != null && playerSprite == null)
+                    {
+                        playerSprite = img.sprite;
+                    }
+                }
+
+                Transform enemyAvatar = battlefield.Find("EnemyAvatar");
+                if (enemyAvatar != null)
+                {
+                    Image img = enemyAvatar.GetComponent<Image>();
+                    if (img != null && img.sprite != null && enemySprite == null)
+                    {
+                        enemySprite = img.sprite;
+                    }
+                }
+            }
+
+            Destroy(existingCanvas.gameObject);
         }
 
         private void BuildUI()
@@ -155,6 +196,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.17f, 0.95f),
                 new Color(0.03f, 0.03f, 0.05f, 0.75f));
             _playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.MiddleCenter);
+            _freePlaysText = CreateText("FreePlays", energyPanel, "Free Plays: 0", 18, TextAnchor.LowerCenter);
 
             RectTransform worldPanel = CreatePanel(
                 "WorldPanel",
@@ -467,6 +509,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private void UpdateInfoTexts()
         {
             _playerEnergyText.text = $"Energy {turnManager.PlayerEnergy}/{turnManager.PlayerMaxEnergy}";
+            if (_freePlaysText != null)
+            {
+                _freePlaysText.text = $"Free Plays: {turnManager.FreePlays}";
+            }
             _playerHpLabel.text = $"{turnManager.PlayerHP}/{turnManager.PlayerMaxHP}";
             _enemyHpLabel.text = $"{turnManager.EnemyHP}/{turnManager.EnemyMaxHP}";
             _enemyTypeLabel.text = BuildEnemyTypeLabel();
