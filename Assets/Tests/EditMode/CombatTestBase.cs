@@ -36,7 +36,39 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardRarity.Common,
                 target,
                 new List<string>(),
-                effectList);
+                effectList,
+                ElementType.None);
+
+            _createdAssets.Add(card);
+            return card;
+        }
+
+        protected CardDefinition CreateCardWithElement(
+            string id,
+            CardType type,
+            CardTarget target,
+            int cost,
+            ElementType elementType,
+            params EffectRef[] effects)
+        {
+            var card = ScriptableObject.CreateInstance<CardDefinition>();
+            var effectList = new List<EffectRef>();
+            if (effects != null)
+            {
+                effectList.AddRange(effects);
+            }
+
+            card.SetDebugData(
+                id,
+                id,
+                $"{id} description",
+                cost,
+                type,
+                CardRarity.Common,
+                target,
+                new List<string>(),
+                effectList,
+                elementType);
 
             _createdAssets.Add(card);
             return card;
@@ -85,7 +117,8 @@ namespace RoguelikeCardBattler.Tests.EditMode
             string name,
             int maxHp,
             EnemyAIPattern pattern,
-            List<EnemyMove> moves)
+            List<EnemyMove> moves,
+            ElementType elementType = ElementType.None)
         {
             var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
             enemy.SetDebugData(
@@ -95,7 +128,10 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 0,
                 pattern,
                 new List<string>(),
-                moves ?? new List<EnemyMove>());
+                moves ?? new List<EnemyMove>(),
+                1f,
+                null,
+                elementType);
 
             _createdAssets.Add(enemy);
             return enemy;

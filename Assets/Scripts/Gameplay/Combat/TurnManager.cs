@@ -142,7 +142,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _player.RemoveCardFromHand(cardEntry);
 
             ICombatActor target = explicitTarget ?? GetDefaultOpponent(_player);
-            QueueEffects(activeCard.Effects, _player, target);
+            QueueEffects(activeCard.Effects, _player, target, activeCard.ElementType);
             _actionQueue.ProcessAll();
             _player.DiscardCard(cardEntry);
 
@@ -193,7 +193,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _plannedEnemyMove = null;
             if (move != null)
             {
-                QueueEffects(move.Effects, _enemy, _player);
+                QueueEffects(move.Effects, _enemy, _player, enemyDefinition?.ElementType ?? ElementType.None);
                 _actionQueue.ProcessAll();
             }
 
@@ -246,7 +246,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
         }
 
-        private void QueueEffects(IEnumerable<EffectRef> effects, ICombatActor source, ICombatActor primaryTarget)
+        private void QueueEffects(IEnumerable<EffectRef> effects, ICombatActor source, ICombatActor primaryTarget, ElementType sourceElementType = ElementType.None)
         {
             if (effects == null)
             {
@@ -257,7 +257,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 foreach (ICombatActor target in ResolveTargets(effect, source, primaryTarget))
                 {
-                    IGameAction action = CreateAction(effect, source, target);
+                    IGameAction action = CreateAction(effect, source, target, sourceElementType);
                     if (action != null)
                     {
                         _actionQueue.Enqueue(action);
@@ -285,13 +285,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
         }
 
-        private IGameAction CreateAction(EffectRef effect, ICombatActor source, ICombatActor target)
+        private IGameAction CreateAction(EffectRef effect, ICombatActor source, ICombatActor target, ElementType sourceElementType)
         {
             int amount = Math.Max(0, effect.value);
             switch (effect.effectType)
             {
                 case EffectType.Damage:
-                    return new DamageAction(source, target, amount);
+                    int adjustedDamage = AdjustDamageForEffectiveness(source, target, sourceElementType, amount);
+                    return new DamageAction(source, target, adjustedDamage);
                 case EffectType.Block:
                     return new BlockAction(target, amount);
                 case EffectType.DrawCards:
@@ -300,6 +301,32 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     Debug.LogWarning($"Effect type {effect.effectType} not implemented for ActionQueue.");
                     return null;
             }
+        }
+
+        private int AdjustDamageForEffectiveness(ICombatActor source, ICombatActor target, ElementType sourceElementType, int baseAmount)
+        {
+            if (baseAmount <= 0)
+            {
+                return 0;
+            }
+
+            // Apply elemental modifiers only for player card damage against the enemy.
+            if (source != _player || target != _enemy)
+            {
+                return baseAmount;
+            }
+
+            ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
+            Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(sourceElementType, defenderType);
+            float multiplier = effectiveness switch
+            {
+                Effectiveness.SuperEficaz => 1.5f,
+                Effectiveness.PocoEficaz => 0.75f,
+                _ => 1f
+            };
+
+            int adjusted = Mathf.RoundToInt(baseAmount * multiplier);
+            return Math.Max(0, adjusted);
         }
 
         private ICombatActor GetDefaultOpponent(ICombatActor source)
