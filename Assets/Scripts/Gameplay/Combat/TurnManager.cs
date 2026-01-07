@@ -19,6 +19,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private int energyPerTurn = 3;
         [SerializeField, Min(1)] private int startingHandSize = 5;
         [SerializeField, Min(1)] private int cardsPerTurn = 5;
+        [Header("World Switch Settings")]
+        [SerializeField, Min(1)] private int maxWorldSwitchesPerCombat = 1;
+        [SerializeField] private bool debugUnlimitedWorldSwitches = false;
 
         public enum WorldSide
         {
@@ -35,6 +38,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private int _enemySequenceCursor;
         private EnemyMove _plannedEnemyMove;
         [SerializeField] private WorldSide currentWorld = WorldSide.A;
+        private int _worldSwitchesUsed;
         private int _freePlays;
 
         public enum CombatPhase
@@ -68,6 +72,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
         public int FreePlays => _freePlays;
+        public int WorldSwitchesUsed => _worldSwitchesUsed;
+        public int MaxWorldSwitchesPerCombat => maxWorldSwitchesPerCombat;
+        public bool DebugUnlimitedWorldSwitches => debugUnlimitedWorldSwitches;
 
         private void Start()
         {
@@ -93,6 +100,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             _freePlays = Mathf.Max(0, value);
         }
+
+        public void SetWorldSwitchesForTest(int used, int? maxPerCombat = null, bool? unlimited = null)
+        {
+            _worldSwitchesUsed = Mathf.Max(0, used);
+            if (maxPerCombat.HasValue)
+            {
+                maxWorldSwitchesPerCombat = Mathf.Max(1, maxPerCombat.Value);
+            }
+
+            if (unlimited.HasValue)
+            {
+                debugUnlimitedWorldSwitches = unlimited.Value;
+            }
+        }
 #endif
 
         public void InitializeCombat()
@@ -114,6 +135,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _actionQueue = new ActionQueue();
             _phase = CombatPhase.None;
             _enemySequenceCursor = 0;
+            _worldSwitchesUsed = 0;
             _freePlays = 0;
             _initialized = true;
 
@@ -406,9 +428,32 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _plannedEnemyMove = SelectEnemyMove();
         }
 
+        public bool TryChangeWorld()
+        {
+            if (!_initialized)
+            {
+                return false;
+            }
+
+            if (!debugUnlimitedWorldSwitches && _worldSwitchesUsed >= maxWorldSwitchesPerCombat)
+            {
+                Debug.LogWarning("World change limit reached for this combat.");
+                return false;
+            }
+
+            currentWorld = currentWorld == WorldSide.A ? WorldSide.B : WorldSide.A;
+
+            if (!debugUnlimitedWorldSwitches)
+            {
+                _worldSwitchesUsed++;
+            }
+
+            return true;
+        }
+
         public void ToggleWorldForDebug()
         {
-            currentWorld = currentWorld == WorldSide.A ? WorldSide.B : WorldSide.A;
+            TryChangeWorld();
         }
 
         public CardDefinition GetActiveCardDefinition(CardDeckEntry entry)

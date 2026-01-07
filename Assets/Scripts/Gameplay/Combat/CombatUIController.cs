@@ -36,6 +36,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Text _discardPileText;
         private Text _enemyIntentText;
         private Text _worldLabel;
+        private Text _worldSwitchesText;
         private Button _endTurnButton;
         private Button _changeWorldButton;
         private RectTransform _handContainer;
@@ -205,6 +206,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.58f, 0.95f),
                 new Color(0.03f, 0.03f, 0.05f, 0.75f));
             _worldLabel = CreateText("WorldLabel", worldPanel, "World: A", 26, TextAnchor.MiddleCenter);
+            _worldSwitchesText = CreateText("WorldSwitches", worldPanel, "Switches: 0/0", 18, TextAnchor.LowerCenter);
 
             RectTransform handPanel = CreatePanel(
                 "HandPanel",
@@ -513,6 +515,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 _freePlaysText.text = $"Free Plays: {turnManager.FreePlays}";
             }
+            if (_worldSwitchesText != null)
+            {
+                string switchesLabel = turnManager.DebugUnlimitedWorldSwitches
+                    ? "Switches: ∞"
+                    : $"Switches: {turnManager.WorldSwitchesUsed}/{turnManager.MaxWorldSwitchesPerCombat}";
+                _worldSwitchesText.text = switchesLabel;
+            }
             _playerHpLabel.text = $"{turnManager.PlayerHP}/{turnManager.PlayerMaxHP}";
             _enemyHpLabel.text = $"{turnManager.EnemyHP}/{turnManager.EnemyMaxHP}";
             _enemyTypeLabel.text = BuildEnemyTypeLabel();
@@ -525,6 +534,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             bool playerTurn = turnManager.IsPlayerTurn();
             _endTurnButton.interactable = playerTurn && !turnManager.IsCombatFinished;
+            bool worldSwitchAvailable = turnManager.DebugUnlimitedWorldSwitches
+                || turnManager.WorldSwitchesUsed < turnManager.MaxWorldSwitchesPerCombat;
+            _changeWorldButton.interactable = playerTurn
+                && !turnManager.IsCombatFinished
+                && worldSwitchAvailable;
             UpdateAvatarHighlight(playerTurn);
         }
 
@@ -701,9 +715,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return;
             }
 
-            turnManager.ToggleWorldForDebug();
+            bool changed = turnManager.TryChangeWorld();
             UpdateWorldVisuals();
             SyncHandButtons(forceRebuild: true);
+            if (!changed)
+            {
+                Debug.LogWarning("Cannot change world: limit reached.");
+            }
         }
 
         private void UpdateWorldVisuals()
