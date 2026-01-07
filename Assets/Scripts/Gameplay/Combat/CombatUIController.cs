@@ -28,6 +28,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Text _playerEnergyText;
         private Text _playerHpLabel;
         private Text _enemyHpLabel;
+        private Text _enemyTypeLabel;
         private Text _playerBlockText;
         private Text _enemyBlockText;
         private Text _drawPileText;
@@ -192,6 +193,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             enemyHpRect.anchorMax = new Vector2(0.9f, -0.02f);
             enemyHpRect.offsetMin = Vector2.zero;
             enemyHpRect.offsetMax = Vector2.zero;
+            _enemyTypeLabel = CreateText("EnemyTypeLabel", _enemyAvatarImage.rectTransform, "Type: —", 18, TextAnchor.UpperCenter);
+            RectTransform enemyTypeRect = _enemyTypeLabel.GetComponent<RectTransform>();
+            enemyTypeRect.anchorMin = new Vector2(0.05f, 1.22f);
+            enemyTypeRect.anchorMax = new Vector2(0.95f, 1.35f);
+            enemyTypeRect.offsetMin = Vector2.zero;
+            enemyTypeRect.offsetMax = Vector2.zero;
             CreateBlockUI(_enemyAvatarImage.rectTransform, "Enemy", out _enemyBlockOverlay, out _enemyBlockText);
 
             _enemyIntentText = CreateText("EnemyIntent", _enemyAvatarImage.rectTransform, "?", 26, TextAnchor.LowerCenter);
@@ -462,6 +469,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _playerEnergyText.text = $"Energy {turnManager.PlayerEnergy}/{turnManager.PlayerMaxEnergy}";
             _playerHpLabel.text = $"{turnManager.PlayerHP}/{turnManager.PlayerMaxHP}";
             _enemyHpLabel.text = $"{turnManager.EnemyHP}/{turnManager.EnemyMaxHP}";
+            _enemyTypeLabel.text = BuildEnemyTypeLabel();
             _drawPileText.text = $"Draw: {turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();
@@ -590,7 +598,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 prefix = turnManager.CurrentWorld == TurnManager.WorldSide.A ? "[A] " : "[B] ";
             }
 
-            string title = string.IsNullOrEmpty(prefix) ? activeCard.CardName : $"{prefix}{activeCard.CardName}";
+            string typePrefix = activeCard.ElementType != ElementType.None ? $"[{activeCard.ElementType}] " : string.Empty;
+            string title = string.IsNullOrEmpty(prefix)
+                ? $"{typePrefix}{activeCard.CardName}"
+                : $"{prefix}{typePrefix}{activeCard.CardName}";
             return $"{title} (Cost {activeCard.Cost})\n{activeCard.Description}";
         }
 
@@ -607,6 +618,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 EnemyIntentType.Defend => "DEFEND",
                 _ => "?"
             };
+        }
+
+        private string BuildEnemyTypeLabel()
+        {
+            if (turnManager == null)
+            {
+                return "Type: —";
+            }
+
+            ElementType type = turnManager.EnemyElementType;
+            return type == ElementType.None ? "Type: —" : $"Type: {type}";
         }
 
         private void UpdateBlockVisuals(Text label, Image overlay, int blockValue)

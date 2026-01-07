@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Gameplay.Enemies
 {
@@ -15,6 +16,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         [SerializeField] private List<EnemyMove> moves = new List<EnemyMove>();
         [SerializeField] private float avatarScale = 1f;
         [SerializeField] private Vector2 avatarOffset = Vector2.zero;
+        [SerializeField] private ElementType elementType = ElementType.None;
 
         public string Id => id;
         public string EnemyName => enemyName;
@@ -25,6 +27,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public IReadOnlyList<EnemyMove> Moves => moves;
         public float AvatarScale => avatarScale;
         public Vector2 AvatarOffset => avatarOffset;
+        public ElementType ElementType => elementType;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public void SetDebugData(
@@ -36,7 +39,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             List<string> newTags,
             List<EnemyMove> newMoves,
             float newAvatarScale = 1f,
-            Vector2? newAvatarOffset = null)
+            Vector2? newAvatarOffset = null,
+            ElementType newElementType = ElementType.None)
         {
             id = newId;
             enemyName = newName;
@@ -47,6 +51,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             moves = newMoves ?? new List<EnemyMove>();
             avatarScale = Mathf.Max(0.1f, newAvatarScale);
             avatarOffset = newAvatarOffset ?? Vector2.zero;
+            elementType = newElementType;
         }
 #endif
     }
