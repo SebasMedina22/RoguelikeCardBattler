@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Gameplay.Cards
 {
@@ -15,6 +16,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         [SerializeField] private CardTarget target = CardTarget.SingleEnemy;
         [SerializeField] private List<string> tags = new List<string>();
         [SerializeField] private List<EffectRef> effects = new List<EffectRef>();
+        [SerializeField] private ElementType elementType = ElementType.None;
 
         public string Id => id;
         public string CardName => cardName;
@@ -25,6 +27,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         public CardTarget Target => target;
         public IReadOnlyList<string> Tags => tags;
         public IReadOnlyList<EffectRef> Effects => effects;
+        public ElementType ElementType => elementType;
 
         public void SetDebugData(
             string newId,
@@ -35,7 +38,8 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             CardRarity newRarity,
             CardTarget newTarget,
             List<string> newTags,
-            List<EffectRef> newEffects)
+            List<EffectRef> newEffects,
+            ElementType newElementType = ElementType.None)
         {
             id = newId;
             cardName = newName;
@@ -46,6 +50,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             target = newTarget;
             tags = newTags;
             effects = newEffects;
+            elementType = newElementType;
         }
     }
 }
