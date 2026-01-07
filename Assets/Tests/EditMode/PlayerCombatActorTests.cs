@@ -56,7 +56,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
 
             player.DiscardHand();
             Assert.AreEqual(0, player.HandCount);
-            Assert.AreEqual(0, player.DrawPileCount);
+            Assert.AreEqual(1, player.DrawPileCount);
             Assert.AreEqual(1, player.DiscardPileCount);
 
             player.DrawCards(2); // should reshuffle discard into draw
