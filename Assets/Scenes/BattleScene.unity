@@ -406,12 +406,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnManager: {fileID: 876543211}
   uiFont: {fileID: 0}
-  playerSprite: {fileID: 21300000, guid: c5d04ef5ae5d47a4a705435dffde04d9, type: 3}
-  enemySprite: {fileID: 21300000, guid: 7d2dc69688834d0397b28f2a710479c6, type: 3}
+  playerSprite: {fileID: 21300000, guid: 9ff518a93ab88b94e90fed9f7cc7ce8d, type: 3}
+  enemySprite: {fileID: -5749342644988343902, guid: 8e4db1288f1d13e499b530f650ec7824, type: 3}
   showPlayerBackground: 0
   showEnemyBackground: 0
   playerSpriteScale: 1
   enemySpriteScale: 0.8
+  playerSpriteYOffset: -40
+  enemySpriteYOffset: -20
+  blockOverlayColor: {r: 0.2, g: 0.6, b: 1, a: 0.35}
   worldASkyColor: {r: 0.07, g: 0.12, b: 0.3, a: 1}
   worldAGroundColor: {r: 0.02, g: 0.07, b: 0.09, a: 1}
   worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}

@@ -20,8 +20,6 @@ MonoBehaviour:
   tags:
   - Basic
   - Slime
-  avatarScale: 0.85
-  avatarOffset: {x: 0, y: -25}
   moves:
   - id: slime_attack_8
     moveName: Goo Jab
@@ -83,4 +81,6 @@ MonoBehaviour:
     weight: 15
     sequenceIndex: -1
     intentType: 2
-
+  avatarScale: 0.85
+  avatarOffset: {x: 0, y: -25}
+  elementType: 3
