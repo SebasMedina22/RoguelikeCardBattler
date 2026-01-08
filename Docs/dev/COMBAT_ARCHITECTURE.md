@@ -13,37 +13,37 @@
 #### Turno del jugador (alto nivel)
 ```mermaid
 flowchart TD
-    A[Start Player Turn] --> B[Draw cards / reset energy]
-    B --> C[Player plays card(s)]
-    C --> D[QueueEffects -> ActionQueue]
-    D --> E[ActionQueue.ProcessAll]
-    E --> F[Check end of combat]
-    F -->|Combat ends| G[Victory/Defeat]
-    F -->|Combat continues| H[Plan enemy move]
-    H --> I[EndPlayerTurn -> EnemyTurn]
-    I --> J[Enemy actions via ActionQueue]
-    J --> K[Check end of combat]
+    A["Start Player Turn"] --> B["Draw cards and reset energy"]
+    B --> C["Player plays cards"]
+    C --> D["QueueEffects to ActionQueue"]
+    D --> E["ActionQueue ProcessAll"]
+    E --> F["Check end of combat"]
+    F -->|Combat ends| G["Victory or Defeat"]
+    F -->|Combat continues| H["Plan enemy move"]
+    H --> I["EndPlayerTurn then EnemyTurn"]
+    I --> J["Enemy actions via ActionQueue"]
+    J --> K["Check end of combat"]
     K -->|Ends| G
-    K -->|Continues| L[Begin next Player Turn]
+    K -->|Continues| L["Begin next Player Turn"]
 ```
 
 #### PlayCard (detalle)
 ```mermaid
 flowchart TD
-    A[PlayCard(entry)] --> B[Get active CardDefinition (DualCardDefinition + WorldSide)]
-    B --> C[Check ownership in hand]
-    C --> D[Energy check]
-    D -->|Momentum available| E[Consume free play (no energy cost)]
-    D -->|No momentum| F[Spend energy (cost)]
-    E --> G[Determine target]
-    F --> G[Determine target]
-    G --> H[QueueEffects(card.Effects, source=_player, target, card.ElementType)]
-    H --> I[For Damage: AdjustDamageForEffectiveness(ElementEffectiveness)]
-    I --> J[If SuperEficaz and damage > 0: grant Momentum +1]
-    J --> K[Emit PlayerHitEffectiveness event (WEAK/RESIST + Momentum info)]
-    K --> L[ActionQueue.ProcessAll]
-    L --> M[Discard card, check combat end]
-    M --> N[UI updates (HUD, popups)]
+    A["PlayCard entry"] --> B["Get active CardDefinition using WorldSide"]
+    B --> C["Check card is in hand"]
+    C --> D["Check energy or Momentum"]
+    D -->|Momentum available| E["Consume Momentum free play"]
+    D -->|No Momentum| F["Spend energy cost"]
+    E --> G["Determine target"]
+    F --> G
+    G --> H["QueueEffects with source element type"]
+    H --> I["Damage: adjust by Effectiveness"]
+    I --> J["If SuperEficaz and damage > 0 then Momentum plus one"]
+    J --> K["Emit hit feedback event"]
+    K --> L["ActionQueue ProcessAll"]
+    L --> M["Discard card and check end"]
+    M --> N["UI updates"]
 ```
 
 ### Where to look (rutas)
