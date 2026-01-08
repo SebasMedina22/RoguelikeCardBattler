@@ -76,6 +76,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int MaxWorldSwitchesPerCombat => maxWorldSwitchesPerCombat;
         public bool DebugUnlimitedWorldSwitches => debugUnlimitedWorldSwitches;
 
+        public event Action<Effectiveness, bool> PlayerHitEffectiveness;
+
         private void Start()
         {
             InitializeCombat();
@@ -362,12 +364,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int adjusted = Mathf.RoundToInt(baseAmount * multiplier);
             int finalAmount = Math.Max(0, adjusted);
 
+            bool momentumGranted = false;
             if (effectiveness == Effectiveness.SuperEficaz && finalAmount > 0)
             {
                 _freePlays++;
-                Debug.Log("ONE MORE: Free Play +1");
+                momentumGranted = true;
+                Debug.Log("MOMENTUM: Free Play +1");
             }
 
+            PlayerHitEffectiveness?.Invoke(effectiveness, momentumGranted);
             return finalAmount;
         }
 

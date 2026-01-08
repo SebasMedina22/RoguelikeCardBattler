@@ -52,6 +52,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Color worldAGroundColor = new Color(0.02f, 0.07f, 0.09f, 1f);
         [SerializeField] private Color worldBSkyColor = new Color(0.2f, 0.05f, 0.05f, 1f);
         [SerializeField] private Color worldBGroundColor = new Color(0.09f, 0.02f, 0.04f, 1f);
+        private Text _hitFeedbackText;
+        private float _hitFeedbackTimer;
+        private const float HitFeedbackDuration = 0.85f;
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
@@ -81,6 +84,27 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             BuildUI();
         }
 
+        private void OnEnable()
+        {
+            if (turnManager == null)
+            {
+                turnManager = GetComponent<TurnManager>();
+            }
+
+            if (turnManager != null)
+            {
+                turnManager.PlayerHitEffectiveness += OnPlayerHitEffectiveness;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (turnManager != null)
+            {
+                turnManager.PlayerHitEffectiveness -= OnPlayerHitEffectiveness;
+            }
+        }
+
         private void Update()
         {
             if (turnManager == null)
@@ -90,6 +114,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             UpdateInfoTexts();
             SyncHandButtons();
+            UpdateHitFeedbackTimer();
         }
 
         private void EnsureEventSystem()
@@ -251,6 +276,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             intentRect.anchorMax = new Vector2(0.95f, 1.2f);
             intentRect.offsetMin = Vector2.zero;
             intentRect.offsetMax = Vector2.zero;
+
+            _hitFeedbackText = CreateText("HitFeedback", battlefield, "", 30, TextAnchor.UpperCenter);
+            RectTransform hitRect = _hitFeedbackText.GetComponent<RectTransform>();
+            hitRect.anchorMin = new Vector2(0.35f, 0.92f);
+            hitRect.anchorMax = new Vector2(0.65f, 0.99f);
+            hitRect.offsetMin = Vector2.zero;
+            hitRect.offsetMax = Vector2.zero;
+            _hitFeedbackText.gameObject.SetActive(false);
 
             _drawPileText = CreateCornerCounter(canvasRect, new Vector2(0.02f, 0.02f), "Draw: 0");
             _discardPileText = CreateCornerCounter(canvasRect, new Vector2(0.82f, 0.02f), "Discard: 0");
@@ -513,7 +546,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _playerEnergyText.text = $"Energy {turnManager.PlayerEnergy}/{turnManager.PlayerMaxEnergy}";
             if (_freePlaysText != null)
             {
-                _freePlaysText.text = $"Free Plays: {turnManager.FreePlays}";
+                _freePlaysText.text = $"Momentum: {turnManager.FreePlays}";
             }
             if (_worldSwitchesText != null)
             {
@@ -585,6 +618,45 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 binding.Button.interactable = canInteract && enoughEnergy;
                 binding.Label.text = BuildCardLabel(binding.CardEntry);
             }
+        }
+
+        private void UpdateHitFeedbackTimer()
+        {
+            if (_hitFeedbackText == null || !_hitFeedbackText.gameObject.activeSelf)
+            {
+                return;
+            }
+
+            _hitFeedbackTimer -= Time.deltaTime;
+            if (_hitFeedbackTimer <= 0f)
+            {
+                _hitFeedbackText.gameObject.SetActive(false);
+            }
+        }
+
+        private void OnPlayerHitEffectiveness(Effectiveness effectiveness, bool momentumGranted)
+        {
+            if (_hitFeedbackText == null)
+            {
+                return;
+            }
+
+            string message = effectiveness switch
+            {
+                Effectiveness.SuperEficaz => momentumGranted ? "WEAK!\nMOMENTUM +1" : "WEAK!",
+                Effectiveness.PocoEficaz => "RESIST",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrEmpty(message))
+            {
+                _hitFeedbackText.gameObject.SetActive(false);
+                return;
+            }
+
+            _hitFeedbackText.text = message;
+            _hitFeedbackText.gameObject.SetActive(true);
+            _hitFeedbackTimer = HitFeedbackDuration;
         }
 
         private bool IsHandCacheValid()

@@ -391,6 +391,8 @@ MonoBehaviour:
   energyPerTurn: 3
   startingHandSize: 5
   cardsPerTurn: 5
+  maxWorldSwitchesPerCombat: 1
+  debugUnlimitedWorldSwitches: 1
   currentWorld: 0
 --- !u!114 &876543212
 MonoBehaviour:
