@@ -3,6 +3,10 @@ using RoguelikeCardBattler.Gameplay.Enemies;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
+    /// <summary>
+    /// Wrapper de stats de enemigo en combate. Usa EnemyDefinition para datos base
+    /// y TurnManager orquesta su turno/acciones.
+    /// </summary>
     public class EnemyCombatActor : ICombatActor
     {
         public EnemyDefinition Definition { get; }

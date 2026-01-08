@@ -5,6 +5,10 @@ using UnityEngine;
 namespace RoguelikeCardBattler.Gameplay.Cards
 {
     [Serializable]
+    /// <summary>
+    /// Entrada que puede apuntar a una carta simple o dual. Resuelve la activa
+    /// según el WorldSide actual.
+    /// </summary>
     public class CardDeckEntry
     {
         [SerializeField] private CardDefinition singleCard;

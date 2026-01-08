@@ -7,6 +7,11 @@ using RoguelikeCardBattler.Gameplay.Enemies;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
+    /// <summary>
+    /// Orquesta el flujo de combate: fases de turno, jugar cartas, encolar efectos
+    /// en la ActionQueue y aplicar efectividad/Momentum. Gestiona también Change World
+    /// (limitado por combate con override de debug) y expone eventos para feedback UI.
+    /// </summary>
     public class TurnManager : MonoBehaviour
     {
         [Header("Setup")]
@@ -76,6 +81,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int MaxWorldSwitchesPerCombat => maxWorldSwitchesPerCombat;
         public bool DebugUnlimitedWorldSwitches => debugUnlimitedWorldSwitches;
 
+        /// <summary>
+        /// Evento disparado al aplicar daño de carta del jugador al enemigo.
+        /// Entrega la efectividad (WEAK/RESIST/NEUTRAL) y si se otorgó Momentum (+1 free play).
+        /// Consumido por la UI para mostrar popups/labels.
+        /// </summary>
         public event Action<Effectiveness, bool> PlayerHitEffectiveness;
 
         private void Start()

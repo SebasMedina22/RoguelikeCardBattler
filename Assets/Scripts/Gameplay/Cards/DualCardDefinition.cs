@@ -3,6 +3,9 @@ using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Gameplay.Cards
 {
+    /// <summary>
+    /// Carta dual con dos lados (A/B) elegidos según WorldSide. Ambas mitades comparten ID y coste.
+    /// </summary>
     [CreateAssetMenu(menuName = "Cards/Dual Card Definition", fileName = "DualCardDefinition")]
     public class DualCardDefinition : ScriptableObject
     {

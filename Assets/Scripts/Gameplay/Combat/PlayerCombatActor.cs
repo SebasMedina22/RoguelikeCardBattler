@@ -4,6 +4,10 @@ using RoguelikeCardBattler.Gameplay.Cards;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
+    /// <summary>
+    /// Representa al jugador en combate: vida, energía, bloqueo y manejo de mazo/mano/descartes.
+    /// TurnManager dirige su flujo (robar, jugar cartas, descartar, etc.).
+    /// </summary>
     public class PlayerCombatActor : ICombatActor
     {
         private readonly List<CardDeckEntry> _drawPile = new List<CardDeckEntry>();

@@ -4,6 +4,9 @@ using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Gameplay.Cards
 {
+    /// <summary>
+    /// ScriptableObject de carta simple: coste, efectos, tipo elemental y metadatos.
+    /// </summary>
     [CreateAssetMenu(menuName = "Cards/Card Definition", fileName = "CardDefinition")]
     public class CardDefinition : ScriptableObject
     {
