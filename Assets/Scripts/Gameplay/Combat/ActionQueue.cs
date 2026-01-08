@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
-    /// Deterministic FIFO queue that resolves gameplay actions one at a time.
+    /// Cola FIFO determinista que resuelve IGameAction una por una.
+    /// Garantiza orden y no reentrar ProcessAll mientras está procesando.
     /// </summary>
     public class ActionQueue
     {

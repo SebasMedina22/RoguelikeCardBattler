@@ -1,5 +1,8 @@
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
+    /// <summary>
+    /// Tipos elementales placeholder por color. Se renombrarán a tipos finales.
+    /// </summary>
     public enum ElementType
     {
         None = 0,
@@ -11,6 +14,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         Blanco
     }
 
+    /// <summary>
+    /// Resultado de atacar con un elemento contra otro.
+    /// </summary>
     public enum Effectiveness
     {
         PocoEficaz,
@@ -18,6 +24,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         SuperEficaz
     }
 
+    /// <summary>
+    /// Matriz de efectividad atacante/defensor. Neutro para None o mismo tipo.
+    /// </summary>
     public static class ElementEffectiveness
     {
         public static Effectiveness GetEffectiveness(ElementType attacker, ElementType defender)

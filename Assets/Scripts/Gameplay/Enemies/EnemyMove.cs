@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace RoguelikeCardBattler.Gameplay.Enemies
 {
+    /// <summary>
+    /// Tipo de intención mostrado en UI (básico: Attack / Defend / Unknown).
+    /// </summary>
     public enum EnemyIntentType
     {
         Unknown,
@@ -13,6 +16,9 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
     }
 
     [Serializable]
+    /// <summary>
+    /// Movimiento de enemigo con efectos, peso/orden y tipo de intención para UI.
+    /// </summary>
     public class EnemyMove
     {
         [SerializeField] private string id = string.Empty;

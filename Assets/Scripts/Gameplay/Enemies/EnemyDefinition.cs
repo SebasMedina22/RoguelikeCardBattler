@@ -4,6 +4,9 @@ using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Gameplay.Enemies
 {
+    /// <summary>
+    /// ScriptableObject de enemigo: HP base, patrón de IA (RandomWeighted/Sequence), moves y tipo elemental.
+    /// </summary>
     [CreateAssetMenu(menuName = "Enemies/Enemy Definition", fileName = "EnemyDefinition")]
     public class EnemyDefinition : ScriptableObject
     {

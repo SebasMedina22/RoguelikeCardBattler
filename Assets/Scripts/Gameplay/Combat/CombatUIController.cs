@@ -8,7 +8,9 @@ using RoguelikeCardBattler.Gameplay.Enemies;
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
-    /// Runtime UI that builds a simple battle HUD, placeholders, and card buttons.
+    /// Construye la UI de combate en runtime: HUD (energía, momentum, mundo, switches),
+    /// mano de cartas y popups de feedback. Reconstruye el canvas y captura sprites
+    /// existentes si fueron asignados en escena/inspector para que no se pierdan.
     /// </summary>
     public class CombatUIController : MonoBehaviour
     {
@@ -131,6 +133,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// <summary>
         /// Si ya existen instancias de UI en escena (por ejemplo, con sprites asignados en editor),
         /// preserva esos sprites y limpia la UI previa para que BuildUI regenere con esos sprites.
+        /// IMPORTANTE: sprites asignados dentro del canvas original se pierden si no se
+        /// configuran aquí; asignarlos al controller o asegurarse de que estén capturados.
         /// </summary>
         private void CaptureExistingAvatarSprites()
         {
