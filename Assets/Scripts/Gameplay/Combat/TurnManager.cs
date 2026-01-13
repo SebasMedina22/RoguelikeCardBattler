@@ -157,42 +157,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         public bool PlayCard(CardDeckEntry cardEntry, ICombatActor explicitTarget = null)
         {
-            if (!_initialized || _phase != CombatPhase.PlayerTurn || cardEntry == null)
+            if (!TryPrepareCardPlay(cardEntry, out PreparedCardPlay prepared, explicitTarget))
             {
                 return false;
             }
 
-            if (!_player.IsCardInHand(cardEntry))
-            {
-                Debug.LogWarning("Card not in hand.");
-                return false;
-            }
-
-            CardDefinition activeCard = GetActiveCardDefinition(cardEntry);
-            if (activeCard == null)
-            {
-                Debug.LogWarning("Active card definition missing.");
-                return false;
-            }
-
-            if (_freePlays > 0)
-            {
-                _freePlays--;
-            }
-            else if (!_player.SpendEnergy(activeCard.Cost))
-            {
-                Debug.LogWarning("Not enough energy to play card.");
-                return false;
-            }
-
-            _player.RemoveCardFromHand(cardEntry);
-
-            ICombatActor target = explicitTarget ?? GetDefaultOpponent(_player);
-            QueueEffects(activeCard.Effects, _player, target, activeCard.ElementType);
-            _actionQueue.ProcessAll();
-            _player.DiscardCard(cardEntry);
-
-            CheckCombatEndConditions();
+            ResolvePreparedCardPlay(prepared);
             return true;
         }
 
@@ -476,6 +446,67 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             return entry?.GetActiveCard(CurrentWorld);
         }
 
+        /// <summary>
+        /// Prepara la jugada de una carta sin ejecutar acciones todavía (para animaciones).
+        /// Valida fase/energía/momentum, remueve la carta de la mano y encola acciones.
+        /// </summary>
+        public bool TryPrepareCardPlay(CardDeckEntry cardEntry, out PreparedCardPlay prepared, ICombatActor explicitTarget = null)
+        {
+            prepared = null;
+            if (!_initialized || _phase != CombatPhase.PlayerTurn || cardEntry == null)
+            {
+                return false;
+            }
+
+            if (!_player.IsCardInHand(cardEntry))
+            {
+                Debug.LogWarning("Card not in hand.");
+                return false;
+            }
+
+            CardDefinition activeCard = GetActiveCardDefinition(cardEntry);
+            if (activeCard == null)
+            {
+                Debug.LogWarning("Active card definition missing.");
+                return false;
+            }
+
+            bool usedFreePlay = false;
+            if (_freePlays > 0)
+            {
+                _freePlays--;
+                usedFreePlay = true;
+            }
+            else if (!_player.SpendEnergy(activeCard.Cost))
+            {
+                Debug.LogWarning("Not enough energy to play card.");
+                return false;
+            }
+
+            _player.RemoveCardFromHand(cardEntry);
+
+            ICombatActor target = explicitTarget ?? GetDefaultOpponent(_player);
+            QueueEffects(activeCard.Effects, _player, target, activeCard.ElementType);
+
+            prepared = new PreparedCardPlay(cardEntry, activeCard, target, activeCard.Type == CardType.Attack, usedFreePlay);
+            return true;
+        }
+
+        /// <summary>
+        /// Ejecuta las acciones encoladas para la carta preparada y descarta la carta.
+        /// </summary>
+        public void ResolvePreparedCardPlay(PreparedCardPlay prepared)
+        {
+            if (prepared == null || prepared.Entry == null)
+            {
+                return;
+            }
+
+            _actionQueue.ProcessAll();
+            _player.DiscardCard(prepared.Entry);
+            CheckCombatEndConditions();
+        }
+
         private int CalculateIntentValue(EnemyMove move)
         {
             if (move == null || move.Effects == null)
@@ -503,6 +534,27 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             return total;
+        }
+    }
+
+    /// <summary>
+    /// Contenedor de datos de una carta preparada para ejecutar tras animación.
+    /// </summary>
+    public class PreparedCardPlay
+    {
+        public CardDeckEntry Entry { get; }
+        public CardDefinition ActiveCard { get; }
+        public ICombatActor Target { get; }
+        public bool IsAttackCard { get; }
+        public bool UsedFreePlay { get; }
+
+        public PreparedCardPlay(CardDeckEntry entry, CardDefinition activeCard, ICombatActor target, bool isAttackCard, bool usedFreePlay)
+        {
+            Entry = entry;
+            ActiveCard = activeCard;
+            Target = target;
+            IsAttackCard = isAttackCard;
+            UsedFreePlay = usedFreePlay;
         }
     }
 }

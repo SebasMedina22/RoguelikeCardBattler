@@ -54,9 +54,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Color worldAGroundColor = new Color(0.02f, 0.07f, 0.09f, 1f);
         [SerializeField] private Color worldBSkyColor = new Color(0.2f, 0.05f, 0.05f, 1f);
         [SerializeField] private Color worldBGroundColor = new Color(0.09f, 0.02f, 0.04f, 1f);
+        [Header("Hero Animation")]
+        [SerializeField] private List<Sprite> heroIdleFrames = new List<Sprite>();
+        [SerializeField] private List<Sprite> heroAttackFrames = new List<Sprite>();
+        [SerializeField] private float heroAttackFps = 16f;
         private Text _hitFeedbackText;
         private float _hitFeedbackTimer;
         private const float HitFeedbackDuration = 0.85f;
+        private SpriteFrameAnimatorUI _playerAnimator;
+        private Image _playerAvatarSpriteImage;
+        private bool _isPlayingAttack;
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
@@ -308,6 +315,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 "Change World");
             _changeWorldButton.onClick.AddListener(OnChangeWorldButtonClicked);
 
+            InitializePlayerAnimator();
             UpdateWorldVisuals();
         }
         private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, string label)
@@ -531,18 +539,34 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void OnCardButtonClicked(CardDeckEntry entry)
         {
-            if (turnManager == null || entry == null)
+            if (turnManager == null || entry == null || _isPlayingAttack)
             {
                 return;
             }
 
-            bool played = turnManager.PlayCard(entry);
-            if (!played)
+            if (!turnManager.TryPrepareCardPlay(entry, out PreparedCardPlay prepared))
             {
                 return;
             }
 
             SyncHandButtons(forceRebuild: true);
+
+            if (prepared.IsAttackCard && _playerAnimator != null)
+            {
+                _isPlayingAttack = true;
+                SetCardButtonsInteractable(false);
+                _playerAnimator.PlayAttackOnce(() =>
+                {
+                    turnManager.ResolvePreparedCardPlay(prepared);
+                    _isPlayingAttack = false;
+                    SyncHandButtons(forceRebuild: true);
+                });
+            }
+            else
+            {
+                turnManager.ResolvePreparedCardPlay(prepared);
+                SyncHandButtons(forceRebuild: true);
+            }
         }
 
         private void UpdateInfoTexts()
@@ -599,6 +623,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             factor = Mathf.Clamp01(factor);
             return new Color(color.r * factor, color.g * factor, color.b * factor, color.a);
+        }
+
+        private void SetCardButtonsInteractable(bool interactable)
+        {
+            foreach (CardButtonBinding binding in _cardButtons)
+            {
+                if (binding?.Button != null)
+                {
+                    binding.Button.interactable = interactable;
+                }
+            }
         }
 
         private void SyncHandButtons(bool forceRebuild = false)
@@ -713,6 +748,35 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 });
                 _handCache.Add(entry);
             }
+        }
+
+        private void InitializePlayerAnimator()
+        {
+            if (_playerAvatarImage == null)
+            {
+                return;
+            }
+
+            Transform spriteChild = _playerAvatarImage.transform.Find("PlayerAvatar_Sprite");
+            if (spriteChild == null)
+            {
+                return;
+            }
+
+            _playerAvatarSpriteImage = spriteChild.GetComponent<Image>();
+            if (_playerAvatarSpriteImage == null)
+            {
+                return;
+            }
+
+            _playerAnimator = spriteChild.GetComponent<SpriteFrameAnimatorUI>();
+            if (_playerAnimator == null)
+            {
+                _playerAnimator = spriteChild.gameObject.AddComponent<SpriteFrameAnimatorUI>();
+            }
+
+            _playerAnimator.Configure(_playerAvatarSpriteImage, heroIdleFrames, heroAttackFrames, heroAttackFps);
+            _playerAnimator.PlayIdleLoop();
         }
 
         private string BuildCardLabel(CardDeckEntry entry)

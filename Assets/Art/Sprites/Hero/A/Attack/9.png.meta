@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 9ff518a93ab88b94e90fed9f7cc7ce8d
+guid: e0f4e56c73e7bc0458fab48ff61a33b3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5008443073623471720
-    second: personaje_robot_0
-  - first:
-      213: -6306596725799510894
-    second: personaje_robot_1
+      213: 4113829005332862926
+    second: 9_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -40,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -49,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -103,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: personaje_robot_0
+      name: 9_0
       rect:
         serializedVersion: 2
-        x: 9
-        y: 8
-        width: 478
-        height: 493
+        x: 74
+        y: 113
+        width: 425
+        height: 272
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -118,30 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 89948e67f8f6e7ab0800000000000000
-      internalID: -5008443073623471720
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: personaje_robot_1
-      rect:
-        serializedVersion: 2
-        x: 293
-        y: 23
-        width: 8
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 29c141111b77a78a0800000000000000
-      internalID: -6306596725799510894
+      spriteID: ec750913fa1471930800000000000000
+      internalID: 4113829005332862926
       vertices: []
       indices: 
       edges: []
@@ -150,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -160,8 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      personaje_robot_0: -5008443073623471720
-      personaje_robot_1: -6306596725799510894
+      9_0: 4113829005332862926
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
