@@ -408,7 +408,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnManager: {fileID: 876543211}
   uiFont: {fileID: 0}
-  playerSprite: {fileID: 21300000, guid: 9ff518a93ab88b94e90fed9f7cc7ce8d, type: 3}
+  playerSprite: {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
   enemySprite: {fileID: -5749342644988343902, guid: 8e4db1288f1d13e499b530f650ec7824, type: 3}
   showPlayerBackground: 0
   showEnemyBackground: 0
@@ -421,6 +421,23 @@ MonoBehaviour:
   worldAGroundColor: {r: 0.02, g: 0.07, b: 0.09, a: 1}
   worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}
   worldBGroundColor: {r: 0.09, g: 0.02, b: 0.04, a: 1}
+  heroIdleFrames:
+  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
+  heroAttackFrames:
+  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
+  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
+  - {fileID: 6937817954938267909, guid: 3516004bb82d3cc47a4a3f6c089242bf, type: 3}
+  - {fileID: -6470460504253458178, guid: 2d337014c06a52545b3b76ea9584e0d4, type: 3}
+  - {fileID: -4178046375966092550, guid: 8314e702be59f4742b6650a4fb9b46a5, type: 3}
+  - {fileID: -2681809406195053031, guid: b7edf73c6f671cf40a618dfe2116cadc, type: 3}
+  - {fileID: 4130640169021434097, guid: 948bcbea857fcf54383771e7f140599f, type: 3}
+  - {fileID: 3465286685962602723, guid: 5b2659185e360c94d951d6627be9ec17, type: 3}
+  - {fileID: 7028616704906629411, guid: 5705112c113023d4d81514a9e06cf2a1, type: 3}
+  - {fileID: -5099292496197868168, guid: 577d49537c5b02a4a841cfefc8cf585e, type: 3}
+  - {fileID: -2966200626249415253, guid: cd8bf609b20f53849b3a08c668069250, type: 3}
+  - {fileID: -6270953770400647376, guid: 3b1645101f55f9d40a6c36a79d03cba9, type: 3}
+  - {fileID: 4349915267927364619, guid: ae5a70e0c5330f24198b664bcc8df64c, type: 3}
+  heroAttackFps: 12
 --- !u!4 &876543213
 Transform:
   m_ObjectHideFlags: 0
