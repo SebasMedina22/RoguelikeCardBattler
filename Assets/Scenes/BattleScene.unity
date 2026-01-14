@@ -392,7 +392,7 @@ MonoBehaviour:
   startingHandSize: 5
   cardsPerTurn: 5
   maxWorldSwitchesPerCombat: 1
-  debugUnlimitedWorldSwitches: 1
+  debugUnlimitedWorldSwitches: 0
   currentWorld: 0
 --- !u!114 &876543212
 MonoBehaviour:
@@ -422,22 +422,25 @@ MonoBehaviour:
   worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}
   worldBGroundColor: {r: 0.09, g: 0.02, b: 0.04, a: 1}
   heroIdleFrames:
-  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
+  - {fileID: -8868803461578586678, guid: be9bfb6f1161b924d9b9258bd18566d8, type: 3}
   heroAttackFrames:
-  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
-  - {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
-  - {fileID: 6937817954938267909, guid: 3516004bb82d3cc47a4a3f6c089242bf, type: 3}
-  - {fileID: -6470460504253458178, guid: 2d337014c06a52545b3b76ea9584e0d4, type: 3}
-  - {fileID: -4178046375966092550, guid: 8314e702be59f4742b6650a4fb9b46a5, type: 3}
-  - {fileID: -2681809406195053031, guid: b7edf73c6f671cf40a618dfe2116cadc, type: 3}
-  - {fileID: 4130640169021434097, guid: 948bcbea857fcf54383771e7f140599f, type: 3}
-  - {fileID: 3465286685962602723, guid: 5b2659185e360c94d951d6627be9ec17, type: 3}
-  - {fileID: 7028616704906629411, guid: 5705112c113023d4d81514a9e06cf2a1, type: 3}
-  - {fileID: -5099292496197868168, guid: 577d49537c5b02a4a841cfefc8cf585e, type: 3}
-  - {fileID: -2966200626249415253, guid: cd8bf609b20f53849b3a08c668069250, type: 3}
-  - {fileID: -6270953770400647376, guid: 3b1645101f55f9d40a6c36a79d03cba9, type: 3}
-  - {fileID: 4349915267927364619, guid: ae5a70e0c5330f24198b664bcc8df64c, type: 3}
-  heroAttackFps: 12
+  - {fileID: -8868803461578586678, guid: 77254d9a43fc9ea438ff1c611cb8300c, type: 3}
+  - {fileID: 6656777990491782475, guid: 45df10b2bdb5c414ea2730191df88c89, type: 3}
+  - {fileID: -1126088072305528666, guid: 4a221e6bff9d735448d5d0b7a6420262, type: 3}
+  - {fileID: 1036393447275659553, guid: 57239d2ceac03864d90d1c58a28cea7a, type: 3}
+  - {fileID: 8022386734101692603, guid: 4beb0c974ea25364190036688d6b1abb, type: 3}
+  - {fileID: -6953090037489088080, guid: 233223de6a707d34191014b1e3753d52, type: 3}
+  - {fileID: -4987914821148657504, guid: c4be25ca7ea1e3f4cb070a584070676f, type: 3}
+  - {fileID: -2754661334083923772, guid: 8cfed9cd150b89c45b0b0b29a606a910, type: 3}
+  - {fileID: 6794146430007631603, guid: b3de2a1ba6ac43544aa64763620e0915, type: 3}
+  - {fileID: -506208333174024162, guid: defaf4797af52174c997503a2321bfd3, type: 3}
+  - {fileID: -4360082526272665862, guid: ad738014b1785c04a8556f49e6b325cc, type: 3}
+  - {fileID: 4018858764485456142, guid: e6238fc1a90ac224ca9c915d4f320322, type: 3}
+  - {fileID: -6956996951487611607, guid: 55242e5f99eade9428b39a34c81407c6, type: 3}
+  - {fileID: 3704511867464680692, guid: cb96418a939d29b4392b4e9c05f90f2e, type: 3}
+  - {fileID: 5321023335126192047, guid: 67ee2dba17c10c74781dfee5d1cd4fd5, type: 3}
+  - {fileID: 1819059919184003959, guid: 98ccda914973d7f468ca9f0077bc4a4b, type: 3}
+  heroAttackFps: 16
 --- !u!4 &876543213
 Transform:
   m_ObjectHideFlags: 0
