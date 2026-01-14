@@ -54,6 +54,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Color worldAGroundColor = new Color(0.02f, 0.07f, 0.09f, 1f);
         [SerializeField] private Color worldBSkyColor = new Color(0.2f, 0.05f, 0.05f, 1f);
         [SerializeField] private Color worldBGroundColor = new Color(0.09f, 0.02f, 0.04f, 1f);
+        [Header("Background Sprites")]
+        [SerializeField] private Sprite worldASkySprite;
+        [SerializeField] private Sprite worldAGroundSprite;
+        [SerializeField] private Sprite worldBSkySprite;
+        [SerializeField] private Sprite worldBGroundSprite;
         [Header("Hero Animation")]
         [SerializeField] private List<Sprite> heroIdleFrames = new List<Sprite>();
         [SerializeField] private List<Sprite> heroAttackFrames = new List<Sprite>();
@@ -353,8 +358,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             RectTransform sky = CreatePanel(
                 "BackgroundSky",
                 canvasRect,
-                new Vector2(0, 0.45f),
-                new Vector2(1, 1),
+                new Vector2(0f, 0f),
+                new Vector2(1f, 1f),
                 worldASkyColor);
             sky.SetAsFirstSibling();
             _skyBackgroundImage = sky.GetComponent<Image>();
@@ -874,18 +879,82 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             string worldLabel = turnManager.CurrentWorld == TurnManager.WorldSide.A ? "A" : "B";
             _worldLabel.text = $"World: {worldLabel}";
 
-            Color targetSky = turnManager.CurrentWorld == TurnManager.WorldSide.A ? worldASkyColor : worldBSkyColor;
-            Color targetGround = turnManager.CurrentWorld == TurnManager.WorldSide.A ? worldAGroundColor : worldBGroundColor;
+            bool isWorldA = turnManager.CurrentWorld == TurnManager.WorldSide.A;
+            Color targetSky = isWorldA ? worldASkyColor : worldBSkyColor;
+            Color targetGround = isWorldA ? worldAGroundColor : worldBGroundColor;
+            Sprite targetSkySprite = isWorldA ? worldASkySprite : worldBSkySprite;
+            Sprite targetGroundSprite = isWorldA ? worldAGroundSprite : worldBGroundSprite;
 
             if (_skyBackgroundImage != null)
             {
-                _skyBackgroundImage.color = targetSky;
+                if (targetSkySprite != null)
+                {
+                    _skyBackgroundImage.sprite = targetSkySprite;
+                    _skyBackgroundImage.type = Image.Type.Simple;
+                    _skyBackgroundImage.preserveAspect = true;
+                    _skyBackgroundImage.color = Color.white;
+                    CoverFill(_skyBackgroundImage.rectTransform, targetSkySprite);
+                }
+                else
+                {
+                    _skyBackgroundImage.sprite = null;
+                    _skyBackgroundImage.color = targetSky;
+                }
             }
 
             if (_groundBackgroundImage != null)
             {
-                _groundBackgroundImage.color = targetGround;
+                if (targetGroundSprite != null)
+                {
+                    _groundBackgroundImage.sprite = targetGroundSprite;
+                    _groundBackgroundImage.type = Image.Type.Simple;
+                    _groundBackgroundImage.preserveAspect = true;
+                    _groundBackgroundImage.color = Color.white;
+                    CoverFill(_groundBackgroundImage.rectTransform, targetGroundSprite);
+                }
+                else
+                {
+                    _groundBackgroundImage.sprite = null;
+                    // Si no hay sprite de ground, lo dejamos transparente para no tapar el sky.
+                    Color transparent = targetGround;
+                    transparent.a = 0f;
+                    _groundBackgroundImage.color = transparent;
+                }
             }
+        }
+
+        /// <summary>
+        /// Ajusta el rect transform para simular "cover": escala manteniendo aspect
+        /// y recorta lo sobrante para llenar el panel.
+        /// </summary>
+        private void CoverFill(RectTransform rectTransform, Sprite sprite)
+        {
+            if (rectTransform == null || sprite == null)
+            {
+                return;
+            }
+
+            Rect panelRect = rectTransform.rect;
+            float panelAspect = panelRect.width / Mathf.Max(0.0001f, panelRect.height);
+            float spriteAspect = sprite.rect.width / Mathf.Max(0.0001f, sprite.rect.height);
+
+            Vector3 scale = Vector3.one;
+            if (spriteAspect > panelAspect)
+            {
+                // Sprite más "ancho": escalar por altura, recortar ancho.
+                float heightScale = 1f;
+                float widthScale = spriteAspect / panelAspect;
+                scale = new Vector3(widthScale, heightScale, 1f);
+            }
+            else
+            {
+                // Sprite más "alto": escalar por ancho, recortar alto.
+                float widthScale = 1f;
+                float heightScale = panelAspect / spriteAspect;
+                scale = new Vector3(widthScale, heightScale, 1f);
+            }
+
+            rectTransform.localScale = scale;
         }
     }
 }
