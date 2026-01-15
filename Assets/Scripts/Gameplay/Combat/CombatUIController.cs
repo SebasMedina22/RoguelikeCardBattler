@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -69,6 +70,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private SpriteFrameAnimatorUI _playerAnimator;
         private Image _playerAvatarSpriteImage;
         private bool _isPlayingAttack;
+        [Header("Enemy Hit Feedback")]
+        [SerializeField] private List<Sprite> enemyHitFrames = new List<Sprite>();
+        [SerializeField] private float enemyHitFps = 16f;
+        private SpriteFrameAnimatorUI _enemyAnimator;
+        private Image _enemyAvatarSpriteImage;
+        private Coroutine _enemyHitRoutine;
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
@@ -108,6 +115,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (turnManager != null)
             {
                 turnManager.PlayerHitEffectiveness += OnPlayerHitEffectiveness;
+                turnManager.EnemyTookDamage += OnEnemyTookDamage;
             }
         }
 
@@ -116,6 +124,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (turnManager != null)
             {
                 turnManager.PlayerHitEffectiveness -= OnPlayerHitEffectiveness;
+                turnManager.EnemyTookDamage -= OnEnemyTookDamage;
             }
         }
 
@@ -230,6 +239,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 enemyScale,
                 enemyOffset);
             _enemyAvatarBaseColor = _enemyAvatarImage.color;
+            InitializeEnemyAnimator();
 
             RectTransform energyPanel = CreatePanel(
                 "EnergyPanel",
@@ -703,6 +713,28 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _hitFeedbackTimer = HitFeedbackDuration;
         }
 
+        private void OnEnemyTookDamage(int damage)
+        {
+            if (damage <= 0)
+            {
+                return;
+            }
+
+            if (_enemyAnimator != null && enemyHitFrames != null && enemyHitFrames.Count > 0)
+            {
+                _enemyAnimator.Configure(_enemyAvatarSpriteImage, new List<Sprite>(), enemyHitFrames, enemyHitFps);
+                _enemyAnimator.PlayAttackOnce();
+            }
+            else
+            {
+                if (_enemyHitRoutine != null)
+                {
+                    StopCoroutine(_enemyHitRoutine);
+                }
+                _enemyHitRoutine = StartCoroutine(EnemyHitFlashAndShake());
+            }
+        }
+
         private bool IsHandCacheValid()
         {
             if (turnManager == null)
@@ -782,6 +814,82 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             _playerAnimator.Configure(_playerAvatarSpriteImage, heroIdleFrames, heroAttackFrames, heroAttackFps);
             _playerAnimator.PlayIdleLoop();
+        }
+
+        private void InitializeEnemyAnimator()
+        {
+            if (_enemyAvatarImage == null)
+            {
+                return;
+            }
+
+            Transform spriteChild = _enemyAvatarImage.transform.Find("EnemyAvatar_Sprite");
+            if (spriteChild == null)
+            {
+                return;
+            }
+
+            _enemyAvatarSpriteImage = spriteChild.GetComponent<Image>();
+            if (_enemyAvatarSpriteImage == null)
+            {
+                return;
+            }
+
+            _enemyAnimator = spriteChild.GetComponent<SpriteFrameAnimatorUI>();
+            if (_enemyAnimator == null)
+            {
+                _enemyAnimator = spriteChild.gameObject.AddComponent<SpriteFrameAnimatorUI>();
+            }
+
+            // Idle opcional (no configurado por ahora) se deja vacío; se usará para hit si hay frames.
+            _enemyAnimator.Configure(_enemyAvatarSpriteImage, new List<Sprite>(), enemyHitFrames, enemyHitFps);
+        }
+
+        private IEnumerator EnemyHitFlashAndShake()
+        {
+            const float duration = 0.15f;
+            const float shakeMagnitude = 3f;
+
+            float timer = 0f;
+            Color flashColor = Color.white;
+            flashColor.a = 0.8f;
+
+            Vector3 originalPos = _enemyAvatarImage.rectTransform.anchoredPosition;
+            Color baseColor = _enemyAvatarImage.color;
+            Color baseSpriteColor = _enemyAvatarSpriteImage != null ? _enemyAvatarSpriteImage.color : Color.white;
+
+            while (timer < duration)
+            {
+                float t = timer / duration;
+                float fade = 1f - t;
+                if (_enemyAvatarImage != null)
+                {
+                    _enemyAvatarImage.color = Color.Lerp(baseColor, flashColor, fade);
+                }
+                if (_enemyAvatarSpriteImage != null)
+                {
+                    _enemyAvatarSpriteImage.color = Color.Lerp(baseSpriteColor, flashColor, fade);
+                }
+
+                if (_enemyAvatarImage != null)
+                {
+                    Vector2 shake = UnityEngine.Random.insideUnitCircle * shakeMagnitude * fade;
+                    _enemyAvatarImage.rectTransform.anchoredPosition = originalPos + (Vector3)shake;
+                }
+
+                timer += Time.deltaTime;
+                yield return null;
+            }
+
+            if (_enemyAvatarImage != null)
+            {
+                _enemyAvatarImage.rectTransform.anchoredPosition = originalPos;
+                _enemyAvatarImage.color = baseColor;
+            }
+            if (_enemyAvatarSpriteImage != null)
+            {
+                _enemyAvatarSpriteImage.color = baseSpriteColor;
+            }
         }
 
         private string BuildCardLabel(CardDeckEntry entry)

@@ -88,6 +88,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// </summary>
         public event Action<Effectiveness, bool> PlayerHitEffectiveness;
 
+        /// <summary>
+        /// Evento disparado cuando el enemigo recibe daño > 0. Valor es el daño final aplicado a HP.
+        /// </summary>
+        public event Action<int> EnemyTookDamage;
+
         private void Start()
         {
             InitializeCombat();
@@ -308,7 +313,18 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 case EffectType.Damage:
                     int adjustedDamage = AdjustDamageForEffectiveness(source, target, sourceElementType, amount);
-                    return new DamageAction(source, target, adjustedDamage);
+                    Action<int> onEnemyDamage = null;
+                    if (source == _player && target == _enemy)
+                    {
+                        onEnemyDamage = dmg =>
+                        {
+                            if (dmg > 0)
+                            {
+                                EnemyTookDamage?.Invoke(dmg);
+                            }
+                        };
+                    }
+                    return new DamageAction(source, target, adjustedDamage, onEnemyDamage);
                 case EffectType.Block:
                     return new BlockAction(target, amount);
                 case EffectType.DrawCards:
