@@ -7,24 +7,31 @@ namespace RoguelikeCardBattler.Run
     /// </summary>
     public class RunState
     {
-        public const int NodeCount = 3;
-
-        public int CurrentNodeIndex { get; set; } = -1;
+        public int CurrentPositionNodeId { get; set; } = -1;
+        public int CurrentNodeId { get; set; } = -1;
         public int Gold { get; set; } = 0;
-        public List<bool> CompletedNodes { get; } = new List<bool>();
+        public HashSet<int> CompletedNodes { get; } = new HashSet<int>();
+        public HashSet<int> AvailableNodes { get; } = new HashSet<int>();
 
-        public void EnsureInitialized()
+        public void EnsureInitialized(ActMap map)
         {
-            if (CompletedNodes.Count == NodeCount)
+            if (map == null)
             {
                 return;
             }
 
-            CompletedNodes.Clear();
-            for (int i = 0; i < NodeCount; i++)
+            if (AvailableNodes.Count > 0 || CompletedNodes.Count > 0)
             {
-                CompletedNodes.Add(false);
+                return;
             }
+
+            AvailableNodes.Clear();
+            CompletedNodes.Clear();
+            AvailableNodes.Add(map.StartNodeId);
+            CurrentPositionNodeId = map.StartNodeId;
         }
+
+        public bool IsNodeAvailable(int nodeId) => AvailableNodes.Contains(nodeId);
+        public bool IsNodeCompleted(int nodeId) => CompletedNodes.Contains(nodeId);
     }
 }

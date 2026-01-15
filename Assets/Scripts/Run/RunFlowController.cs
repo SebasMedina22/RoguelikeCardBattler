@@ -15,12 +15,14 @@ namespace RoguelikeCardBattler.Run
         [SerializeField] private Font uiFont;
 
         private RunState _state;
+        private ActMap _map;
         private Canvas _canvas;
         private RectTransform _root;
         private Text _statusText;
         private Text _titleText;
         private readonly List<Button> _nodeButtons = new List<Button>();
         private Button _continueButton;
+        private static Sprite _whiteSprite;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInRunScene()
@@ -30,7 +32,7 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
-            if (FindObjectOfType<RunFlowController>() != null)
+            if (Object.FindFirstObjectByType<RunFlowController>() != null)
             {
                 return;
             }
@@ -43,7 +45,8 @@ namespace RoguelikeCardBattler.Run
         {
             RunSession session = RunSession.GetOrCreate();
             _state = session.State;
-            _state.EnsureInitialized();
+            _map = session.Map;
+            _state.EnsureInitialized(_map);
 
             if (uiFont == null)
             {
@@ -53,6 +56,7 @@ namespace RoguelikeCardBattler.Run
             EnsureEventSystem();
             BuildUI();
             ShowMap();
+            PrintMapDebugOnce();
         }
 
         private void BuildUI()
@@ -70,37 +74,193 @@ namespace RoguelikeCardBattler.Run
             statusRect.anchorMin = new Vector2(0.1f, 0.8f);
             statusRect.anchorMax = new Vector2(0.9f, 0.88f);
 
-            CreateNodeButtons();
+            CreateNodeButtons(CreateNodeScrollView());
             _continueButton = CreateButton("ContinueButton", _root, "Continuar");
             _continueButton.onClick.AddListener(OnContinue);
             _continueButton.gameObject.SetActive(false);
+
+#if UNITY_EDITOR
+            RectTransform contentRect = _canvas.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
+            if (contentRect != null)
+            {
+                Debug.Log($"[RunUI Debug] Content height: {contentRect.rect.height}, children: {contentRect.childCount}");
+            }
+#endif
         }
 
         private void EnsureEventSystem()
         {
-            if (FindObjectOfType<EventSystem>() != null)
+            EventSystem[] all = Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None);
+            EventSystem existing = all.Length > 0 ? all[0] : null;
+
+#if UNITY_EDITOR
+            if (all.Length > 1)
             {
+                Debug.LogWarning($"[RunUI] Multiple EventSystems detected: {all.Length}. Keeping the first one.");
+            }
+#endif
+
+            for (int i = 1; i < all.Length; i++)
+            {
+                if (all[i] != null)
+                {
+                    Destroy(all[i].gameObject);
+                }
+            }
+
+            GameObject target = existing != null ? existing.gameObject : new GameObject("EventSystem", typeof(EventSystem));
+
+            System.Type inputSystemType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            if (inputSystemType != null)
+            {
+                StandaloneInputModule legacy = target.GetComponent<StandaloneInputModule>();
+                if (legacy != null)
+                {
+                    Destroy(legacy);
+                }
+
+                if (target.GetComponent(inputSystemType) == null)
+                {
+                    target.AddComponent(inputSystemType);
+                }
+
+#if UNITY_EDITOR
+                Debug.Log("[RunUI] EventSystem module: InputSystemUIInputModule");
+#endif
                 return;
             }
 
-            GameObject eventSystemGO = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-            DontDestroyOnLoad(eventSystemGO);
+            if (target.GetComponent<StandaloneInputModule>() == null)
+            {
+                foreach (Component component in target.GetComponents<Component>())
+                {
+                    if (component != null && component.GetType().FullName == "UnityEngine.InputSystem.UI.InputSystemUIInputModule")
+                    {
+                        Destroy(component);
+                    }
+                }
+
+                target.AddComponent<StandaloneInputModule>();
+            }
+
+#if UNITY_EDITOR
+            Debug.Log("[RunUI] EventSystem module: StandaloneInputModule");
+#endif
         }
 
-        private void CreateNodeButtons()
+        private RectTransform CreateNodeScrollView()
         {
-            float startY = 0.65f;
-            float step = 0.12f;
-            for (int i = 0; i < RunState.NodeCount; i++)
+            GameObject scrollGO = new GameObject("NodeScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+            scrollGO.transform.SetParent(_root, false);
+
+            RectTransform scrollRect = scrollGO.GetComponent<RectTransform>();
+            scrollRect.anchorMin = new Vector2(0.1f, 0.25f);
+            scrollRect.anchorMax = new Vector2(0.9f, 0.78f);
+            scrollRect.offsetMin = Vector2.zero;
+            scrollRect.offsetMax = Vector2.zero;
+
+            Image bg = scrollGO.GetComponent<Image>();
+            bg.sprite = GetWhiteSprite();
+            bg.type = Image.Type.Simple;
+            bg.color = new Color(0.05f, 0.05f, 0.08f, 0.3f);
+
+            ScrollRect scroll = scrollGO.GetComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+
+            GameObject viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D), typeof(Image));
+            viewportGO.transform.SetParent(scrollGO.transform, false);
+            RectTransform viewportRect = viewportGO.GetComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+
+            Image viewportImage = viewportGO.GetComponent<Image>();
+            viewportImage.color = new Color(0f, 0f, 0f, 0f);
+            viewportImage.raycastTarget = true;
+
+            GameObject contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentGO.transform.SetParent(viewportGO.transform, false);
+            RectTransform contentRect = contentGO.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 0f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = Vector2.zero;
+
+            VerticalLayoutGroup layout = contentGO.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childForceExpandHeight = false;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childControlWidth = true;
+
+            ContentSizeFitter fitter = contentGO.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.viewport = viewportRect;
+            scroll.content = contentRect;
+
+            return contentRect;
+        }
+
+        private void CreateNodeButtons(RectTransform parent)
+        {
+            for (int i = 0; i < _map.Nodes.Count; i++)
             {
-                int index = i;
-                Button button = CreateButton($"Node_{i + 1}", _root, $"Nodo {i + 1}");
-                RectTransform rect = button.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.35f, startY - step * i);
-                rect.anchorMax = new Vector2(0.65f, startY - step * i + 0.08f);
-                button.onClick.AddListener(() => EnterNode(index));
+                MapNode node = _map.Nodes[i];
+                int nodeId = node.Id;
+                Button button = CreateNodeButton(parent, $"Node_{nodeId}", $"Nodo {nodeId + 1}");
+                button.onClick.AddListener(() => EnterNode(nodeId));
                 _nodeButtons.Add(button);
             }
+        }
+
+        private Button CreateNodeButton(RectTransform parent, string name, string label)
+        {
+            GameObject buttonGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            buttonGO.transform.SetParent(parent, false);
+            RectTransform rect = buttonGO.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            LayoutElement layout = buttonGO.GetComponent<LayoutElement>();
+            layout.preferredHeight = 70f;
+            layout.minHeight = 60f;
+
+            Image image = buttonGO.GetComponent<Image>();
+            image.sprite = GetWhiteSprite();
+            image.type = Image.Type.Simple;
+            image.color = new Color(0.15f, 0.15f, 0.2f, 1f);
+            image.raycastTarget = true;
+
+            GameObject textGO = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            textGO.transform.SetParent(buttonGO.transform, false);
+            RectTransform textRect = textGO.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            Text text = textGO.GetComponent<Text>();
+            text.font = uiFont;
+            text.fontSize = 20;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            text.text = label;
+            text.raycastTarget = false;
+
+            Outline outline = textGO.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            return buttonGO.GetComponent<Button>();
         }
 
         private void ShowMap()
@@ -109,22 +269,22 @@ namespace RoguelikeCardBattler.Run
             _titleText.text = "Mapa Acto 1 (placeholder)";
 
             int completed = 0;
-            for (int i = 0; i < _state.CompletedNodes.Count; i++)
+            foreach (MapNode node in _map.Nodes)
             {
-                if (_state.CompletedNodes[i])
+                if (_state.IsNodeCompleted(node.Id))
                 {
                     completed++;
                 }
             }
 
-            _statusText.text = $"Gold: {_state.Gold} | Completados: {completed}/{RunState.NodeCount}";
+            _statusText.text = $"Gold: {_state.Gold} | Completados: {completed}/{_map.Nodes.Count}";
 
-            int nextAvailable = GetNextAvailableNodeIndex();
             for (int i = 0; i < _nodeButtons.Count; i++)
             {
                 Button button = _nodeButtons[i];
-                bool completedNode = _state.CompletedNodes[i];
-                bool available = i == nextAvailable;
+                int nodeId = _map.Nodes[i].Id;
+                bool completedNode = _state.IsNodeCompleted(nodeId);
+                bool available = _state.IsNodeAvailable(nodeId);
 
                 button.gameObject.SetActive(true);
                 button.interactable = available;
@@ -132,29 +292,33 @@ namespace RoguelikeCardBattler.Run
                 Text label = button.GetComponentInChildren<Text>();
                 if (label != null)
                 {
-                    label.text = completedNode ? $"Nodo {i + 1} (Completado)" : $"Nodo {i + 1}";
+                    NodeType type = _map.Nodes[i].Type;
+                    string typeLabel = $"{type}";
+                    label.text = completedNode
+                        ? $"Nodo {nodeId + 1} ({typeLabel}) - Completado"
+                        : $"Nodo {nodeId + 1} ({typeLabel})";
                 }
             }
         }
 
         private void EnterNode(int index)
         {
-            if (index < 0 || index >= _state.CompletedNodes.Count)
+            if (index < 0 || index >= _map.Nodes.Count)
             {
                 return;
             }
 
-            if (_state.CompletedNodes[index])
+            if (_state.IsNodeCompleted(index))
             {
                 return;
             }
 
-            if (index != GetNextAvailableNodeIndex())
+            if (!_state.IsNodeAvailable(index))
             {
                 return;
             }
 
-            _state.CurrentNodeIndex = index;
+            _state.CurrentNodeId = index;
             _titleText.text = $"Nodo {index + 1}";
             _statusText.text = "Contenido placeholder. Resolver y continuar.";
 
@@ -168,29 +332,66 @@ namespace RoguelikeCardBattler.Run
 
         private void OnContinue()
         {
-            if (_state.CurrentNodeIndex < 0 || _state.CurrentNodeIndex >= _state.CompletedNodes.Count)
+            if (_state.CurrentNodeId < 0 || _state.CurrentNodeId >= _map.Nodes.Count)
             {
                 ShowMap();
                 return;
             }
 
-            _state.CompletedNodes[_state.CurrentNodeIndex] = true;
-            _state.CurrentNodeIndex = -1;
+            CompleteNode(_state.CurrentNodeId);
+            _state.CurrentNodeId = -1;
             _state.Gold += 10;
             ShowMap();
         }
 
-        private int GetNextAvailableNodeIndex()
+        private void CompleteNode(int nodeId)
         {
-            for (int i = 0; i < _state.CompletedNodes.Count; i++)
+            if (_state.IsNodeCompleted(nodeId))
             {
-                if (!_state.CompletedNodes[i])
+                return;
+            }
+
+            _state.CompletedNodes.Add(nodeId);
+            _state.AvailableNodes.Clear();
+            _state.CurrentPositionNodeId = nodeId;
+
+            MapNode node = _map.GetNode(nodeId);
+            if (node == null)
+            {
+                return;
+            }
+
+            foreach (int connection in node.Connections)
+            {
+                if (!_state.IsNodeCompleted(connection))
                 {
-                    return i;
+                    _state.AvailableNodes.Add(connection);
                 }
             }
 
-            return -1;
+            if (_state.AvailableNodes.Count == 0 && _state.CompletedNodes.Count < _map.Nodes.Count)
+            {
+                Debug.LogWarning("No available nodes remaining. Check map connections.");
+            }
+        }
+
+        private void PrintMapDebugOnce()
+        {
+            if (_map == null)
+            {
+                return;
+            }
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine("[ActMap Debug] Nodes:");
+            foreach (MapNode node in _map.Nodes)
+            {
+                string connections = node.Connections.Count > 0
+                    ? string.Join(", ", node.Connections)
+                    : "none";
+                sb.AppendLine($"- {node.Id}: {node.Type} -> [{connections}]");
+            }
+            Debug.Log(sb.ToString());
         }
 
         private Canvas CreateCanvas(string name)
@@ -237,6 +438,8 @@ namespace RoguelikeCardBattler.Run
             rect.offsetMax = Vector2.zero;
 
             Image image = buttonGO.GetComponent<Image>();
+            image.sprite = GetWhiteSprite();
+            image.type = Image.Type.Simple;
             image.color = new Color(0.15f, 0.15f, 0.2f, 0.9f);
 
             GameObject textGO = new GameObject("Label", typeof(RectTransform), typeof(Text));
@@ -255,6 +458,20 @@ namespace RoguelikeCardBattler.Run
             text.text = label;
 
             return buttonGO.GetComponent<Button>();
+        }
+
+        private static Sprite GetWhiteSprite()
+        {
+            if (_whiteSprite != null)
+            {
+                return _whiteSprite;
+            }
+
+            _whiteSprite = Sprite.Create(
+                Texture2D.whiteTexture,
+                new Rect(0, 0, 1, 1),
+                new Vector2(0.5f, 0.5f));
+            return _whiteSprite;
         }
     }
 }
