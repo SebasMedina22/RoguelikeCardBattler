@@ -10,6 +10,7 @@ namespace RoguelikeCardBattler.Run
         public static RunSession Instance { get; private set; }
 
         public RunState State { get; } = new RunState();
+        public ActMap Map { get; private set; }
 
         public static RunSession GetOrCreate()
         {
@@ -18,7 +19,7 @@ namespace RoguelikeCardBattler.Run
                 return Instance;
             }
 
-            var existing = FindObjectOfType<RunSession>();
+            var existing = Object.FindFirstObjectByType<RunSession>();
             if (existing != null)
             {
                 Instance = existing;
@@ -40,7 +41,11 @@ namespace RoguelikeCardBattler.Run
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            State.EnsureInitialized();
+            if (Map == null)
+            {
+                Map = RunMapGenerator.GenerateAct1();
+            }
+            State.EnsureInitialized(Map);
         }
     }
 }
