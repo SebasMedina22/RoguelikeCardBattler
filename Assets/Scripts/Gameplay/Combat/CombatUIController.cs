@@ -142,13 +142,38 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void EnsureEventSystem()
         {
-            if (EventSystem.current != null)
+            EventSystem existing = Object.FindFirstObjectByType<EventSystem>();
+            GameObject target = existing != null ? existing.gameObject : new GameObject("EventSystem", typeof(EventSystem));
+
+            System.Type inputSystemType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            if (inputSystemType != null)
             {
+                StandaloneInputModule legacy = target.GetComponent<StandaloneInputModule>();
+                if (legacy != null)
+                {
+                    Destroy(legacy);
+                }
+
+                if (target.GetComponent(inputSystemType) == null)
+                {
+                    target.AddComponent(inputSystemType);
+                }
+
                 return;
             }
 
-            GameObject eventSystemGO = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-            DontDestroyOnLoad(eventSystemGO);
+            if (target.GetComponent<StandaloneInputModule>() == null)
+            {
+                foreach (Component component in target.GetComponents<Component>())
+                {
+                    if (component != null && component.GetType().FullName == "UnityEngine.InputSystem.UI.InputSystemUIInputModule")
+                    {
+                        Destroy(component);
+                    }
+                }
+
+                target.AddComponent<StandaloneInputModule>();
+            }
         }
 
         /// <summary>

@@ -20,6 +20,7 @@ namespace RoguelikeCardBattler.Run
         private RectTransform _root;
         private RectTransform _mapPanel;
         private RectTransform _resolvePanel;
+        private RectTransform _defeatPanel;
         private Text _statusText;
         private Text _titleText;
         private readonly List<Button> _nodeButtons = new List<Button>();
@@ -28,27 +29,19 @@ namespace RoguelikeCardBattler.Run
         private Button _resolveCompleteButton;
         private Button _resolveBackButton;
         private int _resolveNodeId = -1;
+        private Button _defeatRetryButton;
+        private Button _defeatExitButton;
         private static Sprite _whiteSprite;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void EnsureInRunScene()
-        {
-            if (SceneManager.GetActiveScene().name != "RunScene")
-            {
-                return;
-            }
-
-            if (Object.FindFirstObjectByType<RunFlowController>() != null)
-            {
-                return;
-            }
-
-            GameObject go = new GameObject("RunFlowController");
-            go.AddComponent<RunFlowController>();
-        }
 
         private void Awake()
         {
+            RunFlowController existing = Object.FindFirstObjectByType<RunFlowController>();
+            if (existing != null && existing != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             RunSession session = RunSession.GetOrCreate();
             _state = session.State;
             _map = session.Map;
@@ -61,7 +54,15 @@ namespace RoguelikeCardBattler.Run
 
             EnsureEventSystem();
             BuildUI();
-            ShowMap();
+            HandlePendingBattleResult();
+            if (_state.RunFailed)
+            {
+                ShowDefeatPanel();
+            }
+            else
+            {
+                ShowMap();
+            }
             PrintMapDebugOnce();
         }
 
@@ -72,7 +73,9 @@ namespace RoguelikeCardBattler.Run
 
             _mapPanel = CreatePanel("MapPanel", _root, new Color(0f, 0f, 0f, 0f), false);
             _resolvePanel = CreatePanel("NodeResolvePanel", _root, new Color(0f, 0f, 0f, 0.6f), true);
+            _defeatPanel = CreatePanel("DefeatPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
             _resolvePanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
 
             _titleText = CreateText("Title", _mapPanel, "Run - Acto 1 (placeholder)", 28, TextAnchor.UpperCenter);
             RectTransform titleRect = _titleText.GetComponent<RectTransform>();
@@ -86,6 +89,7 @@ namespace RoguelikeCardBattler.Run
 
             CreateNodeButtons(CreateNodeScrollView(_mapPanel));
             BuildResolvePanel();
+            BuildDefeatPanel();
 
 #if UNITY_EDITOR
             RectTransform contentRect = _mapPanel.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
@@ -274,6 +278,7 @@ namespace RoguelikeCardBattler.Run
         private void ShowMap()
         {
             _resolvePanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
             _mapPanel.gameObject.SetActive(true);
             _titleText.text = "Mapa Acto 1 (placeholder)";
 
@@ -296,7 +301,7 @@ namespace RoguelikeCardBattler.Run
                 bool available = _state.IsNodeAvailable(nodeId);
 
                 button.gameObject.SetActive(true);
-                button.interactable = available;
+                button.interactable = available && !_state.RunFailed;
 
                 Text label = button.GetComponentInChildren<Text>();
                 if (label != null)
@@ -346,6 +351,13 @@ namespace RoguelikeCardBattler.Run
 
             _state.CurrentNodeId = index;
             _resolveNodeId = index;
+            MapNode node = _map.GetNode(index);
+            if (node != null && (node.Type == NodeType.Combat || node.Type == NodeType.Elite || node.Type == NodeType.Boss))
+            {
+                StartCombatForNode(index);
+                return;
+            }
+
             ShowResolvePanel(index);
         }
 
@@ -361,6 +373,21 @@ namespace RoguelikeCardBattler.Run
             _state.CurrentNodeId = -1;
             _state.Gold += 10;
             ShowMap();
+        }
+
+        private void StartCombatForNode(int nodeId)
+        {
+            _state.CurrentNodeId = nodeId;
+            _state.PendingReturnFromBattle = false;
+            _state.LastNodeOutcome = RunState.NodeOutcome.None;
+            if (!IsSceneInBuild("BattleScene"))
+            {
+#if UNITY_EDITOR
+                Debug.LogError("[RunFlow] BattleScene no está en Build Settings.");
+#endif
+                return;
+            }
+            SceneManager.LoadScene("BattleScene");
         }
 
         private void ShowResolvePanel(int nodeId)
@@ -399,6 +426,31 @@ namespace RoguelikeCardBattler.Run
             ShowMap();
         }
 
+        private void HandlePendingBattleResult()
+        {
+            if (!_state.PendingReturnFromBattle)
+            {
+                return;
+            }
+
+            if (_state.LastNodeOutcome == RunState.NodeOutcome.Victory)
+            {
+                if (_state.CurrentNodeId >= 0)
+                {
+                    CompleteNode(_state.CurrentNodeId);
+                }
+                _state.PendingReturnFromBattle = false;
+                _state.LastNodeOutcome = RunState.NodeOutcome.None;
+                _state.CurrentNodeId = -1;
+                return;
+            }
+
+            if (_state.LastNodeOutcome == RunState.NodeOutcome.Defeat)
+            {
+                _state.PendingReturnFromBattle = false;
+            }
+        }
+
         private void CompleteNode(int nodeId)
         {
             if (_state.IsNodeCompleted(nodeId))
@@ -428,6 +480,14 @@ namespace RoguelikeCardBattler.Run
             {
                 Debug.LogWarning("No available nodes remaining. Check map connections.");
             }
+        }
+
+        private void ShowDefeatPanel()
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(true);
+            _defeatPanel.SetAsLastSibling();
         }
 
         private void PrintMapDebugOnce()
@@ -557,6 +617,56 @@ namespace RoguelikeCardBattler.Run
             backRect.anchorMin = new Vector2(0.3f, 0.15f);
             backRect.anchorMax = new Vector2(0.7f, 0.23f);
             _resolveBackButton.onClick.AddListener(OnResolveBack);
+        }
+
+        private void BuildDefeatPanel()
+        {
+            Text defeatTitle = CreateText("DefeatTitle", _defeatPanel, "Derrota", 28, TextAnchor.UpperCenter);
+            RectTransform titleRect = defeatTitle.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.2f, 0.65f);
+            titleRect.anchorMax = new Vector2(0.8f, 0.8f);
+
+            Text defeatBody = CreateText("DefeatBody", _defeatPanel, "La run ha terminado.", 20, TextAnchor.UpperCenter);
+            RectTransform bodyRect = defeatBody.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0.2f, 0.5f);
+            bodyRect.anchorMax = new Vector2(0.8f, 0.65f);
+
+            _defeatRetryButton = CreateButton("DefeatRetry", _defeatPanel, "Reintentar");
+            RectTransform retryRect = _defeatRetryButton.GetComponent<RectTransform>();
+            retryRect.anchorMin = new Vector2(0.3f, 0.35f);
+            retryRect.anchorMax = new Vector2(0.7f, 0.43f);
+            _defeatRetryButton.onClick.AddListener(() =>
+            {
+                _state.RunFailed = false;
+                _state.PendingReturnFromBattle = false;
+                _state.LastNodeOutcome = RunState.NodeOutcome.None;
+                SceneManager.LoadScene("BattleScene");
+            });
+
+            _defeatExitButton = CreateButton("DefeatExit", _defeatPanel, "Volver al mapa");
+            RectTransform exitRect = _defeatExitButton.GetComponent<RectTransform>();
+            exitRect.anchorMin = new Vector2(0.3f, 0.25f);
+            exitRect.anchorMax = new Vector2(0.7f, 0.33f);
+            _defeatExitButton.onClick.AddListener(() =>
+            {
+                _state.Reset(_map);
+                ShowMap();
+            });
+        }
+
+        private bool IsSceneInBuild(string sceneName)
+        {
+            int total = SceneManager.sceneCountInBuildSettings;
+            for (int i = 0; i < total; i++)
+            {
+                string path = SceneUtility.GetScenePathByBuildIndex(i);
+                if (path.EndsWith($"/{sceneName}.unity"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static Sprite GetWhiteSprite()
