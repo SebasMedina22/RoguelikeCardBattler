@@ -18,10 +18,16 @@ namespace RoguelikeCardBattler.Run
         private ActMap _map;
         private Canvas _canvas;
         private RectTransform _root;
+        private RectTransform _mapPanel;
+        private RectTransform _resolvePanel;
         private Text _statusText;
         private Text _titleText;
         private readonly List<Button> _nodeButtons = new List<Button>();
-        private Button _continueButton;
+        private Text _resolveTitleText;
+        private Text _resolveBodyText;
+        private Button _resolveCompleteButton;
+        private Button _resolveBackButton;
+        private int _resolveNodeId = -1;
         private static Sprite _whiteSprite;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -64,23 +70,25 @@ namespace RoguelikeCardBattler.Run
             _canvas = CreateCanvas("RunCanvas");
             _root = _canvas.GetComponent<RectTransform>();
 
-            _titleText = CreateText("Title", _root, "Run - Acto 1 (placeholder)", 28, TextAnchor.UpperCenter);
+            _mapPanel = CreatePanel("MapPanel", _root, new Color(0f, 0f, 0f, 0f), false);
+            _resolvePanel = CreatePanel("NodeResolvePanel", _root, new Color(0f, 0f, 0f, 0.6f), true);
+            _resolvePanel.gameObject.SetActive(false);
+
+            _titleText = CreateText("Title", _mapPanel, "Run - Acto 1 (placeholder)", 28, TextAnchor.UpperCenter);
             RectTransform titleRect = _titleText.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0.1f, 0.88f);
             titleRect.anchorMax = new Vector2(0.9f, 0.98f);
 
-            _statusText = CreateText("Status", _root, "Gold: 0 | Completados: 0/3", 20, TextAnchor.UpperCenter);
+            _statusText = CreateText("Status", _mapPanel, "Gold: 0 | Completados: 0/3", 20, TextAnchor.UpperCenter);
             RectTransform statusRect = _statusText.GetComponent<RectTransform>();
             statusRect.anchorMin = new Vector2(0.1f, 0.8f);
             statusRect.anchorMax = new Vector2(0.9f, 0.88f);
 
-            CreateNodeButtons(CreateNodeScrollView());
-            _continueButton = CreateButton("ContinueButton", _root, "Continuar");
-            _continueButton.onClick.AddListener(OnContinue);
-            _continueButton.gameObject.SetActive(false);
+            CreateNodeButtons(CreateNodeScrollView(_mapPanel));
+            BuildResolvePanel();
 
 #if UNITY_EDITOR
-            RectTransform contentRect = _canvas.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
+            RectTransform contentRect = _mapPanel.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
             if (contentRect != null)
             {
                 Debug.Log($"[RunUI Debug] Content height: {contentRect.rect.height}, children: {contentRect.childCount}");
@@ -148,10 +156,10 @@ namespace RoguelikeCardBattler.Run
 #endif
         }
 
-        private RectTransform CreateNodeScrollView()
+        private RectTransform CreateNodeScrollView(RectTransform parent)
         {
             GameObject scrollGO = new GameObject("NodeScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
-            scrollGO.transform.SetParent(_root, false);
+            scrollGO.transform.SetParent(parent, false);
 
             RectTransform scrollRect = scrollGO.GetComponent<RectTransform>();
             scrollRect.anchorMin = new Vector2(0.1f, 0.25f);
@@ -265,7 +273,8 @@ namespace RoguelikeCardBattler.Run
 
         private void ShowMap()
         {
-            _continueButton.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _mapPanel.gameObject.SetActive(true);
             _titleText.text = "Mapa Acto 1 (placeholder)";
 
             int completed = 0;
@@ -295,8 +304,25 @@ namespace RoguelikeCardBattler.Run
                     NodeType type = _map.Nodes[i].Type;
                     string typeLabel = $"{type}";
                     label.text = completedNode
-                        ? $"Nodo {nodeId + 1} ({typeLabel}) - Completado"
+                        ? $"Nodo {nodeId + 1} ({typeLabel}) ✓"
                         : $"Nodo {nodeId + 1} ({typeLabel})";
+                }
+
+                Image image = button.GetComponent<Image>();
+                if (image != null)
+                {
+                    if (completedNode)
+                    {
+                        image.color = new Color(0.2f, 0.5f, 0.25f, 1f);
+                    }
+                    else if (available)
+                    {
+                        image.color = new Color(0.2f, 0.35f, 0.6f, 1f);
+                    }
+                    else
+                    {
+                        image.color = new Color(0.2f, 0.2f, 0.2f, 0.7f);
+                    }
                 }
             }
         }
@@ -319,15 +345,8 @@ namespace RoguelikeCardBattler.Run
             }
 
             _state.CurrentNodeId = index;
-            _titleText.text = $"Nodo {index + 1}";
-            _statusText.text = "Contenido placeholder. Resolver y continuar.";
-
-            foreach (Button button in _nodeButtons)
-            {
-                button.gameObject.SetActive(false);
-            }
-
-            _continueButton.gameObject.SetActive(true);
+            _resolveNodeId = index;
+            ShowResolvePanel(index);
         }
 
         private void OnContinue()
@@ -341,6 +360,42 @@ namespace RoguelikeCardBattler.Run
             CompleteNode(_state.CurrentNodeId);
             _state.CurrentNodeId = -1;
             _state.Gold += 10;
+            ShowMap();
+        }
+
+        private void ShowResolvePanel(int nodeId)
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(true);
+            _resolvePanel.SetAsLastSibling();
+
+            MapNode node = _map.GetNode(nodeId);
+            if (node != null)
+            {
+                _resolveTitleText.text = $"Nodo {node.Id + 1}";
+                _resolveBodyText.text = $"Tipo: {node.Type}\n\nContenido placeholder.";
+            }
+        }
+
+        private void OnResolveComplete()
+        {
+            if (_resolveNodeId < 0)
+            {
+                ShowMap();
+                return;
+            }
+
+            CompleteNode(_resolveNodeId);
+            _state.CurrentNodeId = -1;
+            _resolveNodeId = -1;
+            _state.Gold += 10;
+            ShowMap();
+        }
+
+        private void OnResolveBack()
+        {
+            _resolveNodeId = -1;
+            _state.CurrentNodeId = -1;
             ShowMap();
         }
 
@@ -458,6 +513,50 @@ namespace RoguelikeCardBattler.Run
             text.text = label;
 
             return buttonGO.GetComponent<Button>();
+        }
+
+        private RectTransform CreatePanel(string name, RectTransform parent, Color color, bool blockRaycasts)
+        {
+            GameObject panelGO = new GameObject(name, typeof(RectTransform), typeof(Image));
+            panelGO.transform.SetParent(parent, false);
+            RectTransform rect = panelGO.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Image image = panelGO.GetComponent<Image>();
+            image.sprite = GetWhiteSprite();
+            image.type = Image.Type.Simple;
+            image.color = color;
+            image.raycastTarget = blockRaycasts;
+
+            return rect;
+        }
+
+        private void BuildResolvePanel()
+        {
+            _resolveTitleText = CreateText("ResolveTitle", _resolvePanel, "Nodo", 26, TextAnchor.UpperCenter);
+            RectTransform titleRect = _resolveTitleText.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.2f, 0.7f);
+            titleRect.anchorMax = new Vector2(0.8f, 0.9f);
+
+            _resolveBodyText = CreateText("ResolveBody", _resolvePanel, "Tipo:\n\nContenido placeholder.", 20, TextAnchor.UpperCenter);
+            RectTransform bodyRect = _resolveBodyText.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0.2f, 0.45f);
+            bodyRect.anchorMax = new Vector2(0.8f, 0.7f);
+
+            _resolveCompleteButton = CreateButton("ResolveComplete", _resolvePanel, "Completar");
+            RectTransform completeRect = _resolveCompleteButton.GetComponent<RectTransform>();
+            completeRect.anchorMin = new Vector2(0.3f, 0.25f);
+            completeRect.anchorMax = new Vector2(0.7f, 0.33f);
+            _resolveCompleteButton.onClick.AddListener(OnResolveComplete);
+
+            _resolveBackButton = CreateButton("ResolveBack", _resolvePanel, "Volver");
+            RectTransform backRect = _resolveBackButton.GetComponent<RectTransform>();
+            backRect.anchorMin = new Vector2(0.3f, 0.15f);
+            backRect.anchorMax = new Vector2(0.7f, 0.23f);
+            _resolveBackButton.onClick.AddListener(OnResolveBack);
         }
 
         private static Sprite GetWhiteSprite()
