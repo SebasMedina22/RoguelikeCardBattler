@@ -39,6 +39,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private ActionQueue _actionQueue;
         private CombatPhase _phase = CombatPhase.None;
         private bool _initialized;
+        private bool _externalConfigApplied;
         private readonly System.Random _random = new System.Random();
         private int _enemySequenceCursor;
         private EnemyMove _plannedEnemyMove;
@@ -95,6 +96,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void Start()
         {
+            if (_externalConfigApplied)
+            {
+                return;
+            }
             InitializeCombat();
         }
 
@@ -158,6 +163,33 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             PlanNextEnemyMove();
             BeginPlayerTurn(useStartingHand: true);
+        }
+
+        /// <summary>
+        /// Configura el combate con un deck y enemigo específicos antes de inicializar.
+        /// </summary>
+        public void ConfigureCombat(List<CardDeckEntry> deck, EnemyDefinition enemy, bool initializeImmediately = true)
+        {
+            if (deck == null || deck.Count == 0)
+            {
+                Debug.LogError("ConfigureCombat: deck inválido.");
+                return;
+            }
+
+            if (enemy == null)
+            {
+                Debug.LogError("ConfigureCombat: enemy inválido.");
+                return;
+            }
+
+            starterDeck = new List<CardDeckEntry>(deck);
+            enemyDefinition = enemy;
+            _externalConfigApplied = true;
+
+            if (initializeImmediately)
+            {
+                InitializeCombat();
+            }
         }
 
         public bool PlayCard(CardDeckEntry cardEntry, ICombatActor explicitTarget = null)

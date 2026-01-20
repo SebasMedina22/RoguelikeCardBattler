@@ -11,6 +11,7 @@ namespace RoguelikeCardBattler.Run
 
         public RunState State { get; } = new RunState();
         public ActMap Map { get; private set; }
+        public RunCombatConfig CombatConfig { get; private set; }
 
         public static RunSession GetOrCreate()
         {
@@ -46,6 +47,17 @@ namespace RoguelikeCardBattler.Run
                 Map = RunMapGenerator.GenerateAct1();
             }
             State.EnsureInitialized(Map);
+        }
+
+        public void ConfigureCombat(RunCombatConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            CombatConfig = config;
+            State.InitializeDeck(config.StarterDeck);
         }
     }
 }
