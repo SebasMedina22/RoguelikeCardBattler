@@ -29,17 +29,51 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             return singleCard;
         }
 
-#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
-        public void SetSingleCard(CardDefinition card)
+        public void SetSingleCardRuntime(CardDefinition card)
         {
             singleCard = card;
             dualCard = null;
         }
 
-        public void SetDualCard(DualCardDefinition card)
+        public void SetDualCardRuntime(DualCardDefinition card)
         {
             dualCard = card;
             singleCard = null;
+        }
+
+        public static CardDeckEntry CreateSingle(CardDefinition card)
+        {
+            var entry = new CardDeckEntry();
+            entry.SetSingleCardRuntime(card);
+            return entry;
+        }
+
+        public static CardDeckEntry CreateDual(DualCardDefinition card)
+        {
+            var entry = new CardDeckEntry();
+            entry.SetDualCardRuntime(card);
+            return entry;
+        }
+
+        public CardDeckEntry Clone()
+        {
+            if (dualCard != null)
+            {
+                return CreateDual(dualCard);
+            }
+
+            return CreateSingle(singleCard);
+        }
+
+#if UNITY_EDITOR || UNITY_INCLUDE_TESTS
+        public void SetSingleCard(CardDefinition card)
+        {
+            SetSingleCardRuntime(card);
+        }
+
+        public void SetDualCard(DualCardDefinition card)
+        {
+            SetDualCardRuntime(card);
         }
 #endif
     }

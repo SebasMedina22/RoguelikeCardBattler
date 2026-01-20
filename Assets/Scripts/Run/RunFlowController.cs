@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using RoguelikeCardBattler.Gameplay.Cards;
+using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -13,6 +15,10 @@ namespace RoguelikeCardBattler.Run
     public class RunFlowController : MonoBehaviour
     {
         [SerializeField] private Font uiFont;
+        [SerializeField] private RunCombatConfig runCombatConfig;
+
+        private const string RunSceneName = "RunScene";
+        private const string BattleSceneName = "BattleScene";
 
         private RunState _state;
         private ActMap _map;
@@ -21,6 +27,7 @@ namespace RoguelikeCardBattler.Run
         private RectTransform _mapPanel;
         private RectTransform _resolvePanel;
         private RectTransform _defeatPanel;
+        private RectTransform _rewardPanel;
         private Text _statusText;
         private Text _titleText;
         private readonly List<Button> _nodeButtons = new List<Button>();
@@ -31,7 +38,13 @@ namespace RoguelikeCardBattler.Run
         private int _resolveNodeId = -1;
         private Button _defeatRetryButton;
         private Button _defeatExitButton;
+        private Text _rewardTitleText;
+        private Text _rewardGoldText;
+        private readonly List<Button> _rewardButtons = new List<Button>();
+        private readonly List<CardDeckEntry> _rewardOptions = new List<CardDeckEntry>();
+        private int _rewardNodeId = -1;
         private static Sprite _whiteSprite;
+        private bool _rewardConfigErrorLogged;
 
         private void Awake()
         {
@@ -46,6 +59,15 @@ namespace RoguelikeCardBattler.Run
             _state = session.State;
             _map = session.Map;
             _state.EnsureInitialized(_map);
+            if (runCombatConfig == null && session.CombatConfig != null)
+            {
+                runCombatConfig = session.CombatConfig;
+            }
+            RunCombatConfig effectiveConfig = GetCombatConfig();
+            if (effectiveConfig != null)
+            {
+                session.ConfigureCombat(effectiveConfig);
+            }
 
             if (uiFont == null)
             {
@@ -55,6 +77,11 @@ namespace RoguelikeCardBattler.Run
             EnsureEventSystem();
             BuildUI();
             HandlePendingBattleResult();
+            if (_rewardPanel.gameObject.activeSelf)
+            {
+                PrintMapDebugOnce();
+                return;
+            }
             if (_state.RunFailed)
             {
                 ShowDefeatPanel();
@@ -74,8 +101,10 @@ namespace RoguelikeCardBattler.Run
             _mapPanel = CreatePanel("MapPanel", _root, new Color(0f, 0f, 0f, 0f), false);
             _resolvePanel = CreatePanel("NodeResolvePanel", _root, new Color(0f, 0f, 0f, 0.6f), true);
             _defeatPanel = CreatePanel("DefeatPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
+            _rewardPanel = CreatePanel("RewardPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
             _resolvePanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
 
             _titleText = CreateText("Title", _mapPanel, "Run - Acto 1 (placeholder)", 28, TextAnchor.UpperCenter);
             RectTransform titleRect = _titleText.GetComponent<RectTransform>();
@@ -90,6 +119,7 @@ namespace RoguelikeCardBattler.Run
             CreateNodeButtons(CreateNodeScrollView(_mapPanel));
             BuildResolvePanel();
             BuildDefeatPanel();
+            BuildRewardPanel();
 
 #if UNITY_EDITOR
             RectTransform contentRect = _mapPanel.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
@@ -279,6 +309,7 @@ namespace RoguelikeCardBattler.Run
         {
             _resolvePanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
             _mapPanel.gameObject.SetActive(true);
             _titleText.text = "Mapa Acto 1 (placeholder)";
 
@@ -380,14 +411,14 @@ namespace RoguelikeCardBattler.Run
             _state.CurrentNodeId = nodeId;
             _state.PendingReturnFromBattle = false;
             _state.LastNodeOutcome = RunState.NodeOutcome.None;
-            if (!IsSceneInBuild("BattleScene"))
+            if (!IsSceneInBuild(BattleSceneName))
             {
 #if UNITY_EDITOR
                 Debug.LogError("[RunFlow] BattleScene no está en Build Settings.");
 #endif
                 return;
             }
-            SceneManager.LoadScene("BattleScene");
+            SceneManager.LoadScene(BattleSceneName);
         }
 
         private void ShowResolvePanel(int nodeId)
@@ -435,13 +466,20 @@ namespace RoguelikeCardBattler.Run
 
             if (_state.LastNodeOutcome == RunState.NodeOutcome.Victory)
             {
-                if (_state.CurrentNodeId >= 0)
-                {
-                    CompleteNode(_state.CurrentNodeId);
-                }
                 _state.PendingReturnFromBattle = false;
                 _state.LastNodeOutcome = RunState.NodeOutcome.None;
-                _state.CurrentNodeId = -1;
+                if (!TryShowRewardPanel())
+                {
+                    if (_state.CurrentNodeId >= 0)
+                    {
+                        CompleteNode(_state.CurrentNodeId);
+                    }
+                    if (runCombatConfig != null)
+                    {
+                        _state.Gold += runCombatConfig.GoldReward;
+                    }
+                    _state.CurrentNodeId = -1;
+                }
                 return;
             }
 
@@ -486,6 +524,7 @@ namespace RoguelikeCardBattler.Run
         {
             _mapPanel.gameObject.SetActive(false);
             _resolvePanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(true);
             _defeatPanel.SetAsLastSibling();
         }
@@ -650,8 +689,162 @@ namespace RoguelikeCardBattler.Run
             _defeatExitButton.onClick.AddListener(() =>
             {
                 _state.Reset(_map);
+                if (runCombatConfig != null)
+                {
+                    _state.InitializeDeck(runCombatConfig.StarterDeck);
+                }
                 ShowMap();
             });
+        }
+
+        private void BuildRewardPanel()
+        {
+            _rewardTitleText = CreateText("RewardTitle", _rewardPanel, "Recompensa", 26, TextAnchor.UpperCenter);
+            RectTransform titleRect = _rewardTitleText.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.2f, 0.78f);
+            titleRect.anchorMax = new Vector2(0.8f, 0.92f);
+
+            _rewardGoldText = CreateText("RewardGold", _rewardPanel, "+0 oro", 20, TextAnchor.UpperCenter);
+            RectTransform goldRect = _rewardGoldText.GetComponent<RectTransform>();
+            goldRect.anchorMin = new Vector2(0.2f, 0.68f);
+            goldRect.anchorMax = new Vector2(0.8f, 0.78f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                Button button = CreateButton($"Reward_{i}", _rewardPanel, "Carta");
+                RectTransform rect = button.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.2f, 0.55f - i * 0.12f);
+                rect.anchorMax = new Vector2(0.8f, 0.62f - i * 0.12f);
+                int choiceIndex = i;
+                button.onClick.AddListener(() => OnRewardSelected(choiceIndex));
+                _rewardButtons.Add(button);
+            }
+        }
+
+        private bool TryShowRewardPanel()
+        {
+            if (_rewardPanel == null)
+            {
+                return false;
+            }
+
+            RunCombatConfig config = GetCombatConfig();
+            if (config == null)
+            {
+#if UNITY_EDITOR
+                if (!_rewardConfigErrorLogged)
+                {
+                    Debug.LogError("[RunFlow] RunCombatConfig no asignado. Recompensa omitida.");
+                    _rewardConfigErrorLogged = true;
+                }
+#endif
+                return false;
+            }
+
+            if (config.RewardPool == null || config.RewardPool.Count == 0)
+            {
+#if UNITY_EDITOR
+                if (!_rewardConfigErrorLogged)
+                {
+                    Debug.LogError("[RunFlow] RewardPool vacío. Recompensa omitida.");
+                    _rewardConfigErrorLogged = true;
+                }
+#endif
+                return false;
+            }
+
+            _rewardNodeId = _state.CurrentNodeId;
+            _rewardGoldText.text = $"+{config.GoldReward} oro";
+
+            _rewardOptions.Clear();
+            _rewardOptions.AddRange(GetRewardOptions(config));
+            if (_rewardOptions.Count == 0)
+            {
+#if UNITY_EDITOR
+                if (!_rewardConfigErrorLogged)
+                {
+                    Debug.LogError("[RunFlow] RewardPool sin entradas válidas. Recompensa omitida.");
+                    _rewardConfigErrorLogged = true;
+                }
+#endif
+                return false;
+            }
+            for (int i = 0; i < _rewardButtons.Count; i++)
+            {
+                Button button = _rewardButtons[i];
+                bool active = i < _rewardOptions.Count;
+                button.gameObject.SetActive(active);
+                if (!active)
+                {
+                    continue;
+                }
+
+                CardDeckEntry entry = _rewardOptions[i];
+                CardDefinition card = entry != null ? entry.GetActiveCard(TurnManager.WorldSide.A) : null;
+                Text label = button.GetComponentInChildren<Text>();
+                if (label != null)
+                {
+                    label.text = card != null ? card.CardName : "Carta";
+                }
+            }
+
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(true);
+            _rewardPanel.SetAsLastSibling();
+            return true;
+        }
+
+        private List<CardDeckEntry> GetRewardOptions(RunCombatConfig config)
+        {
+            int count = Mathf.Min(config.ChoicesCount, config.RewardPool.Count);
+            var options = new List<CardDeckEntry>();
+            for (int i = 0; i < count; i++)
+            {
+                CardDeckEntry entry = config.RewardPool[i];
+                if (entry != null && entry.IsValid)
+                {
+                    options.Add(entry);
+                }
+            }
+
+            return options;
+        }
+
+        private void OnRewardSelected(int index)
+        {
+            if (index < 0 || index >= _rewardOptions.Count)
+            {
+                return;
+            }
+
+            CardDeckEntry chosen = _rewardOptions[index];
+            _state.AddCardToDeck(chosen);
+            RunCombatConfig config = GetCombatConfig();
+            if (config != null)
+            {
+                _state.Gold += config.GoldReward;
+            }
+
+            if (_rewardNodeId >= 0)
+            {
+                CompleteNode(_rewardNodeId);
+            }
+
+            _rewardNodeId = -1;
+            _state.CurrentNodeId = -1;
+            ShowMap();
+        }
+
+        private RunCombatConfig GetCombatConfig()
+        {
+            if (runCombatConfig != null)
+            {
+                return runCombatConfig;
+            }
+
+            return RunSession.GetOrCreate().CombatConfig;
         }
 
         private bool IsSceneInBuild(string sceneName)
