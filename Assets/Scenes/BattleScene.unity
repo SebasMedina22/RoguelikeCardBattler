@@ -389,9 +389,9 @@ MonoBehaviour:
   playerDisplayName: Test Pilot
   playerMaxHP: 60
   energyPerTurn: 3
-  startingHandSize: 1
-  cardsPerTurn: 1
-  maxHandSize: 1
+  startingHandSize: 5
+  cardsPerTurn: 4
+  maxHandSize: 7
   maxWorldSwitchesPerCombat: 1
   debugUnlimitedWorldSwitches: 1
   currentWorld: 0
@@ -446,8 +446,11 @@ MonoBehaviour:
   - {fileID: 5321023335126192047, guid: 67ee2dba17c10c74781dfee5d1cd4fd5, type: 3}
   - {fileID: 1819059919184003959, guid: 98ccda914973d7f468ca9f0077bc4a4b, type: 3}
   heroAttackFps: 16
+  hitFeedbackDuration: 0.85
   enemyHitFrames: []
   enemyHitFps: 16
+  handLimitToastDuration: 0.7
+  handLimitToastCooldown: 0.6
 --- !u!4 &876543213
 Transform:
   m_ObjectHideFlags: 0

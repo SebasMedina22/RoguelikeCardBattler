@@ -49,6 +49,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private WorldSide currentWorld = WorldSide.A;
         private int _worldSwitchesUsed;
         private int _freePlays;
+        private bool _autoEndedThisTurn;
+        private bool _resolvingCard;
 
         public enum CombatPhase
         {
@@ -110,6 +112,33 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return;
             }
             InitializeCombat();
+        }
+
+        private void Update()
+        {
+            if (!_initialized || IsCombatFinished || _phase != CombatPhase.PlayerTurn)
+            {
+                return;
+            }
+
+            if (_autoEndedThisTurn || _resolvingCard)
+            {
+                return;
+            }
+
+            if (_actionQueue != null && _actionQueue.PendingCount > 0)
+            {
+                return;
+            }
+
+            if (HasAnyPlayableCardInHand())
+            {
+                return;
+            }
+
+            // Anti-softlock: si no hay jugadas posibles, termina el turno automáticamente una vez.
+            _autoEndedThisTurn = true;
+            EndPlayerTurn();
         }
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
@@ -261,6 +290,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             _phase = CombatPhase.PlayerTurn;
+            _autoEndedThisTurn = false;
             _player.ResetEnergy();
             ClearBlock(_player);
 
@@ -588,9 +618,66 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return;
             }
 
-            _actionQueue.ProcessAll();
-            _player.DiscardCard(prepared.Entry);
-            CheckCombatEndConditions();
+            _resolvingCard = true;
+            try
+            {
+                _actionQueue.ProcessAll();
+                _player.DiscardCard(prepared.Entry);
+                CheckCombatEndConditions();
+            }
+            finally
+            {
+                _resolvingCard = false;
+            }
+        }
+
+        private bool HasAnyPlayableCardInHand()
+        {
+            if (_player == null)
+            {
+                return false;
+            }
+
+            IReadOnlyList<CardDeckEntry> hand = _player.Hand;
+            if (hand.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (CardDeckEntry entry in hand)
+            {
+                if (CanPlayCard(entry))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Devuelve si una carta es jugable en el estado actual, considerando Momentum (free plays).
+        /// No tiene side effects ni consume recursos; úsalo desde UI y auto-end turn.
+        /// </summary>
+        public bool CanPlayCard(CardDeckEntry entry)
+        {
+            if (_player == null || entry == null)
+            {
+                return false;
+            }
+
+            if (_phase != CombatPhase.PlayerTurn || IsCombatFinished)
+            {
+                return false;
+            }
+
+            CardDefinition activeCard = GetActiveCardDefinition(entry);
+            if (activeCard == null)
+            {
+                return false;
+            }
+
+            return _freePlays > 0 || _player.CanPayEnergy(activeCard.Cost);
         }
 
         private int CalculateIntentValue(EnemyMove move)
