@@ -21,6 +21,9 @@ namespace RoguelikeCardBattler.Run
         public HashSet<int> CompletedNodes { get; } = new HashSet<int>();
         public HashSet<int> AvailableNodes { get; } = new HashSet<int>();
         public List<CardDeckEntry> Deck { get; } = new List<CardDeckEntry>();
+        public int PlayerMaxHP { get; set; }
+        public int PlayerCurrentHP { get; set; }
+        public bool HasPlayerHPInitialized { get; set; }
         public bool PendingReturnFromBattle { get; set; }
         public NodeOutcome LastNodeOutcome { get; set; } = NodeOutcome.None;
         public bool RunFailed { get; set; }
@@ -51,6 +54,9 @@ namespace RoguelikeCardBattler.Run
             CurrentPositionNodeId = -1;
             Gold = 0;
             Deck.Clear();
+            PlayerMaxHP = 0;
+            PlayerCurrentHP = 0;
+            HasPlayerHPInitialized = false;
             PendingReturnFromBattle = false;
             LastNodeOutcome = NodeOutcome.None;
             RunFailed = false;
@@ -76,6 +82,22 @@ namespace RoguelikeCardBattler.Run
 
                 Deck.Add(entry.Clone());
             }
+        }
+
+        /// <summary>
+        /// Inicializa los valores de HP del jugador una sola vez por run.
+        /// Esto permite persistir HP entre combates sin depender de escenas.
+        /// </summary>
+        public void EnsurePlayerHpInitialized(int defaultMaxHp)
+        {
+            if (HasPlayerHPInitialized || defaultMaxHp <= 0)
+            {
+                return;
+            }
+
+            PlayerMaxHP = defaultMaxHp;
+            PlayerCurrentHP = defaultMaxHp;
+            HasPlayerHPInitialized = true;
         }
 
         public void AddCardToDeck(CardDeckEntry entry)
