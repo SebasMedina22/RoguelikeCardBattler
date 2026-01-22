@@ -24,6 +24,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private int energyPerTurn = 3;
         [SerializeField, Min(1)] private int startingHandSize = 5;
         [SerializeField, Min(1)] private int cardsPerTurn = 5;
+        [SerializeField, Min(1)] private int maxHandSize = 7;
         [Header("World Switch Settings")]
         [SerializeField, Min(1)] private int maxWorldSwitchesPerCombat = 1;
         [SerializeField] private bool debugUnlimitedWorldSwitches = false;
@@ -67,6 +68,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int PlayerDiscardPileCount => _player?.DiscardPileCount ?? 0;
         public int PlayerHandCount => _player?.HandCount ?? 0;
         public int PlayerBlock => _player?.Block ?? 0;
+        public int MaxHandSize => _player?.MaxHandSize ?? maxHandSize;
         public int EnemyHP => _enemy?.CurrentHP ?? 0;
         public int EnemyMaxHP => _enemy?.MaxHP ?? enemyDefinition?.MaxHP ?? 0;
         public int EnemyBlock => _enemy?.Block ?? 0;
@@ -95,6 +97,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// Evento disparado cuando el enemigo recibe daño > 0. Valor es el daño final aplicado a HP.
         /// </summary>
         public event Action<int> EnemyTookDamage;
+
+        /// <summary>
+        /// Evento disparado cuando el jugador intenta robar con la mano llena.
+        /// </summary>
+        public event Action<int> PlayerHandLimitReached;
 
         private void Start()
         {
@@ -157,7 +164,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int maxHp = _initialPlayerMaxHpOverride.HasValue
                 ? Mathf.Max(1, _initialPlayerMaxHpOverride.Value)
                 : playerMaxHP;
-            _player = new PlayerCombatActor("player", playerDisplayName, maxHp, energyPerTurn, starterDeck, _random);
+            _player = new PlayerCombatActor("player", playerDisplayName, maxHp, energyPerTurn, starterDeck, maxHandSize, _random);
             if (_initialPlayerHpOverride.HasValue)
             {
                 int desiredHp = Mathf.Clamp(_initialPlayerHpOverride.Value, 1, _player.MaxHP);
@@ -174,6 +181,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _actionQueue = new ActionQueue();
             _phase = CombatPhase.None;
             _enemySequenceCursor = 0;
+
+            _player.HandLimitReached += OnPlayerHandLimitReached;
             _worldSwitchesUsed = 0;
             _freePlays = 0;
             _initialized = true;
@@ -214,6 +223,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 InitializeCombat();
             }
+        }
+
+        private void OnPlayerHandLimitReached(int maxHandSize)
+        {
+            PlayerHandLimitReached?.Invoke(maxHandSize);
         }
 
         public bool PlayCard(CardDeckEntry cardEntry, ICombatActor explicitTarget = null)

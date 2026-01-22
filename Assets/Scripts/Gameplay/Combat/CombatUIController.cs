@@ -44,6 +44,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Button _changeWorldButton;
         private Text _endTurnLabel;
         private Text _changeWorldLabel;
+        private Text _handLimitText;
         private RectTransform _handContainer;
         private Image _playerAvatarImage;
         private Image _enemyAvatarImage;
@@ -68,7 +69,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private float heroAttackFps = 16f;
         private Text _hitFeedbackText;
         private float _hitFeedbackTimer;
-        private const float HitFeedbackDuration = 0.85f;
+        // Tiempos de feedback visual ajustables por diseño sin tocar gameplay.
+        [Header("Feedback Timing")]
+        [SerializeField, Min(0.1f)] private float hitFeedbackDuration = 0.85f;
         private SpriteFrameAnimatorUI _playerAnimator;
         private Image _playerAvatarSpriteImage;
         private bool _isPlayingAttack;
@@ -81,6 +84,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Image _energyPanelImage;
         private Image _worldPanelImage;
         private Coroutine _panelFlashRoutine;
+        private float _handLimitTimer;
+        private float _handLimitCooldown;
+        private float _lastHandWidth;
+        private int _lastHandCount = -1;
 
         // Layout/estilo del HUD: constantes para mantener jerarquía visual y escalado.
         private const float TopBarMinY = 0.92f;
@@ -99,6 +106,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private static readonly Color DisabledLabelColor = new Color(0.75f, 0.75f, 0.75f, 0.7f);
         private static readonly Color WarningLabelColor = new Color(1f, 0.6f, 0.6f, 1f);
         private static readonly Color HudFlashColor = new Color(1f, 0.4f, 0.4f, 0.9f);
+        [SerializeField, Min(0.1f)] private float handLimitToastDuration = 0.7f;
+        [SerializeField, Min(0f)] private float handLimitToastCooldown = 0.6f;
+        private const float HandCardWidthBase = 230f;
+        private const float HandCardHeightBase = 130f;
+        private const float HandCardWidthMin = 150f;
+        private const float HandCardHeightMin = 96f;
+        private const float HandSpacingBase = 12f;
+        private const float HandSpacingMin = 4f;
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
@@ -139,6 +154,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 turnManager.PlayerHitEffectiveness += OnPlayerHitEffectiveness;
                 turnManager.EnemyTookDamage += OnEnemyTookDamage;
+                turnManager.PlayerHandLimitReached += OnPlayerHandLimitReached;
             }
         }
 
@@ -148,6 +164,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 turnManager.PlayerHitEffectiveness -= OnPlayerHitEffectiveness;
                 turnManager.EnemyTookDamage -= OnEnemyTookDamage;
+                turnManager.PlayerHandLimitReached -= OnPlayerHandLimitReached;
             }
         }
 
@@ -161,6 +178,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             UpdateInfoTexts();
             SyncHandButtons();
             UpdateHitFeedbackTimer();
+            UpdateHandLimitTimer();
         }
 
         private void EnsureEventSystem()
@@ -343,6 +361,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             layout.padding = new RectOffset(16, 16, 12, 12);
             _handContainer = handPanel;
 
+
             _playerHpLabel = CreateText("PlayerHpLabel", _playerAvatarImage.rectTransform, "0/0", 24, TextAnchor.LowerCenter);
             RectTransform playerHpRect = _playerHpLabel.GetComponent<RectTransform>();
             playerHpRect.anchorMin = new Vector2(0.1f, -0.15f);
@@ -380,6 +399,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             hitRect.offsetMin = Vector2.zero;
             hitRect.offsetMax = Vector2.zero;
             _hitFeedbackText.gameObject.SetActive(false);
+
+            // Toast para límite de mano: visible y centrado en el battlefield.
+            _handLimitText = CreateText("HandLimitText", battlefield, "", 28, TextAnchor.UpperCenter);
+            _handLimitText.fontStyle = FontStyle.Bold;
+            RectTransform handLimitRect = _handLimitText.GetComponent<RectTransform>();
+            handLimitRect.anchorMin = new Vector2(0.35f, 0.86f);
+            handLimitRect.anchorMax = new Vector2(0.65f, 0.93f);
+            handLimitRect.offsetMin = Vector2.zero;
+            handLimitRect.offsetMax = Vector2.zero;
+            _handLimitText.color = Color.white;
+            _handLimitText.gameObject.SetActive(false);
 
             _drawPileText = CreateCornerCounter(bottomBar, new Vector2(0.02f, 0.05f), new Vector2(0.14f, 0.32f), "Draw: 0");
             _discardPileText = CreateCornerCounter(bottomBar, new Vector2(0.84f, 0.05f), new Vector2(0.14f, 0.32f), "Discard: 0");
@@ -598,14 +628,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             buttonGO.transform.SetParent(parent, false);
 
             RectTransform rect = buttonGO.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(230, 130);
+            rect.sizeDelta = new Vector2(HandCardWidthBase, HandCardHeightBase);
 
             Image image = buttonGO.GetComponent<Image>();
             image.color = CardButtonNormalColor;
 
             LayoutElement layout = buttonGO.GetComponent<LayoutElement>();
-            layout.preferredWidth = 230;
-            layout.preferredHeight = 130;
+            layout.preferredWidth = HandCardWidthBase;
+            layout.preferredHeight = HandCardHeightBase;
 
             Button button = buttonGO.GetComponent<Button>();
 
@@ -770,6 +800,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     image.color = binding.Button.interactable ? CardButtonNormalColor : CardButtonDisabledColor;
                 }
             }
+
+            UpdateHandLayout();
         }
 
         private void UpdateHitFeedbackTimer()
@@ -783,6 +815,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (_hitFeedbackTimer <= 0f)
             {
                 _hitFeedbackText.gameObject.SetActive(false);
+            }
+        }
+
+        private void UpdateHandLimitTimer()
+        {
+            if (_handLimitText == null || !_handLimitText.gameObject.activeSelf)
+            {
+                return;
+            }
+
+            _handLimitTimer -= Time.deltaTime;
+            if (_handLimitTimer <= 0f)
+            {
+                _handLimitText.gameObject.SetActive(false);
             }
         }
 
@@ -808,7 +854,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             _hitFeedbackText.text = message;
             _hitFeedbackText.gameObject.SetActive(true);
-            _hitFeedbackTimer = HitFeedbackDuration;
+            _hitFeedbackTimer = hitFeedbackDuration;
         }
 
         private void OnEnemyTookDamage(int damage)
@@ -1072,6 +1118,112 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (!changed)
             {
                 FlashPanel(_worldPanelImage);
+            }
+        }
+
+        private void OnPlayerHandLimitReached(int maxHandSize)
+        {
+            if (_handLimitText == null)
+            {
+                return;
+            }
+
+            if (_handLimitCooldown > 0f)
+            {
+                return;
+            }
+
+            _handLimitText.text = $"Hand limit: {maxHandSize}";
+            _handLimitText.gameObject.SetActive(true);
+            _handLimitText.transform.SetAsLastSibling();
+            _handLimitTimer = handLimitToastDuration;
+            _handLimitCooldown = handLimitToastCooldown;
+            StartCoroutine(HandLimitCooldownRoutine());
+        }
+
+        private IEnumerator HandLimitCooldownRoutine()
+        {
+            while (_handLimitCooldown > 0f)
+            {
+                _handLimitCooldown -= Time.deltaTime;
+                yield return null;
+            }
+
+            _handLimitCooldown = 0f;
+        }
+
+        /// <summary>
+        /// Ajusta tamaño y espaciado de la mano para mantenerla centrada y visible.
+        /// Usa preferredWidth/Height (no sizeDelta) porque HorizontalLayoutGroup se guía por LayoutElement.
+        /// Se fuerza un rebuild para evitar que el layout quede desplazado.
+        /// </summary>
+        private void UpdateHandLayout()
+        {
+            if (_handContainer == null)
+            {
+                return;
+            }
+
+            int count = _cardButtons.Count;
+            float availableWidth = _handContainer.rect.width;
+            if (count <= 0 || availableWidth <= 0f)
+            {
+                return;
+            }
+
+            if (Mathf.Abs(availableWidth - _lastHandWidth) < 1f && count == _lastHandCount)
+            {
+                return;
+            }
+
+            _lastHandWidth = availableWidth;
+            _lastHandCount = count;
+
+            float padding = 32f; // coincide con padding izquierdo/derecho del layout
+            float targetWidth = Mathf.Max(0f, availableWidth - padding);
+            float spacing = HandSpacingBase;
+            float cardWidth = HandCardWidthBase;
+
+            float totalWidth = (count * cardWidth) + ((count - 1) * spacing);
+            if (totalWidth > targetWidth)
+            {
+                float scale = targetWidth / totalWidth;
+                cardWidth = Mathf.Max(HandCardWidthMin, cardWidth * scale);
+                spacing = Mathf.Max(HandSpacingMin, spacing * scale);
+            }
+
+            float cardHeight = Mathf.Max(HandCardHeightMin, HandCardHeightBase * (cardWidth / HandCardWidthBase));
+
+            HorizontalLayoutGroup layout = _handContainer.GetComponent<HorizontalLayoutGroup>();
+            if (layout != null)
+            {
+                layout.spacing = spacing;
+            }
+
+            bool layoutChanged = false;
+            foreach (CardButtonBinding binding in _cardButtons)
+            {
+                if (binding?.Button == null)
+                {
+                    continue;
+                }
+
+                LayoutElement element = binding.Button.GetComponent<LayoutElement>();
+                if (element != null)
+                {
+                    if (!Mathf.Approximately(element.preferredWidth, cardWidth)
+                        || !Mathf.Approximately(element.preferredHeight, cardHeight))
+                    {
+                        element.preferredWidth = cardWidth;
+                        element.preferredHeight = cardHeight;
+                        layoutChanged = true;
+                    }
+                }
+            }
+
+            if (layoutChanged)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_handContainer);
             }
         }
 

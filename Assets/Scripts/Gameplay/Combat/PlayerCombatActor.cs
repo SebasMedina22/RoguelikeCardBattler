@@ -14,6 +14,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private readonly List<CardDeckEntry> _discardPile = new List<CardDeckEntry>();
         private readonly List<CardDeckEntry> _hand = new List<CardDeckEntry>();
         private readonly Random _random;
+        private readonly int _maxHandSize;
 
         public string Id { get; }
         public string DisplayName { get; }
@@ -22,6 +23,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public int Block { get; private set; }
         public int CurrentEnergy { get; private set; }
         public int MaxEnergy { get; }
+        public int MaxHandSize => _maxHandSize;
+
+        /// <summary>
+        /// Se dispara cuando se intenta robar con la mano llena.
+        /// La UI puede mostrar un aviso sin afectar la lógica de combate.
+        /// </summary>
+        public event Action<int> HandLimitReached;
 
         public IReadOnlyList<CardDeckEntry> Hand => _hand;
         public int DrawPileCount => _drawPile.Count;
@@ -34,6 +42,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int maxHP,
             int baseEnergy,
             IEnumerable<CardDeckEntry> startingDeck,
+            int maxHandSize,
             Random random)
         {
             Id = id;
@@ -43,6 +52,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             MaxEnergy = Math.Max(0, baseEnergy);
             CurrentEnergy = MaxEnergy;
             _random = random ?? new Random();
+            _maxHandSize = Math.Max(1, maxHandSize);
 
             if (startingDeck != null)
             {
@@ -127,8 +137,19 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return;
             }
 
+            bool notified = false;
             for (int i = 0; i < amount; i++)
             {
+                if (_hand.Count >= _maxHandSize)
+                {
+                    if (!notified)
+                    {
+                        HandLimitReached?.Invoke(_maxHandSize);
+                        notified = true;
+                    }
+                    break;
+                }
+
                 CardDeckEntry card = DrawSingleCard();
                 if (card == null)
                 {

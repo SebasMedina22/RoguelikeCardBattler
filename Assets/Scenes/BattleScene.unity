@@ -389,10 +389,11 @@ MonoBehaviour:
   playerDisplayName: Test Pilot
   playerMaxHP: 60
   energyPerTurn: 3
-  startingHandSize: 5
-  cardsPerTurn: 5
+  startingHandSize: 1
+  cardsPerTurn: 1
+  maxHandSize: 1
   maxWorldSwitchesPerCombat: 1
-  debugUnlimitedWorldSwitches: 0
+  debugUnlimitedWorldSwitches: 1
   currentWorld: 0
 --- !u!114 &876543212
 MonoBehaviour:
@@ -421,6 +422,10 @@ MonoBehaviour:
   worldAGroundColor: {r: 0.02, g: 0.07, b: 0.09, a: 1}
   worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}
   worldBGroundColor: {r: 0.09, g: 0.02, b: 0.04, a: 1}
+  worldASkySprite: {fileID: 0}
+  worldAGroundSprite: {fileID: 0}
+  worldBSkySprite: {fileID: 0}
+  worldBGroundSprite: {fileID: 0}
   heroIdleFrames:
   - {fileID: -8868803461578586678, guid: be9bfb6f1161b924d9b9258bd18566d8, type: 3}
   heroAttackFrames:
@@ -441,6 +446,8 @@ MonoBehaviour:
   - {fileID: 5321023335126192047, guid: 67ee2dba17c10c74781dfee5d1cd4fd5, type: 3}
   - {fileID: 1819059919184003959, guid: 98ccda914973d7f468ca9f0077bc4a4b, type: 3}
   heroAttackFps: 16
+  enemyHitFrames: []
+  enemyHitFps: 16
 --- !u!4 &876543213
 Transform:
   m_ObjectHideFlags: 0

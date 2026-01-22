@@ -16,6 +16,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 maxHP: 20,
                 baseEnergy: 3,
                 startingDeck: deck,
+                maxHandSize: 7,
                 random: new Random(0));
         }
 
