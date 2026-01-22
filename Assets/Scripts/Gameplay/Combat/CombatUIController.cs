@@ -42,6 +42,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Text _worldSwitchesText;
         private Button _endTurnButton;
         private Button _changeWorldButton;
+        private Text _endTurnLabel;
+        private Text _changeWorldLabel;
         private RectTransform _handContainer;
         private Image _playerAvatarImage;
         private Image _enemyAvatarImage;
@@ -76,6 +78,27 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private SpriteFrameAnimatorUI _enemyAnimator;
         private Image _enemyAvatarSpriteImage;
         private Coroutine _enemyHitRoutine;
+        private Image _energyPanelImage;
+        private Image _worldPanelImage;
+        private Coroutine _panelFlashRoutine;
+
+        // Layout/estilo del HUD: constantes para mantener jerarquía visual y escalado.
+        private const float TopBarMinY = 0.92f;
+        private const float BattlefieldMinY = 0.28f;
+        private const float BattlefieldMaxY = 0.9f;
+        private const float BottomBarMaxY = 0.28f;
+
+        private static readonly Color HudPanelColor = new Color(0.03f, 0.03f, 0.05f, 0.65f);
+        private static readonly Color HudPanelSoftColor = new Color(0.03f, 0.03f, 0.05f, 0.45f);
+        private static readonly Color ButtonNormalColor = new Color(0.22f, 0.22f, 0.32f, 0.95f);
+        private static readonly Color ButtonDisabledColor = new Color(0.12f, 0.12f, 0.16f, 0.7f);
+        private static readonly Color ButtonPressedColor = new Color(0.35f, 0.35f, 0.45f, 1f);
+        private static readonly Color ButtonHighlightColor = new Color(0.3f, 0.3f, 0.4f, 1f);
+        private static readonly Color CardButtonNormalColor = new Color(0.18f, 0.18f, 0.25f, 0.95f);
+        private static readonly Color CardButtonDisabledColor = new Color(0.1f, 0.1f, 0.14f, 0.6f);
+        private static readonly Color DisabledLabelColor = new Color(0.75f, 0.75f, 0.75f, 0.7f);
+        private static readonly Color WarningLabelColor = new Color(1f, 0.6f, 0.6f, 1f);
+        private static readonly Color HudFlashColor = new Color(1f, 0.4f, 0.4f, 0.9f);
 
         private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
         private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
@@ -224,12 +247,30 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             CreateBackgroundLayers(canvasRect);
 
+            // Layout principal del HUD:
+            // - TopBar: estado de mundo y switches (ligero, lectura rápida).
+            // - Battlefield: zona central sin overlap para avatares/intentos.
+            // - BottomBar: mano centrada + energía y botones principales.
+            RectTransform topBar = CreatePanel(
+                "TopBar",
+                canvasRect,
+                new Vector2(0f, TopBarMinY),
+                new Vector2(1f, 1f),
+                HudPanelSoftColor);
+
             RectTransform battlefield = CreatePanel(
                 "BattlefieldPanel",
                 canvasRect,
-                new Vector2(0.05f, 0.35f),
-                new Vector2(0.95f, 0.9f),
-                new Color(0.04f, 0.07f, 0.11f, 0.6f));
+                new Vector2(0.04f, BattlefieldMinY),
+                new Vector2(0.96f, BattlefieldMaxY),
+                new Color(0.04f, 0.07f, 0.11f, 0.55f));
+
+            RectTransform bottomBar = CreatePanel(
+                "BottomBar",
+                canvasRect,
+                new Vector2(0f, 0f),
+                new Vector2(1f, BottomBarMaxY),
+                HudPanelSoftColor);
 
             _playerAvatarImage = CreateAvatar(
                 "PlayerAvatar",
@@ -268,28 +309,30 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             RectTransform energyPanel = CreatePanel(
                 "EnergyPanel",
-                canvasRect,
-                new Vector2(0.02f, 0.82f),
+                bottomBar,
+                new Vector2(0.02f, 0.52f),
                 new Vector2(0.17f, 0.95f),
-                new Color(0.03f, 0.03f, 0.05f, 0.75f));
-            _playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.MiddleCenter);
-            _freePlaysText = CreateText("FreePlays", energyPanel, "Free Plays: 0", 18, TextAnchor.LowerCenter);
+                HudPanelColor);
+            _energyPanelImage = energyPanel.GetComponent<Image>();
+            _playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.UpperCenter);
+            _freePlaysText = CreateText("FreePlays", energyPanel, "Momentum: 0", 18, TextAnchor.LowerCenter);
 
             RectTransform worldPanel = CreatePanel(
                 "WorldPanel",
-                canvasRect,
-                new Vector2(0.42f, 0.82f),
-                new Vector2(0.58f, 0.95f),
-                new Color(0.03f, 0.03f, 0.05f, 0.75f));
-            _worldLabel = CreateText("WorldLabel", worldPanel, "World: A", 26, TextAnchor.MiddleCenter);
+                topBar,
+                new Vector2(0.38f, 0.1f),
+                new Vector2(0.62f, 0.9f),
+                HudPanelColor);
+            _worldPanelImage = worldPanel.GetComponent<Image>();
+            _worldLabel = CreateText("WorldLabel", worldPanel, "World: A", 24, TextAnchor.UpperCenter);
             _worldSwitchesText = CreateText("WorldSwitches", worldPanel, "Switches: 0/0", 18, TextAnchor.LowerCenter);
 
             RectTransform handPanel = CreatePanel(
                 "HandPanel",
-                canvasRect,
-                new Vector2(0.05f, 0.05f),
-                new Vector2(0.95f, 0.25f),
-                new Color(0.08f, 0.08f, 0.12f, 0.8f));
+                bottomBar,
+                new Vector2(0.18f, 0.12f),
+                new Vector2(0.82f, 0.95f),
+                new Color(0.08f, 0.08f, 0.12f, 0.75f));
             HorizontalLayoutGroup layout = handPanel.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.spacing = 12f;
@@ -297,6 +340,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             layout.childControlWidth = false;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = false;
+            layout.padding = new RectOffset(16, 16, 12, 12);
             _handContainer = handPanel;
 
             _playerHpLabel = CreateText("PlayerHpLabel", _playerAvatarImage.rectTransform, "0/0", 24, TextAnchor.LowerCenter);
@@ -315,18 +359,19 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             enemyHpRect.offsetMax = Vector2.zero;
             _enemyTypeLabel = CreateText("EnemyTypeLabel", _enemyAvatarImage.rectTransform, "Type: —", 18, TextAnchor.UpperCenter);
             RectTransform enemyTypeRect = _enemyTypeLabel.GetComponent<RectTransform>();
-            enemyTypeRect.anchorMin = new Vector2(0.05f, 1.22f);
-            enemyTypeRect.anchorMax = new Vector2(0.95f, 1.35f);
+            enemyTypeRect.anchorMin = new Vector2(0.05f, 0.76f);
+            enemyTypeRect.anchorMax = new Vector2(0.95f, 0.88f);
             enemyTypeRect.offsetMin = Vector2.zero;
             enemyTypeRect.offsetMax = Vector2.zero;
             CreateBlockUI(_enemyAvatarImage.rectTransform, "Enemy", out _enemyBlockOverlay, out _enemyBlockText);
 
-            _enemyIntentText = CreateText("EnemyIntent", _enemyAvatarImage.rectTransform, "?", 26, TextAnchor.LowerCenter);
-            RectTransform intentRect = _enemyIntentText.GetComponent<RectTransform>();
-            intentRect.anchorMin = new Vector2(0.05f, 1.02f);
-            intentRect.anchorMax = new Vector2(0.95f, 1.2f);
-            intentRect.offsetMin = Vector2.zero;
-            intentRect.offsetMax = Vector2.zero;
+            RectTransform intentPanel = CreatePanel(
+                "EnemyIntentPanel",
+                _enemyAvatarImage.rectTransform,
+                new Vector2(0.1f, 1.02f),
+                new Vector2(0.9f, 1.2f),
+                HudPanelColor);
+            _enemyIntentText = CreateText("EnemyIntent", intentPanel, "?", 24, TextAnchor.MiddleCenter);
 
             _hitFeedbackText = CreateText("HitFeedback", battlefield, "", 30, TextAnchor.UpperCenter);
             RectTransform hitRect = _hitFeedbackText.GetComponent<RectTransform>();
@@ -336,37 +381,41 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             hitRect.offsetMax = Vector2.zero;
             _hitFeedbackText.gameObject.SetActive(false);
 
-            _drawPileText = CreateCornerCounter(canvasRect, new Vector2(0.02f, 0.02f), "Draw: 0");
-            _discardPileText = CreateCornerCounter(canvasRect, new Vector2(0.82f, 0.02f), "Discard: 0");
+            _drawPileText = CreateCornerCounter(bottomBar, new Vector2(0.02f, 0.05f), new Vector2(0.14f, 0.32f), "Draw: 0");
+            _discardPileText = CreateCornerCounter(bottomBar, new Vector2(0.84f, 0.05f), new Vector2(0.14f, 0.32f), "Discard: 0");
 
             _endTurnButton = CreateButton(
                 "EndTurnButton",
-                canvasRect,
-                new Vector2(0.83f, 0.88f),
-                new Vector2(0.97f, 0.97f),
+                bottomBar,
+                new Vector2(0.82f, 0.52f),
+                new Vector2(0.98f, 0.95f),
                 "End Turn");
+            _endTurnLabel = _endTurnButton.GetComponentInChildren<Text>();
             _endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
+            ApplyButtonStyle(_endTurnButton);
 
             _changeWorldButton = CreateButton(
                 "ChangeWorldButton",
-                canvasRect,
-                new Vector2(0.64f, 0.88f),
-                new Vector2(0.8f, 0.97f),
+                topBar,
+                new Vector2(0.74f, 0.1f),
+                new Vector2(0.98f, 0.9f),
                 "Change World");
+            _changeWorldLabel = _changeWorldButton.GetComponentInChildren<Text>();
             _changeWorldButton.onClick.AddListener(OnChangeWorldButtonClicked);
+            ApplyButtonStyle(_changeWorldButton);
 
             InitializePlayerAnimator();
             UpdateWorldVisuals();
         }
-        private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, string label)
+        private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, Vector2 size, string label)
         {
             RectTransform panel = CreatePanel(
                 label + "_Panel",
                 parent,
                 anchorMin,
-                anchorMin + new Vector2(0.15f, 0.09f),
-                new Color(0.03f, 0.03f, 0.05f, 0.65f));
-            return CreateText(label + "_Text", panel, label, 22, TextAnchor.MiddleCenter);
+                anchorMin + size,
+                HudPanelColor);
+            return CreateText(label + "_Text", panel, label, 20, TextAnchor.MiddleCenter);
         }
 
 
@@ -507,11 +556,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             rect.offsetMax = Vector2.zero;
 
             Image image = buttonGO.GetComponent<Image>();
-            image.color = new Color(0.25f, 0.25f, 0.35f, 0.95f);
+            image.color = ButtonNormalColor;
 
             Button button = buttonGO.GetComponent<Button>();
+            button.targetGraphic = image;
 
-            Text labelText = CreateText("Label", rect, label, 28, TextAnchor.MiddleCenter);
+            Text labelText = CreateText("Label", rect, label, 26, TextAnchor.MiddleCenter);
             labelText.fontStyle = FontStyle.Bold;
 
             return button;
@@ -533,8 +583,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             blockText = CreateText(prefix + "_BlockText", parent, "Block 0", 20, TextAnchor.MiddleCenter);
             RectTransform blockRect = blockText.GetComponent<RectTransform>();
-            blockRect.anchorMin = new Vector2(0.15f, -0.32f);
-            blockRect.anchorMax = new Vector2(0.85f, -0.18f);
+            blockRect.anchorMin = new Vector2(0.12f, 0.02f);
+            blockRect.anchorMax = new Vector2(0.88f, 0.16f);
             blockRect.offsetMin = Vector2.zero;
             blockRect.offsetMax = Vector2.zero;
         }
@@ -551,7 +601,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             rect.sizeDelta = new Vector2(230, 130);
 
             Image image = buttonGO.GetComponent<Image>();
-            image.color = new Color(0.18f, 0.18f, 0.25f, 0.95f);
+            image.color = CardButtonNormalColor;
 
             LayoutElement layout = buttonGO.GetComponent<LayoutElement>();
             layout.preferredWidth = 230;
@@ -571,6 +621,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             if (turnManager == null || !turnManager.IsPlayerTurn())
             {
+                FlashPanel(_energyPanelImage);
                 return;
             }
 
@@ -586,6 +637,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             if (!turnManager.TryPrepareCardPlay(entry, out PreparedCardPlay prepared))
             {
+                FlashPanel(_energyPanelImage);
                 return;
             }
 
@@ -635,11 +687,23 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             bool playerTurn = turnManager.IsPlayerTurn();
             _endTurnButton.interactable = playerTurn && !turnManager.IsCombatFinished;
+            if (_endTurnLabel != null)
+            {
+                _endTurnLabel.color = _endTurnButton.interactable ? Color.white : DisabledLabelColor;
+            }
             bool worldSwitchAvailable = turnManager.DebugUnlimitedWorldSwitches
                 || turnManager.WorldSwitchesUsed < turnManager.MaxWorldSwitchesPerCombat;
             _changeWorldButton.interactable = playerTurn
                 && !turnManager.IsCombatFinished
                 && worldSwitchAvailable;
+            if (_changeWorldLabel != null)
+            {
+                _changeWorldLabel.color = _changeWorldButton.interactable ? Color.white : DisabledLabelColor;
+            }
+            if (_worldSwitchesText != null)
+            {
+                _worldSwitchesText.color = worldSwitchAvailable ? Color.white : WarningLabelColor;
+            }
             UpdateAvatarHighlight(playerTurn);
         }
 
@@ -696,6 +760,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 bool enoughEnergy = activeCard != null && currentEnergy >= activeCard.Cost;
                 binding.Button.interactable = canInteract && enoughEnergy;
                 binding.Label.text = BuildCardLabel(binding.CardEntry);
+                if (binding.Label != null)
+                {
+                    binding.Label.color = binding.Button.interactable ? Color.white : DisabledLabelColor;
+                }
+                Image image = binding.Button.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = binding.Button.interactable ? CardButtonNormalColor : CardButtonDisabledColor;
+                }
             }
         }
 
@@ -998,8 +1071,48 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             SyncHandButtons(forceRebuild: true);
             if (!changed)
             {
-                Debug.LogWarning("Cannot change world: limit reached.");
+                FlashPanel(_worldPanelImage);
             }
+        }
+
+        private void ApplyButtonStyle(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = ButtonNormalColor;
+            colors.highlightedColor = ButtonHighlightColor;
+            colors.pressedColor = ButtonPressedColor;
+            colors.disabledColor = ButtonDisabledColor;
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+        }
+
+        private void FlashPanel(Image panelImage)
+        {
+            if (panelImage == null)
+            {
+                return;
+            }
+
+            if (_panelFlashRoutine != null)
+            {
+                StopCoroutine(_panelFlashRoutine);
+            }
+            _panelFlashRoutine = StartCoroutine(FlashPanelRoutine(panelImage));
+        }
+
+        private IEnumerator FlashPanelRoutine(Image panelImage)
+        {
+            Color original = panelImage.color;
+            panelImage.color = HudFlashColor;
+            yield return new WaitForSeconds(0.12f);
+            panelImage.color = original;
+            _panelFlashRoutine = null;
         }
 
         private void UpdateWorldVisuals()
