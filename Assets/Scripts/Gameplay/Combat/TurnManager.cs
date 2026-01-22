@@ -40,6 +40,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private CombatPhase _phase = CombatPhase.None;
         private bool _initialized;
         private bool _externalConfigApplied;
+        private int? _initialPlayerHpOverride;
+        private int? _initialPlayerMaxHpOverride;
         private readonly System.Random _random = new System.Random();
         private int _enemySequenceCursor;
         private EnemyMove _plannedEnemyMove;
@@ -152,7 +154,22 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return;
             }
 
-            _player = new PlayerCombatActor("player", playerDisplayName, playerMaxHP, energyPerTurn, starterDeck, _random);
+            int maxHp = _initialPlayerMaxHpOverride.HasValue
+                ? Mathf.Max(1, _initialPlayerMaxHpOverride.Value)
+                : playerMaxHP;
+            _player = new PlayerCombatActor("player", playerDisplayName, maxHp, energyPerTurn, starterDeck, _random);
+            if (_initialPlayerHpOverride.HasValue)
+            {
+                int desiredHp = Mathf.Clamp(_initialPlayerHpOverride.Value, 1, _player.MaxHP);
+                int damage = _player.MaxHP - desiredHp;
+                if (damage > 0)
+                {
+                    // Ajuste de HP inicial sin tocar mecánicas: aplicar daño directo al inicio.
+                    _player.TakeDamage(damage);
+                }
+            }
+            _initialPlayerHpOverride = null;
+            _initialPlayerMaxHpOverride = null;
             _enemy = new EnemyCombatActor(enemyDefinition);
             _actionQueue = new ActionQueue();
             _phase = CombatPhase.None;
@@ -168,7 +185,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// <summary>
         /// Configura el combate con un deck y enemigo específicos antes de inicializar.
         /// </summary>
-        public void ConfigureCombat(List<CardDeckEntry> deck, EnemyDefinition enemy, bool initializeImmediately = true)
+        public void ConfigureCombat(
+            List<CardDeckEntry> deck,
+            EnemyDefinition enemy,
+            int? playerCurrentHpOverride = null,
+            int? playerMaxHpOverride = null,
+            bool initializeImmediately = true)
         {
             if (deck == null || deck.Count == 0)
             {
@@ -184,6 +206,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             starterDeck = new List<CardDeckEntry>(deck);
             enemyDefinition = enemy;
+            _initialPlayerHpOverride = playerCurrentHpOverride;
+            _initialPlayerMaxHpOverride = playerMaxHpOverride;
             _externalConfigApplied = true;
 
             if (initializeImmediately)

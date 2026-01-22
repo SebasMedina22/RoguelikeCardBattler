@@ -83,6 +83,13 @@ namespace RoguelikeCardBattler.Run
         {
             _reported = true;
             RunSession session = RunSession.GetOrCreate();
+            if (_turnManager != null)
+            {
+                // Persistir HP del jugador entre combates (estado de run, no escena).
+                session.State.PlayerMaxHP = _turnManager.PlayerMaxHP;
+                session.State.PlayerCurrentHP = _turnManager.PlayerHP;
+                session.State.HasPlayerHPInitialized = true;
+            }
             session.State.LastNodeOutcome = victory ? RunState.NodeOutcome.Victory : RunState.NodeOutcome.Defeat;
             session.State.PendingReturnFromBattle = true;
             session.State.RunFailed = !victory;
@@ -129,6 +136,9 @@ namespace RoguelikeCardBattler.Run
                 }
             }
 
+            session.State.EnsurePlayerHpInitialized(_turnManager.PlayerMaxHP);
+            int? currentHp = session.State.HasPlayerHPInitialized ? session.State.PlayerCurrentHP : null;
+            int? maxHp = session.State.HasPlayerHPInitialized ? session.State.PlayerMaxHP : null;
             var deck = session.State.GetDeckSnapshot();
             if (deck.Count == 0)
             {
@@ -145,7 +155,7 @@ namespace RoguelikeCardBattler.Run
 #if UNITY_EDITOR
             Debug.Log($"[BattleFlow] Deck size: {deck.Count}");
 #endif
-            _turnManager.ConfigureCombat(deck, config.DefaultEnemy);
+            _turnManager.ConfigureCombat(deck, config.DefaultEnemy, currentHp, maxHp);
             _configured = true;
         }
 
