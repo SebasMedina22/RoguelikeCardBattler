@@ -28,6 +28,7 @@ namespace RoguelikeCardBattler.Run
         private RectTransform _resolvePanel;
         private RectTransform _defeatPanel;
         private RectTransform _rewardPanel;
+        private RectTransform _actoCompletedPanel;
         private Text _statusText;
         private Text _titleText;
         private readonly List<Button> _nodeButtons = new List<Button>();
@@ -102,9 +103,11 @@ namespace RoguelikeCardBattler.Run
             _resolvePanel = CreatePanel("NodeResolvePanel", _root, new Color(0f, 0f, 0f, 0.6f), true);
             _defeatPanel = CreatePanel("DefeatPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
             _rewardPanel = CreatePanel("RewardPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
+            _actoCompletedPanel = CreatePanel("ActoCompletedPanel", _root, new Color(0f, 0f, 0f, 0.7f), true);
             _resolvePanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(false);
             _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
 
             _titleText = CreateText("Title", _mapPanel, "Run - Acto 1 (placeholder)", 28, TextAnchor.UpperCenter);
             RectTransform titleRect = _titleText.GetComponent<RectTransform>();
@@ -120,6 +123,7 @@ namespace RoguelikeCardBattler.Run
             BuildResolvePanel();
             BuildDefeatPanel();
             BuildRewardPanel();
+            BuildActoCompletedPanel();
 
 #if UNITY_EDITOR
             RectTransform contentRect = _mapPanel.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
@@ -464,6 +468,14 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
+            // Chequear si el acto fue completado (victoria contra boss)
+            if (_state.ActoCompleted)
+            {
+                _state.PendingReturnFromBattle = false;
+                ShowActoCompletedPanel();
+                return;
+            }
+
             if (_state.LastNodeOutcome == RunState.NodeOutcome.Victory)
             {
                 _state.PendingReturnFromBattle = false;
@@ -525,8 +537,19 @@ namespace RoguelikeCardBattler.Run
             _mapPanel.gameObject.SetActive(false);
             _resolvePanel.gameObject.SetActive(false);
             _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(true);
             _defeatPanel.SetAsLastSibling();
+        }
+
+        private void ShowActoCompletedPanel()
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(true);
+            _actoCompletedPanel.SetAsLastSibling();
         }
 
         private void PrintMapDebugOnce()
@@ -693,6 +716,36 @@ namespace RoguelikeCardBattler.Run
                 {
                     _state.InitializeDeck(runCombatConfig.StarterDeck);
                 }
+                ShowMap();
+            });
+        }
+
+        private void BuildActoCompletedPanel()
+        {
+            Text actoTitle = CreateText("ActoTitle", _actoCompletedPanel, "¡Acto Completado!", 32, TextAnchor.UpperCenter);
+            RectTransform titleRect = actoTitle.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0.1f, 0.65f);
+            titleRect.anchorMax = new Vector2(0.9f, 0.8f);
+
+            Text actoBody = CreateText("ActoBody", _actoCompletedPanel, "Has derrotado al boss del Acto 1.\n¡Felicidades!", 20, TextAnchor.UpperCenter);
+            RectTransform bodyRect = actoBody.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0.1f, 0.45f);
+            bodyRect.anchorMax = new Vector2(0.9f, 0.65f);
+
+            Button menuButton = CreateButton("MenuButton", _actoCompletedPanel, "Volver al Menú");
+            RectTransform menuRect = menuButton.GetComponent<RectTransform>();
+            menuRect.anchorMin = new Vector2(0.3f, 0.25f);
+            menuRect.anchorMax = new Vector2(0.7f, 0.35f);
+            menuButton.onClick.AddListener(() =>
+            {
+                _state.Reset(_map);
+                if (runCombatConfig != null)
+                {
+                    _state.InitializeDeck(runCombatConfig.StarterDeck);
+                }
+#if UNITY_EDITOR
+                Debug.Log("[RunFlow] Volviendo al menú principal desde Acto Completado");
+#endif
                 ShowMap();
             });
         }

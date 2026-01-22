@@ -27,6 +27,7 @@ namespace RoguelikeCardBattler.Run
         public bool PendingReturnFromBattle { get; set; }
         public NodeOutcome LastNodeOutcome { get; set; } = NodeOutcome.None;
         public bool RunFailed { get; set; }
+        public bool ActoCompleted { get; set; } = false;
 
         public void EnsureInitialized(ActMap map)
         {
@@ -60,6 +61,7 @@ namespace RoguelikeCardBattler.Run
             PendingReturnFromBattle = false;
             LastNodeOutcome = NodeOutcome.None;
             RunFailed = false;
+            ActoCompleted = false;
             EnsureInitialized(map);
         }
 

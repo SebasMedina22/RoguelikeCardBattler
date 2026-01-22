@@ -83,6 +83,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public float CurrentEnemyAvatarScale => enemyDefinition != null ? Mathf.Max(0.1f, enemyDefinition.AvatarScale) : 1f;
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
+        public EnemyDefinition CurrentEnemyDefinition => enemyDefinition;
         public int FreePlays => _freePlays;
         public int WorldSwitchesUsed => _worldSwitchesUsed;
         public int MaxWorldSwitchesPerCombat => maxWorldSwitchesPerCombat;

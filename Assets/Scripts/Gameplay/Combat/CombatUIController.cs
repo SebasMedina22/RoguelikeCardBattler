@@ -142,7 +142,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             EnsureEventSystem();
-            BuildUI();
+            // Nota: BuildUI() se llamará desde Start(), no desde Awake(),
+            // para permitir que BattleFlowController configure el TurnManager correctamente primero
+        }
+
+        private void Start()
+        {
+            if (_canvas == null)
+            {
+                BuildUI();
+            }
         }
 
         private void OnEnable()
@@ -310,10 +319,31 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             Vector2 enemyOffset = new Vector2(0f, enemySpriteYOffset);
             float enemyScale = enemySpriteScale;
+            Sprite finalEnemySprite = enemySprite;
+#if UNITY_EDITOR
+            Debug.Log($"[CombatUI] enemySprite asignado en inspector: {enemySprite}");
+#endif
             if (turnManager != null)
             {
                 enemyOffset += turnManager.CurrentEnemyAvatarOffset;
                 enemyScale = turnManager.CurrentEnemyAvatarScale;
+                
+#if UNITY_EDITOR
+                Debug.Log($"[CombatUI] CurrentEnemyDefinition: {turnManager.CurrentEnemyDefinition}");
+                if (turnManager.CurrentEnemyDefinition != null)
+                {
+                    Debug.Log($"[CombatUI] Enemy Avatar from Definition: {turnManager.CurrentEnemyDefinition.Avatar}");
+                }
+#endif
+                
+                // Si no hay sprite asignado manualmente, intenta cargar desde la EnemyDefinition
+                if (finalEnemySprite == null && turnManager.CurrentEnemyDefinition != null)
+                {
+                    finalEnemySprite = turnManager.CurrentEnemyDefinition.Avatar;
+#if UNITY_EDITOR
+                    Debug.Log($"[CombatUI] Usando sprite del enemigo: {finalEnemySprite}");
+#endif
+                }
             }
 
             _enemyAvatarImage = CreateAvatar(
@@ -322,8 +352,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(0.7f, 0.1f),
                 new Vector2(0.95f, 0.9f),
                 new Color(0.95f, 0.4f, 0.4f),
-                "Slime",
-                enemySprite,
+                turnManager.CurrentEnemyDefinition?.EnemyName ?? "Enemy",
+                finalEnemySprite,
                 showEnemyBackground,
                 enemyScale,
                 enemyOffset);
