@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97a162302b3a4c76a900df910806fae3, type: 3}
+  m_Name: CombatBackgroundTheme_Act1
+  m_EditorClassIdentifier: 
+  layers:
+  - layerName: BG_Far
+    worldASprite: {fileID: 21300000, guid: a2d04d67b859524439e945022e0597ea, type: 3}
+    worldBSprite: {fileID: 21300000, guid: 86f917da3ee3c69479ab74f43290683f, type: 3}
+    parallaxFactor: 0.02
+  - layerName: BG_Mid
+    worldASprite: {fileID: 21300000, guid: 630227a2121b4a243888619c45836138, type: 3}
+    worldBSprite: {fileID: 21300000, guid: 680f8afb79e338a47a220c4a199533c5, type: 3}
+    parallaxFactor: 0.04
+  - layerName: BG_Mid2
+    worldASprite: {fileID: 21300000, guid: 31eddef01407d664bb7dc07175c9797f, type: 3}
+    worldBSprite: {fileID: 21300000, guid: e9313620d8b44324ea02f98a3ee892be, type: 3}
+    parallaxFactor: 0.06
+  - layerName: BG_Near
+    worldASprite: {fileID: 21300000, guid: 5363ba5ff6a4d25418d986e793446fdb, type: 3}
+    worldBSprite: {fileID: 21300000, guid: ca6841502e6bca24187cacb218fd5561, type: 3}
+    parallaxFactor: 0.1
+  - layerName: FG
+    worldASprite: {fileID: 21300000, guid: f0328e3028fda6341a7f32ca37ccd221, type: 3}
+    worldBSprite: {fileID: 21300000, guid: 0ceb3b7f07f8bff499799cb7cfa69fcd, type: 3}
+    parallaxFactor: 0.08
