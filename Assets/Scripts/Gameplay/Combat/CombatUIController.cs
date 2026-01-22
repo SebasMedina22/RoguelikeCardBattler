@@ -21,6 +21,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private Sprite enemySprite;
         [SerializeField] private bool showPlayerBackground = true;
         [SerializeField] private bool showEnemyBackground = true;
+        [Header("Background (Canvas Placeholder)")]
+        [SerializeField] private bool useCanvasBackground = false;
         [SerializeField] private float playerSpriteScale = 1f;
         [SerializeField] private float enemySpriteScale = 0.8f;
         [SerializeField] private float playerSpriteYOffset = -40f;
@@ -263,7 +265,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _canvas = CreateCanvas("CombatCanvas");
             RectTransform canvasRect = _canvas.GetComponent<RectTransform>();
 
-            CreateBackgroundLayers(canvasRect);
+            if (useCanvasBackground)
+            {
+                CreateBackgroundLayers(canvasRect);
+            }
 
             // Layout principal del HUD:
             // - TopBar: estado de mundo y switches (ligero, lectura rápida).
