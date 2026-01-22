@@ -15,7 +15,10 @@ namespace RoguelikeCardBattler.Run
             map.Nodes.Add(new MapNode(4, NodeType.Campfire));
             map.Nodes.Add(new MapNode(5, NodeType.Combat));
             map.Nodes.Add(new MapNode(6, NodeType.Event));
-            map.Nodes.Add(new MapNode(7, NodeType.Boss));
+            
+            // Nodo Boss - el enemigo específico será asignado desde RunSession
+            MapNode bossNode = new MapNode(7, NodeType.Boss);
+            map.Nodes.Add(bossNode);
 
             map.GetNode(0).Connections.Add(1);
             map.GetNode(0).Connections.Add(2);

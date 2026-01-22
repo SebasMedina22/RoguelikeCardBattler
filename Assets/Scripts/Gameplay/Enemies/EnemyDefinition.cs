@@ -5,7 +5,7 @@ using RoguelikeCardBattler.Gameplay.Combat;
 namespace RoguelikeCardBattler.Gameplay.Enemies
 {
     /// <summary>
-    /// ScriptableObject de enemigo: HP base, patrón de IA (RandomWeighted/Sequence), moves y tipo elemental.
+    /// ScriptableObject de enemigo: HP base, patrón de IA (RandomWeighted/Sequence), moves, tipo elemental y sprite.
     /// </summary>
     [CreateAssetMenu(menuName = "Enemies/Enemy Definition", fileName = "EnemyDefinition")]
     public class EnemyDefinition : ScriptableObject
@@ -20,6 +20,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         [SerializeField] private float avatarScale = 1f;
         [SerializeField] private Vector2 avatarOffset = Vector2.zero;
         [SerializeField] private ElementType elementType = ElementType.None;
+        [SerializeField] private Sprite avatar = null;
 
         public string Id => id;
         public string EnemyName => enemyName;
@@ -31,6 +32,7 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public float AvatarScale => avatarScale;
         public Vector2 AvatarOffset => avatarOffset;
         public ElementType ElementType => elementType;
+        public Sprite Avatar => avatar;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public void SetDebugData(

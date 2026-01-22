@@ -10,78 +10,66 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 338b6c04c3364f30af226f884a2d4f1d, type: 3}
-  m_Name: WeakSlime
+  m_Name: BossAct1
   m_EditorClassIdentifier: 
-  id: weak_slime
-  enemyName: Weak Slime
-  maxHP: 30
+  id: boss_act1
+  enemyName: Boss Act I
+  maxHP: 60
   baseBlock: 0
   aiPattern: 0
   tags:
-  - Basic
-  - Slime
+  - Boss
+  - Act1
   moves:
-  - id: slime_attack_8
-    moveName: Goo Jab
-    description: Deals 8 damage.
+  - id: boss_heavy_attack
+    moveName: Heavy Strike
+    description: Deals 20 damage.
     effects:
     - effectType: 0
-      value: 8
+      value: 20
       target: 1
       statusType: 0
       extraParams: []
     weight: 40
     sequenceIndex: -1
     intentType: 1
-  - id: slime_attack_12
-    moveName: Sticky Slam
-    description: Deals 12 damage.
+  - id: boss_debuff_attack
+    moveName: Weakening Blow
+    description: Deals 12 damage and applies Weak.
     effects:
     - effectType: 0
       value: 12
       target: 1
       statusType: 0
       extraParams: []
-    weight: 35
+    weight: 30
     sequenceIndex: -1
     intentType: 1
-  - id: slime_attack_15
-    moveName: Acid Burst
-    description: Deals 15 damage.
-    effects:
-    - effectType: 0
-      value: 15
-      target: 1
-      statusType: 0
-      extraParams: []
-    weight: 25
-    sequenceIndex: -1
-    intentType: 1
-  - id: slime_defend_6
-    moveName: Harden Goo
-    description: Gains 6 Block.
+  - id: boss_defend
+    moveName: Iron Guard
+    description: Gains 15 Block.
     effects:
     - effectType: 1
-      value: 6
+      value: 15
       target: 0
       statusType: 0
       extraParams: []
     weight: 20
     sequenceIndex: -1
     intentType: 2
-  - id: slime_defend_8
-    moveName: Reinforce Goo
-    description: Gains 8 Block.
+  - id: boss_recover
+    moveName: Regenerate
+    description: Recovers 10 HP.
     effects:
-    - effectType: 1
-      value: 8
+    - effectType: 2
+      value: 10
       target: 0
       statusType: 0
       extraParams: []
-    weight: 15
+    weight: 10
     sequenceIndex: -1
     intentType: 2
-  avatarScale: 0.85
-  avatarOffset: {x: 0, y: -25}
-  elementType: 3
-  avatar: {fileID: -5749342644988343902, guid: 8e4db1288f1d13e499b530f650ec7824, type: 3}
+  avatarScale: 1.2
+  avatarOffset: {x: 0, y: -30}
+  elementType: 0
+  avatar: {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
