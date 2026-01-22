@@ -783,12 +783,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             bool canInteract = turnManager.IsPlayerTurn();
-            int currentEnergy = turnManager.PlayerEnergy;
             foreach (CardButtonBinding binding in _cardButtons)
             {
-                CardDefinition activeCard = turnManager.GetActiveCardDefinition(binding.CardEntry);
-                bool enoughEnergy = activeCard != null && currentEnergy >= activeCard.Cost;
-                binding.Button.interactable = canInteract && enoughEnergy;
+                bool canPlay = turnManager.CanPlayCard(binding.CardEntry);
+                binding.Button.interactable = canInteract && canPlay;
                 binding.Label.text = BuildCardLabel(binding.CardEntry);
                 if (binding.Label != null)
                 {
