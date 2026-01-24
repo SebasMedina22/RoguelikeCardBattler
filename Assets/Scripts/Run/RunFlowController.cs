@@ -83,6 +83,11 @@ namespace RoguelikeCardBattler.Run
                 PrintMapDebugOnce();
                 return;
             }
+            if (_actoCompletedPanel.gameObject.activeSelf)
+            {
+                PrintMapDebugOnce();
+                return;
+            }
             if (_state.RunFailed)
             {
                 ShowDefeatPanel();
@@ -314,6 +319,7 @@ namespace RoguelikeCardBattler.Run
             _resolvePanel.gameObject.SetActive(false);
             _defeatPanel.gameObject.SetActive(false);
             _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
             _mapPanel.gameObject.SetActive(true);
             _titleText.text = "Mapa Acto 1 (placeholder)";
 
@@ -544,6 +550,7 @@ namespace RoguelikeCardBattler.Run
 
         private void ShowActoCompletedPanel()
         {
+            // Overlay modal: ocultamos el mapa y bloqueamos raycasts para que no haya input detrás.
             _mapPanel.gameObject.SetActive(false);
             _resolvePanel.gameObject.SetActive(false);
             _rewardPanel.gameObject.SetActive(false);
@@ -746,6 +753,7 @@ namespace RoguelikeCardBattler.Run
 #if UNITY_EDITOR
                 Debug.Log("[RunFlow] Volviendo al menú principal desde Acto Completado");
 #endif
+                // TODO: cuando exista MainMenuScene, cargarla aquí.
                 ShowMap();
             });
         }
