@@ -38,6 +38,7 @@ namespace RoguelikeCardBattler.Run
         {
             if (Instance != null && Instance != this)
             {
+                Instance.TryInheritBossFrom(this);
                 Destroy(gameObject);
                 return;
             }
@@ -49,8 +50,24 @@ namespace RoguelikeCardBattler.Run
                 Map = RunMapGenerator.GenerateAct1();
             }
             State.EnsureInitialized(Map);
-            
+
             // Asigna BossAct1 al nodo jefe si está configurado
+            AssignBossAct1();
+        }
+
+        /// <summary>
+        /// Reinicia la run en memoria para comenzar desde cero.
+        /// </summary>
+        public void ResetForNewRun()
+        {
+            Map = RunMapGenerator.GenerateAct1();
+            State.Reset(Map);
+            CombatConfig = null;
+            AssignBossAct1();
+        }
+
+        private void AssignBossAct1()
+        {
             if (bossAct1Enemy != null && Map != null && Map.Nodes.Count > 7)
             {
                 MapNode bossNode = Map.GetNode(7);
@@ -58,6 +75,20 @@ namespace RoguelikeCardBattler.Run
                 {
                     bossNode.SpecificEnemy = bossAct1Enemy;
                 }
+            }
+        }
+
+        private void TryInheritBossFrom(RunSession source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            if (bossAct1Enemy == null && source.bossAct1Enemy != null)
+            {
+                bossAct1Enemy = source.bossAct1Enemy;
+                AssignBossAct1();
             }
         }
 
