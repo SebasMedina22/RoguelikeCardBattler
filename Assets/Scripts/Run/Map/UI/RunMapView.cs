@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -9,6 +10,8 @@ namespace RoguelikeCardBattler.Run
     /// Construye y gestiona el mapa visual 2D ramificado dentro de RunScene.
     /// Posiciona nodos automáticamente por profundidad BFS y dibuja edges
     /// entre nodos conectados. RunFlowController delega la presentación aquí.
+    /// Also orchestrates juice animations: staggered entrance, pulse on
+    /// available nodes, edge highlights on unlock.
     /// </summary>
     public class RunMapView
     {
@@ -19,6 +22,7 @@ namespace RoguelikeCardBattler.Run
         private const float NodeWidth = 130f;
         private const float NodeHeight = 50f;
         private const float EdgeThickness = 3f;
+        private const float EntranceDelayPerDepth = 0.08f;
 
         public event Action<int> OnNodeClicked;
 
@@ -26,20 +30,24 @@ namespace RoguelikeCardBattler.Run
             new Dictionary<int, RunMapNodeView>();
         private readonly List<RunMapEdgeView> _edgeViews =
             new List<RunMapEdgeView>();
+        private readonly Dictionary<int, List<RunMapEdgeView>> _edgesByTarget =
+            new Dictionary<int, List<RunMapEdgeView>>();
+        private readonly Dictionary<int, int> _depthMap;
 
         /// <summary>
-        /// Construye todo el mapa visual: calcula layout, crea edges y nodos.
+        /// Construye todo el mapa visual: calcula layout, crea edges y nodos,
+        /// then plays the staggered entrance animation.
         /// </summary>
         public RunMapView(RectTransform parent, ActMap map, RunState state,
             Font font, Sprite whiteSprite)
         {
             RectTransform content = CreateScrollView(parent, whiteSprite);
 
-            Dictionary<int, int> depthMap = ComputeDepths(map);
+            _depthMap = ComputeDepths(map);
             int maxDepth = 0;
             Dictionary<int, List<int>> depthBuckets = new Dictionary<int, List<int>>();
 
-            foreach (KeyValuePair<int, int> kvp in depthMap)
+            foreach (KeyValuePair<int, int> kvp in _depthMap)
             {
                 if (kvp.Value > maxDepth)
                 {
@@ -59,34 +67,41 @@ namespace RoguelikeCardBattler.Run
 
             foreach (MapNode node in map.Nodes)
             {
-                if (!depthMap.ContainsKey(node.Id))
+                if (!_depthMap.ContainsKey(node.Id))
                 {
                     continue;
                 }
 
-                Vector2 fromPos = GetNodePosition(node.Id, depthMap, depthBuckets);
+                Vector2 fromPos = GetNodePosition(node.Id, _depthMap, depthBuckets);
                 foreach (int connId in node.Connections)
                 {
-                    if (!depthMap.ContainsKey(connId))
+                    if (!_depthMap.ContainsKey(connId))
                     {
                         continue;
                     }
 
-                    Vector2 toPos = GetNodePosition(connId, depthMap, depthBuckets);
+                    Vector2 toPos = GetNodePosition(connId, _depthMap, depthBuckets);
                     RunMapEdgeView edge = RunMapEdgeView.Create(
                         content, fromPos, toPos, EdgeThickness, whiteSprite);
                     _edgeViews.Add(edge);
+
+                    if (!_edgesByTarget.ContainsKey(connId))
+                    {
+                        _edgesByTarget[connId] = new List<RunMapEdgeView>();
+                    }
+
+                    _edgesByTarget[connId].Add(edge);
                 }
             }
 
             foreach (MapNode node in map.Nodes)
             {
-                if (!depthMap.ContainsKey(node.Id))
+                if (!_depthMap.ContainsKey(node.Id))
                 {
                     continue;
                 }
 
-                Vector2 pos = GetNodePosition(node.Id, depthMap, depthBuckets);
+                Vector2 pos = GetNodePosition(node.Id, _depthMap, depthBuckets);
                 RunMapNodeView nodeView = new RunMapNodeView(
                     node.Id, node.Type, content, pos,
                     new Vector2(NodeWidth, NodeHeight), font, whiteSprite,
@@ -94,32 +109,88 @@ namespace RoguelikeCardBattler.Run
                 _nodeViews[node.Id] = nodeView;
             }
 
+            // Play entrance FIRST so _entrancePlaying is true before Refresh.
+            // Refresh applies colors only (skips PulseLoop) during entrance.
+            // When each node's entrance completes, it re-calls ApplyState to start PulseLoop.
+            PlayEntranceAnimation();
             Refresh(state);
         }
 
         /// <summary>
         /// Actualiza los estados visuales de todos los nodos sin reconstruir el mapa.
-        /// Se llama cada vez que el mapa se muestra (ShowMap) o tras completar un nodo.
+        /// Detects state transitions: when a node becomes Available, incoming edges
+        /// get a golden highlight animation.
         /// </summary>
         public void Refresh(RunState state)
         {
             foreach (KeyValuePair<int, RunMapNodeView> kvp in _nodeViews)
             {
-                NodeState vs;
+                NodeState newState;
                 if (state.IsNodeCompleted(kvp.Key))
                 {
-                    vs = NodeState.Completed;
+                    newState = NodeState.Completed;
                 }
                 else if (state.IsNodeAvailable(kvp.Key))
                 {
-                    vs = NodeState.Available;
+                    newState = NodeState.Available;
                 }
                 else
                 {
-                    vs = NodeState.Locked;
+                    newState = NodeState.Locked;
                 }
 
-                kvp.Value.ApplyState(vs);
+                NodeState oldState = kvp.Value.CurrentState;
+                kvp.Value.ApplyState(newState);
+
+                if (newState == NodeState.Available && oldState != NodeState.Available)
+                {
+                    if (_edgesByTarget.TryGetValue(kvp.Key, out List<RunMapEdgeView> edges))
+                    {
+                        foreach (RunMapEdgeView edge in edges)
+                        {
+                            edge.AnimateHighlight();
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Kills all DOTween tweens on nodes and edges. Call before transitioning
+        /// to another scene to avoid "destroyed RectTransform" / Safe Mode warnings.
+        /// </summary>
+        public void Cleanup()
+        {
+            foreach (RunMapNodeView nodeView in _nodeViews.Values)
+            {
+                DOTween.Kill(nodeView.Rect);
+            }
+
+            foreach (RunMapEdgeView edge in _edgeViews)
+            {
+                edge.KillTweens();
+            }
+        }
+
+        /// <summary>
+        /// Plays the staggered entrance: nodes and edges appear sequentially
+        /// by BFS depth (start node first, boss last). Each depth layer is
+        /// delayed by <see cref="EntranceDelayPerDepth"/> seconds.
+        /// </summary>
+        private void PlayEntranceAnimation()
+        {
+            foreach (KeyValuePair<int, RunMapNodeView> kvp in _nodeViews)
+            {
+                int depth = _depthMap.ContainsKey(kvp.Key) ? _depthMap[kvp.Key] : 0;
+                kvp.Value.PlayEntrance(depth * EntranceDelayPerDepth);
+            }
+
+            int edgeIndex = 0;
+            foreach (RunMapEdgeView edge in _edgeViews)
+            {
+                float delay = edgeIndex * EntranceDelayPerDepth * 0.5f;
+                edge.PlayEntrance(delay);
+                edgeIndex++;
             }
         }
 

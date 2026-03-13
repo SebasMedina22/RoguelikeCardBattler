@@ -121,14 +121,23 @@ namespace RoguelikeCardBattler.Run
                 AssignBossAct1();
             }
 
+            bool copiedConfigs = false;
             if (mapConfig == null && source.mapConfig != null)
             {
                 mapConfig = source.mapConfig;
+                copiedConfigs = true;
             }
 
             if (enemyPoolConfig == null && source.enemyPoolConfig != null)
             {
                 enemyPoolConfig = source.enemyPoolConfig;
+                copiedConfigs = true;
+            }
+
+            if (copiedConfigs)
+            {
+                Map = GenerateMap();
+                AssignBossAct1();
             }
         }
 

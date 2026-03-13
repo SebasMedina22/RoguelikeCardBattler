@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
+using RoguelikeCardBattler.Core.UI;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -8,6 +10,7 @@ namespace RoguelikeCardBattler.Run
     /// Vista individual de un nodo en el mapa de run.
     /// Crea un botón UI posicionado manualmente y aplica estado visual
     /// (Locked/Available/Completed) leyendo NodeState.
+    /// Available nodes pulse gently; transitioning to Completed triggers a punch.
     /// </summary>
     public class RunMapNodeView
     {
@@ -20,10 +23,13 @@ namespace RoguelikeCardBattler.Run
         public int NodeId { get; }
         public NodeType Type { get; }
         public RectTransform Rect { get; }
+        public NodeState CurrentState { get; private set; } = NodeState.Locked;
 
         private readonly Button _button;
         private readonly Image _bgImage;
         private readonly Text _label;
+        private readonly CanvasGroup _canvasGroup;
+        private bool _entrancePlaying;
 
         public RunMapNodeView(int nodeId, NodeType type, RectTransform parent,
             Vector2 position, Vector2 size, Font font, Sprite whiteSprite,
@@ -33,7 +39,7 @@ namespace RoguelikeCardBattler.Run
             Type = type;
 
             GameObject go = new GameObject($"MapNode_{nodeId}",
-                typeof(RectTransform), typeof(Image), typeof(Button));
+                typeof(RectTransform), typeof(Image), typeof(Button), typeof(CanvasGroup));
             go.transform.SetParent(parent, false);
 
             Rect = go.GetComponent<RectTransform>();
@@ -47,6 +53,8 @@ namespace RoguelikeCardBattler.Run
             _bgImage.sprite = whiteSprite;
             _bgImage.type = Image.Type.Simple;
             _bgImage.raycastTarget = true;
+
+            _canvasGroup = go.GetComponent<CanvasGroup>();
 
             _button = go.GetComponent<Button>();
             int capturedId = nodeId;
@@ -75,6 +83,7 @@ namespace RoguelikeCardBattler.Run
 
         public void ApplyState(NodeState state)
         {
+            NodeState previous = CurrentState;
             bool isBoss = Type == NodeType.Boss;
             bool completed = state == NodeState.Completed;
             bool available = state == NodeState.Available;
@@ -99,6 +108,57 @@ namespace RoguelikeCardBattler.Run
             }
 
             _label.text = FormatLabel(completed);
+            CurrentState = state;
+
+            if (_entrancePlaying)
+            {
+                return;
+            }
+
+            if (previous == NodeState.Available && state == NodeState.Completed)
+            {
+                UIAnimationHelper.StopPulse(Rect);
+                UIAnimationHelper.Punch(Rect, 0.12f, 0.3f);
+            }
+            else if (state == NodeState.Available)
+            {
+                UIAnimationHelper.PulseLoop(Rect, 1.08f, 0.7f);
+            }
+            else if (state != NodeState.Available)
+            {
+                UIAnimationHelper.StopPulse(Rect);
+            }
+        }
+
+        /// <summary>
+        /// Staggered entrance: node starts invisible and at scale 0, then
+        /// pops in with a combined scale + fade animation after the given delay.
+        /// OnComplete re-calls ApplyState so PulseLoop starts for Available nodes
+        /// only after the entrance finishes.
+        /// </summary>
+        public void PlayEntrance(float delay)
+        {
+            _entrancePlaying = true;
+            DOTween.Kill(Rect);
+            _canvasGroup.alpha = 0f;
+            Rect.localScale = Vector3.zero;
+
+            Sequence seq = DOTween.Sequence()
+                .SetTarget(Rect)
+                .SetUpdate(true)
+                .SetDelay(delay);
+
+            seq.Append(
+                DOTween.To(() => Rect.localScale, x => Rect.localScale = x, Vector3.one, 0.25f)
+                    .SetEase(Ease.OutBack));
+            seq.Join(
+                DOTween.To(() => _canvasGroup.alpha, x => _canvasGroup.alpha = x, 1f, 0.25f)
+                    .SetEase(Ease.OutQuad));
+            seq.OnComplete(() =>
+            {
+                _entrancePlaying = false;
+                ApplyState(CurrentState);
+            });
         }
 
         private string FormatLabel(bool completed)

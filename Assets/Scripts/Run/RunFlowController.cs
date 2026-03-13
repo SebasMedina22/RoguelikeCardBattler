@@ -270,6 +270,7 @@ namespace RoguelikeCardBattler.Run
 #endif
                 return;
             }
+            _mapView?.Cleanup();
             SceneTransitionManager.LoadScene(BattleSceneName);
         }
 
@@ -551,6 +552,7 @@ namespace RoguelikeCardBattler.Run
                 _state.RunFailed = false;
                 _state.PendingReturnFromBattle = false;
                 _state.LastNodeOutcome = RunState.NodeOutcome.None;
+                _mapView?.Cleanup();
                 SceneTransitionManager.LoadScene("BattleScene");
             });
 
