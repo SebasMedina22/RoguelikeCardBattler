@@ -1,5 +1,6 @@
 ﻿<Solution>
   <Project Path="RoguelikeCardBattler.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="EditModeTests.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
 </Solution>

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Run;
 
 namespace RoguelikeCardBattler.Menu
@@ -67,7 +68,7 @@ namespace RoguelikeCardBattler.Menu
 
             RunSession session = RunSession.GetOrCreate();
             session.ResetForNewRun();
-            SceneManager.LoadScene(SceneRun);
+            SceneTransitionManager.LoadScene(SceneRun);
         }
 
         /// <summary>
