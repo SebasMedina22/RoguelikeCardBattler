@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
 
@@ -269,7 +270,7 @@ namespace RoguelikeCardBattler.Run
 #endif
                 return;
             }
-            SceneManager.LoadScene(BattleSceneName);
+            SceneTransitionManager.LoadScene(BattleSceneName);
         }
 
         private void ShowResolvePanel(int nodeId)
@@ -550,7 +551,7 @@ namespace RoguelikeCardBattler.Run
                 _state.RunFailed = false;
                 _state.PendingReturnFromBattle = false;
                 _state.LastNodeOutcome = RunState.NodeOutcome.None;
-                SceneManager.LoadScene("BattleScene");
+                SceneTransitionManager.LoadScene("BattleScene");
             });
 
             _defeatExitButton = CreateButton("DefeatExit", _defeatPanel, "Volver al mapa");

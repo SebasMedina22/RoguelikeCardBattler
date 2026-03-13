@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Enemies;
 
@@ -115,7 +116,7 @@ namespace RoguelikeCardBattler.Run
 #if UNITY_EDITOR
             Debug.Log($"[BattleFlow] Loading RunScene (HP saved: {session.State.PlayerCurrentHP}/{session.State.PlayerMaxHP})");
 #endif
-            SceneManager.LoadScene(RunSceneName);
+            SceneTransitionManager.LoadScene(RunSceneName);
         }
 
         private void TryConfigureCombat()
