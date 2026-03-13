@@ -150,6 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.RunSession
   bossAct1Enemy: {fileID: 11400000, guid: 8f4c2b1a5e3d9f7c6b4a0e9d2f1c5a8b, type: 2}
   mapConfig: {fileID: 11400000, guid: e7c4d5b6a3f2190834567890abcdef34, type: 2}
+  enemyPoolConfig: {fileID: 11400000, guid: b1c2d3e4f5a6b7c8d9e0f12345678902, type: 2}
 --- !u!4 &239194291
 Transform:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RoguelikeCardBattler.Gameplay.Enemies;
 using UnityEngine;
 
 namespace RoguelikeCardBattler.Run
@@ -7,7 +8,8 @@ namespace RoguelikeCardBattler.Run
     /// <summary>
     /// Genera mapas de acto para el run. Soporta generación aleatoria con pesos
     /// para tipos de nodo y múltiples templates de topología.
-    /// Seed-based: misma seed produce el mismo mapa (para debug/reproducibilidad).
+    /// También asigna enemigos a nodos Combat/Elite basándose en profundidad BFS.
+    /// Seed-based: misma seed produce el mismo mapa y mismos enemigos.
     /// </summary>
     public static class RunMapGenerator
     {
@@ -181,5 +183,122 @@ namespace RoguelikeCardBattler.Run
                 list[j] = temp;
             }
         }
+
+        /// <summary>
+        /// Assigns enemies to Combat/Elite nodes based on BFS depth and weighted pools.
+        /// Boss nodes are skipped (handled by RunSession.AssignBossAct1).
+        /// Uses its own System.Random from the provided seed for determinism
+        /// independent of the map topology generator.
+        /// </summary>
+        public static void AssignEnemies(ActMap map, EnemyPoolConfig pool, int seed)
+        {
+            if (pool == null || map == null)
+            {
+                return;
+            }
+
+            System.Random rng = new System.Random(seed);
+            Dictionary<int, int> depths = ComputeNodeDepths(map);
+
+            foreach (MapNode node in map.Nodes)
+            {
+                if (node.Type == NodeType.Boss)
+                {
+                    continue;
+                }
+
+                if (node.Type != NodeType.Combat && node.Type != NodeType.Elite)
+                {
+                    continue;
+                }
+
+                int depth = depths.ContainsKey(node.Id) ? depths[node.Id] : 0;
+                DepthPool dp = pool.GetPoolForDepth(depth);
+
+                if (dp != null && dp.entries.Count > 0)
+                {
+                    node.SpecificEnemy = WeightedRandomEnemy(dp.entries, rng);
+                }
+                else if (pool.FallbackEnemy != null)
+                {
+                    node.SpecificEnemy = pool.FallbackEnemy;
+                }
+            }
+
+#if UNITY_EDITOR
+            Debug.Log($"[MapGen] AssignEnemies seed={seed}, depths=[{FormatDepths(depths)}]");
+#endif
+        }
+
+        /// <summary>
+        /// BFS from StartNodeId to compute each node's depth (distance from start).
+        /// Same algorithm as RunMapView.ComputeDepths, duplicated here to keep
+        /// the generator independent of UI code.
+        /// </summary>
+        private static Dictionary<int, int> ComputeNodeDepths(ActMap map)
+        {
+            Dictionary<int, int> depths = new Dictionary<int, int>();
+            Queue<int> queue = new Queue<int>();
+            depths[map.StartNodeId] = 0;
+            queue.Enqueue(map.StartNodeId);
+
+            while (queue.Count > 0)
+            {
+                int current = queue.Dequeue();
+                MapNode node = map.GetNode(current);
+                if (node == null)
+                {
+                    continue;
+                }
+
+                int nextDepth = depths[current] + 1;
+                foreach (int conn in node.Connections)
+                {
+                    if (!depths.ContainsKey(conn))
+                    {
+                        depths[conn] = nextDepth;
+                        queue.Enqueue(conn);
+                    }
+                }
+            }
+
+            return depths;
+        }
+
+        private static EnemyDefinition WeightedRandomEnemy(
+            List<EnemyWeightEntry> entries, System.Random rng)
+        {
+            float totalWeight = 0f;
+            foreach (EnemyWeightEntry e in entries)
+            {
+                totalWeight += e.weight;
+            }
+
+            float roll = (float)(rng.NextDouble() * totalWeight);
+            float cumulative = 0f;
+            foreach (EnemyWeightEntry e in entries)
+            {
+                cumulative += e.weight;
+                if (roll <= cumulative)
+                {
+                    return e.enemy;
+                }
+            }
+
+            return entries.Count > 0 ? entries[entries.Count - 1].enemy : null;
+        }
+
+#if UNITY_EDITOR
+        private static string FormatDepths(Dictionary<int, int> depths)
+        {
+            List<string> parts = new List<string>();
+            foreach (KeyValuePair<int, int> kv in depths)
+            {
+                parts.Add($"{kv.Key}:d{kv.Value}");
+            }
+
+            return string.Join(",", parts);
+        }
+#endif
     }
 }

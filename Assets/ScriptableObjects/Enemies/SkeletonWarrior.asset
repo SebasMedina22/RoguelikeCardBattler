@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 338b6c04c3364f30af226f884a2d4f1d, type: 3}
+  m_Name: SkeletonWarrior
+  m_EditorClassIdentifier: 
+  id: skeleton_warrior
+  enemyName: Skeleton Warrior
+  maxHP: 35
+  baseBlock: 0
+  aiPattern: 1
+  tags:
+  - Undead
+  - Skeleton
+  moves:
+  - id: skeleton_bone_strike
+    moveName: Bone Strike
+    description: Deals 8 damage.
+    effects:
+    - effectType: 0
+      value: 8
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: 0
+    intentType: 1
+  - id: skeleton_shield_bones
+    moveName: Shield Bones
+    description: Gains 5 Block.
+    effects:
+    - effectType: 1
+      value: 5
+      target: 0
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: 1
+    intentType: 2
+  - id: skeleton_heavy_slash
+    moveName: Heavy Slash
+    description: Deals 10 damage.
+    effects:
+    - effectType: 0
+      value: 10
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: 2
+    intentType: 1
+  avatarScale: 1
+  avatarOffset: {x: 0, y: 0}
+  elementType: 0
+  avatar: {fileID: 0}
