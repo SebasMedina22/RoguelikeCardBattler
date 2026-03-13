@@ -31,7 +31,7 @@ namespace RoguelikeCardBattler.Run
         private RectTransform _actoCompletedPanel;
         private Text _statusText;
         private Text _titleText;
-        private readonly List<Button> _nodeButtons = new List<Button>();
+        private RunMapView _mapView;
         private Text _resolveTitleText;
         private Text _resolveBodyText;
         private Button _resolveCompleteButton;
@@ -124,19 +124,12 @@ namespace RoguelikeCardBattler.Run
             statusRect.anchorMin = new Vector2(0.1f, 0.8f);
             statusRect.anchorMax = new Vector2(0.9f, 0.88f);
 
-            CreateNodeButtons(CreateNodeScrollView(_mapPanel));
+            _mapView = new RunMapView(_mapPanel, _map, _state, uiFont, GetWhiteSprite());
+            _mapView.OnNodeClicked += EnterNode;
             BuildResolvePanel();
             BuildDefeatPanel();
             BuildRewardPanel();
             BuildActoCompletedPanel();
-
-#if UNITY_EDITOR
-            RectTransform contentRect = _mapPanel.transform.Find("NodeScrollView/Viewport/Content") as RectTransform;
-            if (contentRect != null)
-            {
-                Debug.Log($"[RunUI Debug] Content height: {contentRect.rect.height}, children: {contentRect.childCount}");
-            }
-#endif
         }
 
         private void EnsureEventSystem()
@@ -199,121 +192,6 @@ namespace RoguelikeCardBattler.Run
 #endif
         }
 
-        private RectTransform CreateNodeScrollView(RectTransform parent)
-        {
-            GameObject scrollGO = new GameObject("NodeScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
-            scrollGO.transform.SetParent(parent, false);
-
-            RectTransform scrollRect = scrollGO.GetComponent<RectTransform>();
-            scrollRect.anchorMin = new Vector2(0.1f, 0.25f);
-            scrollRect.anchorMax = new Vector2(0.9f, 0.78f);
-            scrollRect.offsetMin = Vector2.zero;
-            scrollRect.offsetMax = Vector2.zero;
-
-            Image bg = scrollGO.GetComponent<Image>();
-            bg.sprite = GetWhiteSprite();
-            bg.type = Image.Type.Simple;
-            bg.color = new Color(0.05f, 0.05f, 0.08f, 0.3f);
-
-            ScrollRect scroll = scrollGO.GetComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-
-            GameObject viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D), typeof(Image));
-            viewportGO.transform.SetParent(scrollGO.transform, false);
-            RectTransform viewportRect = viewportGO.GetComponent<RectTransform>();
-            viewportRect.anchorMin = Vector2.zero;
-            viewportRect.anchorMax = Vector2.one;
-            viewportRect.offsetMin = Vector2.zero;
-            viewportRect.offsetMax = Vector2.zero;
-
-            Image viewportImage = viewportGO.GetComponent<Image>();
-            viewportImage.color = new Color(0f, 0f, 0f, 0f);
-            viewportImage.raycastTarget = true;
-
-            GameObject contentGO = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-            contentGO.transform.SetParent(viewportGO.transform, false);
-            RectTransform contentRect = contentGO.GetComponent<RectTransform>();
-            contentRect.anchorMin = new Vector2(0f, 0f);
-            contentRect.anchorMax = new Vector2(1f, 1f);
-            contentRect.pivot = new Vector2(0.5f, 1f);
-            contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = Vector2.zero;
-
-            VerticalLayoutGroup layout = contentGO.GetComponent<VerticalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childForceExpandHeight = false;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childControlWidth = true;
-
-            ContentSizeFitter fitter = contentGO.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            scroll.viewport = viewportRect;
-            scroll.content = contentRect;
-
-            return contentRect;
-        }
-
-        private void CreateNodeButtons(RectTransform parent)
-        {
-            for (int i = 0; i < _map.Nodes.Count; i++)
-            {
-                MapNode node = _map.Nodes[i];
-                int nodeId = node.Id;
-                Button button = CreateNodeButton(parent, $"Node_{nodeId}", $"Nodo {nodeId + 1}");
-                button.onClick.AddListener(() => EnterNode(nodeId));
-                _nodeButtons.Add(button);
-            }
-        }
-
-        private Button CreateNodeButton(RectTransform parent, string name, string label)
-        {
-            GameObject buttonGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonGO.transform.SetParent(parent, false);
-            RectTransform rect = buttonGO.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            LayoutElement layout = buttonGO.GetComponent<LayoutElement>();
-            layout.preferredHeight = 70f;
-            layout.minHeight = 60f;
-
-            Image image = buttonGO.GetComponent<Image>();
-            image.sprite = GetWhiteSprite();
-            image.type = Image.Type.Simple;
-            image.color = new Color(0.15f, 0.15f, 0.2f, 1f);
-            image.raycastTarget = true;
-
-            GameObject textGO = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            textGO.transform.SetParent(buttonGO.transform, false);
-            RectTransform textRect = textGO.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-
-            Text text = textGO.GetComponent<Text>();
-            text.font = uiFont;
-            text.fontSize = 20;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.white;
-            text.text = label;
-            text.raycastTarget = false;
-
-            Outline outline = textGO.AddComponent<Outline>();
-            outline.effectColor = new Color(0f, 0f, 0f, 0.6f);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            return buttonGO.GetComponent<Button>();
-        }
-
         private void ShowMap()
         {
             _resolvePanel.gameObject.SetActive(false);
@@ -321,7 +199,7 @@ namespace RoguelikeCardBattler.Run
             _rewardPanel.gameObject.SetActive(false);
             _actoCompletedPanel.gameObject.SetActive(false);
             _mapPanel.gameObject.SetActive(true);
-            _titleText.text = "Mapa Acto 1 (placeholder)";
+            _titleText.text = "Mapa Acto 1";
 
             int completed = 0;
             foreach (MapNode node in _map.Nodes)
@@ -333,44 +211,7 @@ namespace RoguelikeCardBattler.Run
             }
 
             _statusText.text = $"Gold: {_state.Gold} | Completados: {completed}/{_map.Nodes.Count}";
-
-            for (int i = 0; i < _nodeButtons.Count; i++)
-            {
-                Button button = _nodeButtons[i];
-                int nodeId = _map.Nodes[i].Id;
-                bool completedNode = _state.IsNodeCompleted(nodeId);
-                bool available = _state.IsNodeAvailable(nodeId);
-
-                button.gameObject.SetActive(true);
-                button.interactable = available && !_state.RunFailed;
-
-                Text label = button.GetComponentInChildren<Text>();
-                if (label != null)
-                {
-                    NodeType type = _map.Nodes[i].Type;
-                    string typeLabel = $"{type}";
-                    label.text = completedNode
-                        ? $"Nodo {nodeId + 1} ({typeLabel}) ✓"
-                        : $"Nodo {nodeId + 1} ({typeLabel})";
-                }
-
-                Image image = button.GetComponent<Image>();
-                if (image != null)
-                {
-                    if (completedNode)
-                    {
-                        image.color = new Color(0.2f, 0.5f, 0.25f, 1f);
-                    }
-                    else if (available)
-                    {
-                        image.color = new Color(0.2f, 0.35f, 0.6f, 1f);
-                    }
-                    else
-                    {
-                        image.color = new Color(0.2f, 0.2f, 0.2f, 0.7f);
-                    }
-                }
-            }
+            _mapView?.Refresh(_state);
         }
 
         private void EnterNode(int index)
