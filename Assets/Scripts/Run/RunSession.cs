@@ -14,6 +14,7 @@ namespace RoguelikeCardBattler.Run
         public ActMap Map { get; private set; }
         public RunCombatConfig CombatConfig { get; private set; }
         [SerializeField] private EnemyDefinition bossAct1Enemy;
+        [SerializeField] private Act1MapConfig mapConfig;
 
         public static RunSession GetOrCreate()
         {
@@ -47,7 +48,9 @@ namespace RoguelikeCardBattler.Run
             DontDestroyOnLoad(gameObject);
             if (Map == null)
             {
-                Map = RunMapGenerator.GenerateAct1();
+                Map = mapConfig != null
+                    ? RunMapGenerator.Generate(mapConfig)
+                    : RunMapGenerator.GenerateAct1();
             }
             State.EnsureInitialized(Map);
 
@@ -60,7 +63,9 @@ namespace RoguelikeCardBattler.Run
         /// </summary>
         public void ResetForNewRun()
         {
-            Map = RunMapGenerator.GenerateAct1();
+            Map = mapConfig != null
+                ? RunMapGenerator.Generate(mapConfig)
+                : RunMapGenerator.GenerateAct1();
             State.Reset(Map);
             CombatConfig = null;
             AssignBossAct1();
@@ -68,12 +73,17 @@ namespace RoguelikeCardBattler.Run
 
         private void AssignBossAct1()
         {
-            if (bossAct1Enemy != null && Map != null && Map.Nodes.Count > 7)
+            if (bossAct1Enemy == null || Map == null)
             {
-                MapNode bossNode = Map.GetNode(7);
-                if (bossNode != null && bossNode.Type == NodeType.Boss)
+                return;
+            }
+
+            foreach (MapNode node in Map.Nodes)
+            {
+                if (node.Type == NodeType.Boss)
                 {
-                    bossNode.SpecificEnemy = bossAct1Enemy;
+                    node.SpecificEnemy = bossAct1Enemy;
+                    break;
                 }
             }
         }
@@ -89,6 +99,11 @@ namespace RoguelikeCardBattler.Run
             {
                 bossAct1Enemy = source.bossAct1Enemy;
                 AssignBossAct1();
+            }
+
+            if (mapConfig == null && source.mapConfig != null)
+            {
+                mapConfig = source.mapConfig;
             }
         }
 
