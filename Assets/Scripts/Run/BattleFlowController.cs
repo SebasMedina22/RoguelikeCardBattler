@@ -99,6 +99,12 @@ namespace RoguelikeCardBattler.Run
 #endif
             }
 
+            if (_turnManager != null)
+            {
+                session.State.PlayerCurrentHP = _turnManager.PlayerHP;
+                session.State.PlayerMaxHP = _turnManager.PlayerMaxHP;
+            }
+
             if (!IsSceneInBuild(RunSceneName))
             {
 #if UNITY_EDITOR
@@ -107,7 +113,7 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 #if UNITY_EDITOR
-            Debug.Log("[BattleFlow] Loading RunScene");
+            Debug.Log($"[BattleFlow] Loading RunScene (HP saved: {session.State.PlayerCurrentHP}/{session.State.PlayerMaxHP})");
 #endif
             SceneManager.LoadScene(RunSceneName);
         }
@@ -161,10 +167,14 @@ namespace RoguelikeCardBattler.Run
             // Detecta si es una batalla de boss basado en el tipo de nodo
             _isBossBattle = IsCurrentNodeBoss(session);
 
+            session.State.EnsurePlayerHpInitialized(_turnManager.PlayerMaxHP);
+            int currentHp = session.State.PlayerCurrentHP;
+            int maxHp = session.State.PlayerMaxHP;
+
 #if UNITY_EDITOR
-            Debug.Log($"[BattleFlow] Deck size: {deck.Count}, Enemy: {enemyToUse.EnemyName}, IsBoss: {_isBossBattle}");
+            Debug.Log($"[BattleFlow] Deck size: {deck.Count}, Enemy: {enemyToUse.EnemyName}, IsBoss: {_isBossBattle}, HP: {currentHp}/{maxHp}");
 #endif
-            _turnManager.ConfigureCombat(deck, enemyToUse);
+            _turnManager.ConfigureCombat(deck, enemyToUse, currentHp, maxHp);
             _configured = true;
         }
 

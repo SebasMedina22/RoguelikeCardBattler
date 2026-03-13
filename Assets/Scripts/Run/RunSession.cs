@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Enemies;
 
@@ -15,6 +16,7 @@ namespace RoguelikeCardBattler.Run
         public RunCombatConfig CombatConfig { get; private set; }
         [SerializeField] private EnemyDefinition bossAct1Enemy;
         [SerializeField] private Act1MapConfig mapConfig;
+        [SerializeField] private EnemyPoolConfig enemyPoolConfig;
 
         public static RunSession GetOrCreate()
         {
@@ -23,7 +25,7 @@ namespace RoguelikeCardBattler.Run
                 return Instance;
             }
 
-            var existing = Object.FindFirstObjectByType<RunSession>();
+            var existing = UnityEngine.Object.FindFirstObjectByType<RunSession>();
             if (existing != null)
             {
                 Instance = existing;
@@ -48,13 +50,9 @@ namespace RoguelikeCardBattler.Run
             DontDestroyOnLoad(gameObject);
             if (Map == null)
             {
-                Map = mapConfig != null
-                    ? RunMapGenerator.Generate(mapConfig)
-                    : RunMapGenerator.GenerateAct1();
+                Map = GenerateMap();
             }
             State.EnsureInitialized(Map);
-
-            // Asigna BossAct1 al nodo jefe si está configurado
             AssignBossAct1();
         }
 
@@ -63,12 +61,34 @@ namespace RoguelikeCardBattler.Run
         /// </summary>
         public void ResetForNewRun()
         {
-            Map = mapConfig != null
-                ? RunMapGenerator.Generate(mapConfig)
-                : RunMapGenerator.GenerateAct1();
+            Map = GenerateMap();
             State.Reset(Map);
             CombatConfig = null;
             AssignBossAct1();
+        }
+
+        /// <summary>
+        /// Generates the map and assigns enemies using a shared seed for determinism.
+        /// The same seed produces the same topology + types AND the same enemy placement.
+        /// </summary>
+        private ActMap GenerateMap()
+        {
+            int seed = mapConfig != null ? mapConfig.Seed : 0;
+            if (seed == 0)
+            {
+                seed = Environment.TickCount;
+            }
+
+            ActMap map = mapConfig != null
+                ? RunMapGenerator.Generate(mapConfig, seed)
+                : RunMapGenerator.GenerateAct1();
+
+            if (enemyPoolConfig != null)
+            {
+                RunMapGenerator.AssignEnemies(map, enemyPoolConfig, seed);
+            }
+
+            return map;
         }
 
         private void AssignBossAct1()
@@ -104,6 +124,11 @@ namespace RoguelikeCardBattler.Run
             if (mapConfig == null && source.mapConfig != null)
             {
                 mapConfig = source.mapConfig;
+            }
+
+            if (enemyPoolConfig == null && source.enemyPoolConfig != null)
+            {
+                enemyPoolConfig = source.enemyPoolConfig;
             }
         }
 
