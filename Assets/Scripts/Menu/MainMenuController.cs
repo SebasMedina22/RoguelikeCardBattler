@@ -3,7 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using DG.Tweening;
 using RoguelikeCardBattler.Core;
+using RoguelikeCardBattler.Core.UI;
 using RoguelikeCardBattler.Run;
 
 namespace RoguelikeCardBattler.Menu
@@ -36,6 +38,16 @@ namespace RoguelikeCardBattler.Menu
         private int _resolutionIndex;
         private int _screenModeIndex;
         private bool _scenesValid;
+
+        // ── Juice: CanvasGroups for entry animations ──
+        private CanvasGroup _backgroundGroup;
+        private CanvasGroup _titleGroup;
+        private CanvasGroup _playButtonGroup;
+        private CanvasGroup _continueButtonGroup;
+        private CanvasGroup _settingsButtonGroup;
+        private CanvasGroup _quitButtonGroup;
+        private RectTransform _titleRect;
+        private Sequence _introSequence;
 
         private readonly string[] _resolutionOptions = { "1920x1080", "1280x720" };
         private readonly string[] _screenModeOptions = { "Pantalla completa", "Ventana" };
@@ -208,6 +220,15 @@ namespace RoguelikeCardBattler.Menu
 
             BuildSettingsPanel();
             ShowMainMenuPanel();
+
+            // ── Hover effects on main menu buttons ──
+            AddHoverEffect(_playButton);
+            AddHoverEffect(_continueButton);
+            AddHoverEffect(_settingsButton);
+            AddHoverEffect(_quitButton);
+
+            // ── Entry animation sequence ──
+            PlayIntroSequence(background, title, titleRect);
         }
 
         private void BuildSettingsPanel()
@@ -321,6 +342,145 @@ namespace RoguelikeCardBattler.Menu
             {
                 _mainMenuPanel.gameObject.SetActive(true);
             }
+        }
+
+        // ────────────────────────────────────────────────────────
+        // Juice: entry animation, hover feedback, title bob loop
+        // ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Orchestrates the staggered entry animation: background fade → title scale+fade → buttons slide in.
+        /// Called once at the end of <see cref="BuildUI"/>.
+        /// </summary>
+        private void PlayIntroSequence(RectTransform background, Text title, RectTransform titleRect)
+        {
+            _titleRect = titleRect;
+
+            // Prepare CanvasGroups — elements start invisible
+            _backgroundGroup = background.gameObject.AddComponent<CanvasGroup>();
+            _backgroundGroup.alpha = 0f;
+
+            _titleGroup = title.gameObject.AddComponent<CanvasGroup>();
+            _titleGroup.alpha = 0f;
+            titleRect.localScale = Vector3.zero;
+
+            _playButtonGroup = _playButton.gameObject.AddComponent<CanvasGroup>();
+            _playButtonGroup.alpha = 0f;
+            _continueButtonGroup = _continueButton.gameObject.AddComponent<CanvasGroup>();
+            _continueButtonGroup.alpha = 0f;
+            _settingsButtonGroup = _settingsButton.gameObject.AddComponent<CanvasGroup>();
+            _settingsButtonGroup.alpha = 0f;
+            _quitButtonGroup = _quitButton.gameObject.AddComponent<CanvasGroup>();
+            _quitButtonGroup.alpha = 0f;
+
+            CanvasGroup[] buttonGroups = { _playButtonGroup, _continueButtonGroup, _settingsButtonGroup, _quitButtonGroup };
+            RectTransform[] buttonRects =
+            {
+                _playButton.GetComponent<RectTransform>(),
+                _continueButton.GetComponent<RectTransform>(),
+                _settingsButton.GetComponent<RectTransform>(),
+                _quitButton.GetComponent<RectTransform>()
+            };
+
+            // Build DOTween Sequence
+            _introSequence = DOTween.Sequence().SetUpdate(true);
+
+            // 1) Background fade in (0.3s)
+            _introSequence.Append(UIAnimationHelper.FadeIn(_backgroundGroup, 0.3f));
+
+            // 2) Title fade + scale in parallel (after 0.2s delay from background start → total offset 0.2s into sequence)
+            _introSequence.AppendInterval(0.2f);
+            _introSequence.Append(UIAnimationHelper.FadeIn(_titleGroup, 0.2f));
+            _introSequence.Join(UIAnimationHelper.ScaleIn(titleRect.transform, 0.2f));
+
+            // 3) Buttons staggered: 0.1s apart, each with fade + slide in parallel
+            for (int i = 0; i < buttonGroups.Length; i++)
+            {
+                if (i > 0)
+                {
+                    _introSequence.AppendInterval(0.1f);
+                }
+                _introSequence.Append(UIAnimationHelper.FadeIn(buttonGroups[i], 0.25f));
+                _introSequence.Join(UIAnimationHelper.SlideIn(buttonRects[i], new Vector2(0, -60f), 0.25f));
+            }
+
+            // After intro completes, start the infinite title bob
+            _introSequence.OnComplete(() => StartTitleBob(titleRect));
+        }
+
+        /// <summary>
+        /// Adds pointer-enter/exit hover scale feedback to a button using EventTrigger.
+        /// Scales to 1.05x on hover, back to 1.0x on exit.
+        /// </summary>
+        private void AddHoverEffect(Button button)
+        {
+            RectTransform target = button.GetComponent<RectTransform>();
+            EventTrigger trigger = button.gameObject.AddComponent<EventTrigger>();
+
+            // PointerEnter → scale up to 1.05
+            EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+            enterEntry.eventID = EventTriggerType.PointerEnter;
+            enterEntry.callback.AddListener(_ =>
+            {
+                DOTween.Kill(target);
+                DOTween.To(() => target.localScale, x => target.localScale = x,
+                    new Vector3(1.05f, 1.05f, 1.05f), 0.1f)
+                    .SetTarget(target)
+                    .SetEase(Ease.OutQuad)
+                    .SetUpdate(true);
+            });
+            trigger.triggers.Add(enterEntry);
+
+            // PointerExit → scale back to 1.0
+            EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+            exitEntry.eventID = EventTriggerType.PointerExit;
+            exitEntry.callback.AddListener(_ =>
+            {
+                DOTween.Kill(target);
+                DOTween.To(() => target.localScale, x => target.localScale = x,
+                    Vector3.one, 0.1f)
+                    .SetTarget(target)
+                    .SetEase(Ease.OutQuad)
+                    .SetUpdate(true);
+            });
+            trigger.triggers.Add(exitEntry);
+        }
+
+        /// <summary>
+        /// Starts an infinite vertical bob on the title (±3px, 2s full cycle, InOutSine yoyo).
+        /// Runs unscaled so it works even at timeScale 0.
+        /// </summary>
+        private void StartTitleBob(RectTransform titleRect)
+        {
+            Vector2 restPosition = titleRect.anchoredPosition;
+            DOTween.To(
+                    () => titleRect.anchoredPosition,
+                    x => titleRect.anchoredPosition = x,
+                    new Vector2(restPosition.x, restPosition.y + 3f),
+                    1f) // 1s per half-cycle = 2s full cycle
+                .SetTarget(titleRect)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetUpdate(true);
+        }
+
+        /// <summary>
+        /// Cleanup: kill all DOTween tweens owned by this controller's UI elements.
+        /// </summary>
+        private void OnDestroy()
+        {
+            _introSequence?.Kill();
+            if (_titleRect != null) DOTween.Kill(_titleRect);
+            if (_backgroundGroup != null) DOTween.Kill(_backgroundGroup);
+            if (_titleGroup != null) DOTween.Kill(_titleGroup);
+            if (_playButton != null) DOTween.Kill(_playButton.GetComponent<RectTransform>());
+            if (_continueButton != null) DOTween.Kill(_continueButton.GetComponent<RectTransform>());
+            if (_settingsButton != null) DOTween.Kill(_settingsButton.GetComponent<RectTransform>());
+            if (_quitButton != null) DOTween.Kill(_quitButton.GetComponent<RectTransform>());
+            if (_playButtonGroup != null) DOTween.Kill(_playButtonGroup);
+            if (_continueButtonGroup != null) DOTween.Kill(_continueButtonGroup);
+            if (_settingsButtonGroup != null) DOTween.Kill(_settingsButtonGroup);
+            if (_quitButtonGroup != null) DOTween.Kill(_quitButtonGroup);
         }
 
         private Canvas CreateCanvas(string name)
