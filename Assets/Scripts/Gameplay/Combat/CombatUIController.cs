@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using DG.Tweening;
+using RoguelikeCardBattler.Core.Audio;
 using RoguelikeCardBattler.Core.UI;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
@@ -697,6 +698,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void OnCardButtonClicked(CardDeckEntry entry)
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.CardPlaySFX);
             if (turnManager == null || entry == null || _isPlayingAttack)
             {
                 return;
@@ -891,7 +893,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _hitFeedbackText.gameObject.SetActive(true);
             _hitFeedbackTimer = hitFeedbackDuration;
 
-            // ── Juice: player avatar shake + HP label red flash ──
+            // ── Juice: player avatar shake + HP label red flash + SFX ──
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.HitSFX);
             if (_playerAvatarImage != null)
             {
                 UIAnimationHelper.Punch(_playerAvatarImage.transform, 0.15f, 0.3f);
@@ -911,6 +914,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void OnEnemyTookDamage(int damage)
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.HitSFX);
             if (damage <= 0)
             {
                 return;
@@ -1135,6 +1139,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private void OnChangeWorldButtonClicked()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.WorldChangeSFX);
             if (turnManager == null)
             {
                 return;
@@ -1393,6 +1398,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// </summary>
         public void ShowVictoryText()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.VictorySFX);
             ShowCombatResultText("VICTORY", new Color(0.2f, 1f, 0.4f));
         }
 
@@ -1402,6 +1408,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// </summary>
         public void ShowDefeatText()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.DefeatSFX);
             ShowCombatResultText("DEFEAT", new Color(1f, 0.3f, 0.3f));
         }
 

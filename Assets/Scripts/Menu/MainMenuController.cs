@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using DG.Tweening;
 using RoguelikeCardBattler.Core;
+using RoguelikeCardBattler.Core.Audio;
 using RoguelikeCardBattler.Core.UI;
 using RoguelikeCardBattler.Run;
 
@@ -72,6 +73,7 @@ namespace RoguelikeCardBattler.Menu
         /// </summary>
         public void OnPlayClicked()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.ClickSFX);
             if (!_scenesValid)
             {
                 Debug.LogError("RunScene or BattleScene not in Build Settings. Add them in File > Build Settings.");
@@ -88,6 +90,7 @@ namespace RoguelikeCardBattler.Menu
         /// </summary>
         public void OnContinueClicked()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.ClickSFX);
             SetMessage(ContinuePlaceholder);
         }
 
@@ -96,6 +99,7 @@ namespace RoguelikeCardBattler.Menu
         /// </summary>
         public void OnSettingsClicked()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.ClickSFX);
             ShowSettingsPanel();
         }
 
@@ -104,6 +108,7 @@ namespace RoguelikeCardBattler.Menu
         /// </summary>
         public void OnQuitClicked()
         {
+            AudioManager.Instance?.PlaySFX(AudioManager.Instance.ClickSFX);
 #if UNITY_EDITOR
             Debug.Log("[MainMenu] Quit requested (no-op in editor).");
 #endif
