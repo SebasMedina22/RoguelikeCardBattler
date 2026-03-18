@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using DG.Tweening;
+using RoguelikeCardBattler.Core.UI;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
 
@@ -82,7 +84,6 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private float enemyHitFps = 16f;
         private SpriteFrameAnimatorUI _enemyAnimator;
         private Image _enemyAvatarSpriteImage;
-        private Coroutine _enemyHitRoutine;
         private Image _energyPanelImage;
         private Image _worldPanelImage;
         private Coroutine _panelFlashRoutine;
@@ -125,6 +126,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             public CardDeckEntry CardEntry;
             public Button Button;
             public Text Label;
+            public CanvasGroup Group;
         }
 
         private void Awake()
@@ -888,6 +890,23 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _hitFeedbackText.text = message;
             _hitFeedbackText.gameObject.SetActive(true);
             _hitFeedbackTimer = hitFeedbackDuration;
+
+            // ── Juice: player avatar shake + HP label red flash ──
+            if (_playerAvatarImage != null)
+            {
+                UIAnimationHelper.Punch(_playerAvatarImage.transform, 0.15f, 0.3f);
+            }
+
+            if (_playerHpLabel != null)
+            {
+                _playerHpLabel.color = new Color(1f, 0.3f, 0.3f, 1f);
+                DOTween.To(
+                    () => _playerHpLabel.color,
+                    x => _playerHpLabel.color = x,
+                    Color.white, 0.4f)
+                    .SetTarget(_playerHpLabel)
+                    .SetUpdate(true);
+            }
         }
 
         private void OnEnemyTookDamage(int damage)
@@ -904,11 +923,23 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
             else
             {
-                if (_enemyHitRoutine != null)
+                // ── Juice: DOTween-based enemy shake (replaces coroutine) ──
+                if (_enemyAvatarImage != null)
                 {
-                    StopCoroutine(_enemyHitRoutine);
+                    UIAnimationHelper.Punch(_enemyAvatarImage.transform, 0.2f, 0.25f);
                 }
-                _enemyHitRoutine = StartCoroutine(EnemyHitFlashAndShake());
+
+                if (_enemyAvatarSpriteImage != null)
+                {
+                    Color originalColor = _enemyAvatarSpriteImage.color;
+                    _enemyAvatarSpriteImage.color = Color.white;
+                    DOTween.To(
+                        () => _enemyAvatarSpriteImage.color,
+                        x => _enemyAvatarSpriteImage.color = x,
+                        originalColor, 0.15f)
+                        .SetTarget(_enemyAvatarSpriteImage)
+                        .SetUpdate(true);
+                }
             }
         }
 
@@ -942,6 +973,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 if (binding?.Button != null)
                 {
+                    DOTween.Kill(binding.Button.GetComponent<RectTransform>());
+                    if (binding.Group != null) DOTween.Kill(binding.Group);
                     Destroy(binding.Button.gameObject);
                 }
             }
@@ -950,15 +983,24 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _handCache.Clear();
 
             IReadOnlyList<CardDeckEntry> hand = turnManager.PlayerHand;
-            foreach (CardDeckEntry entry in hand)
+            for (int i = 0; i < hand.Count; i++)
             {
+                CardDeckEntry entry = hand[i];
                 Button button = CreateCardButton(entry, _handContainer);
                 Text label = button.GetComponentInChildren<Text>();
+
+                // ── Juice: staggered fade-in only (no scale/slide — LayoutGroup controls position and scale) ──
+                CanvasGroup cardGroup = button.gameObject.AddComponent<CanvasGroup>();
+                cardGroup.alpha = 0f;
+                float delay = i * 0.05f;
+                UIAnimationHelper.FadeIn(cardGroup, 0.2f).SetDelay(delay);
+
                 _cardButtons.Add(new CardButtonBinding
                 {
                     CardEntry = entry,
                     Button = button,
-                    Label = label
+                    Label = label,
+                    Group = cardGroup
                 });
                 _handCache.Add(entry);
             }
@@ -1020,53 +1062,6 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             // Idle opcional (no configurado por ahora) se deja vacío; se usará para hit si hay frames.
             _enemyAnimator.Configure(_enemyAvatarSpriteImage, new List<Sprite>(), enemyHitFrames, enemyHitFps);
-        }
-
-        private IEnumerator EnemyHitFlashAndShake()
-        {
-            const float duration = 0.15f;
-            const float shakeMagnitude = 3f;
-
-            float timer = 0f;
-            Color flashColor = Color.white;
-            flashColor.a = 0.8f;
-
-            Vector3 originalPos = _enemyAvatarImage.rectTransform.anchoredPosition;
-            Color baseColor = _enemyAvatarImage.color;
-            Color baseSpriteColor = _enemyAvatarSpriteImage != null ? _enemyAvatarSpriteImage.color : Color.white;
-
-            while (timer < duration)
-            {
-                float t = timer / duration;
-                float fade = 1f - t;
-                if (_enemyAvatarImage != null)
-                {
-                    _enemyAvatarImage.color = Color.Lerp(baseColor, flashColor, fade);
-                }
-                if (_enemyAvatarSpriteImage != null)
-                {
-                    _enemyAvatarSpriteImage.color = Color.Lerp(baseSpriteColor, flashColor, fade);
-                }
-
-                if (_enemyAvatarImage != null)
-                {
-                    Vector2 shake = UnityEngine.Random.insideUnitCircle * shakeMagnitude * fade;
-                    _enemyAvatarImage.rectTransform.anchoredPosition = originalPos + (Vector3)shake;
-                }
-
-                timer += Time.deltaTime;
-                yield return null;
-            }
-
-            if (_enemyAvatarImage != null)
-            {
-                _enemyAvatarImage.rectTransform.anchoredPosition = originalPos;
-                _enemyAvatarImage.color = baseColor;
-            }
-            if (_enemyAvatarSpriteImage != null)
-            {
-                _enemyAvatarSpriteImage.color = baseSpriteColor;
-            }
         }
 
         private string BuildCardLabel(CardDeckEntry entry)
@@ -1386,6 +1381,85 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             rectTransform.localScale = scale;
+        }
+
+        // ────────────────────────────────────────────────────────
+        // Juice: combat result text + DOTween cleanup
+        // ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Shows an animated "VICTORY" text centered on screen.
+        /// Not connected to any event yet — call from BattleFlowController in a future issue.
+        /// </summary>
+        public void ShowVictoryText()
+        {
+            ShowCombatResultText("VICTORY", new Color(0.2f, 1f, 0.4f));
+        }
+
+        /// <summary>
+        /// Shows an animated "DEFEAT" text centered on screen.
+        /// Not connected to any event yet — call from BattleFlowController in a future issue.
+        /// </summary>
+        public void ShowDefeatText()
+        {
+            ShowCombatResultText("DEFEAT", new Color(1f, 0.3f, 0.3f));
+        }
+
+        /// <summary>
+        /// Creates a large centered text with scale-in + fade-in animation, auto-destroys after 2s.
+        /// </summary>
+        private void ShowCombatResultText(string message, Color color)
+        {
+            if (_canvas == null)
+            {
+                return;
+            }
+
+            RectTransform canvasRect = _canvas.GetComponent<RectTransform>();
+            Text resultText = CreateText("CombatResultText", canvasRect, message, 60, TextAnchor.MiddleCenter);
+            resultText.fontStyle = FontStyle.Bold;
+            resultText.color = color;
+
+            RectTransform textRect = resultText.GetComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0.1f, 0.3f);
+            textRect.anchorMax = new Vector2(0.9f, 0.7f);
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            CanvasGroup group = resultText.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+
+            UIAnimationHelper.ScaleIn(textRect.transform, 0.4f);
+            UIAnimationHelper.FadeIn(group, 0.3f);
+
+            Destroy(resultText.gameObject, 2f);
+        }
+
+        /// <summary>
+        /// Cleanup: kill all active DOTween tweens owned by this controller's UI elements.
+        /// </summary>
+        private void OnDestroy()
+        {
+            // Kill tweens on card buttons
+            foreach (CardButtonBinding binding in _cardButtons)
+            {
+                if (binding?.Button != null)
+                {
+                    DOTween.Kill(binding.Button.GetComponent<RectTransform>());
+                }
+                if (binding?.Group != null)
+                {
+                    DOTween.Kill(binding.Group);
+                }
+            }
+
+            // Kill tweens on avatars
+            if (_playerAvatarImage != null) DOTween.Kill(_playerAvatarImage.transform);
+            if (_enemyAvatarImage != null) DOTween.Kill(_enemyAvatarImage.transform);
+
+            // Kill tweens on labels
+            if (_playerHpLabel != null) DOTween.Kill(_playerHpLabel);
+            if (_enemyAvatarSpriteImage != null) DOTween.Kill(_enemyAvatarSpriteImage);
         }
     }
 }
