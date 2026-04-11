@@ -1,12 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using DG.Tweening;
 using RoguelikeCardBattler.Core.Audio;
-using RoguelikeCardBattler.Core.UI;
-using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
@@ -73,13 +69,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private List<Sprite> heroAttackFrames = new List<Sprite>();
         [SerializeField] private float heroAttackFps = 16f;
         private Text _hitFeedbackText;
-        private float _hitFeedbackTimer;
         // Tiempos de feedback visual ajustables por diseño sin tocar gameplay.
         [Header("Feedback Timing")]
         [SerializeField, Min(0.1f)] private float hitFeedbackDuration = 0.85f;
         private SpriteFrameAnimatorUI _playerAnimator;
         private Image _playerAvatarSpriteImage;
-        private bool _isPlayingAttack;
         [Header("Enemy Hit Feedback")]
         [SerializeField] private List<Sprite> enemyHitFrames = new List<Sprite>();
         [SerializeField] private float enemyHitFps = 16f;
@@ -87,11 +81,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Image _enemyAvatarSpriteImage;
         private Image _energyPanelImage;
         private Image _worldPanelImage;
-        private Coroutine _panelFlashRoutine;
-        private float _handLimitTimer;
-        private float _handLimitCooldown;
-        private float _lastHandWidth;
-        private int _lastHandCount = -1;
+        // Componentes extraídos que manejan áreas específicas de la UI de combate.
+        private CombatFeedbackView _feedbackView;
+        private CardHandView _cardHandView;
 
         // Layout/estilo del HUD: constantes para mantener jerarquía visual y escalado.
         private const float TopBarMinY = 0.92f;
@@ -105,30 +97,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private static readonly Color ButtonDisabledColor = new Color(0.12f, 0.12f, 0.16f, 0.7f);
         private static readonly Color ButtonPressedColor = new Color(0.35f, 0.35f, 0.45f, 1f);
         private static readonly Color ButtonHighlightColor = new Color(0.3f, 0.3f, 0.4f, 1f);
-        private static readonly Color CardButtonNormalColor = new Color(0.18f, 0.18f, 0.25f, 0.95f);
-        private static readonly Color CardButtonDisabledColor = new Color(0.1f, 0.1f, 0.14f, 0.6f);
         private static readonly Color DisabledLabelColor = new Color(0.75f, 0.75f, 0.75f, 0.7f);
         private static readonly Color WarningLabelColor = new Color(1f, 0.6f, 0.6f, 1f);
-        private static readonly Color HudFlashColor = new Color(1f, 0.4f, 0.4f, 0.9f);
         [SerializeField, Min(0.1f)] private float handLimitToastDuration = 0.7f;
         [SerializeField, Min(0f)] private float handLimitToastCooldown = 0.6f;
-        private const float HandCardWidthBase = 230f;
-        private const float HandCardHeightBase = 130f;
-        private const float HandCardWidthMin = 150f;
-        private const float HandCardHeightMin = 96f;
-        private const float HandSpacingBase = 12f;
-        private const float HandSpacingMin = 4f;
-
-        private readonly List<CardButtonBinding> _cardButtons = new List<CardButtonBinding>();
-        private readonly List<CardDeckEntry> _handCache = new List<CardDeckEntry>();
-
-        private class CardButtonBinding
-        {
-            public CardDeckEntry CardEntry;
-            public Button Button;
-            public Text Label;
-            public CanvasGroup Group;
-        }
 
         private void Awake()
         {
@@ -164,22 +136,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 turnManager = GetComponent<TurnManager>();
             }
 
-            if (turnManager != null)
-            {
-                turnManager.PlayerHitEffectiveness += OnPlayerHitEffectiveness;
-                turnManager.EnemyTookDamage += OnEnemyTookDamage;
-                turnManager.PlayerHandLimitReached += OnPlayerHandLimitReached;
-            }
+            // Eventos de feedback (PlayerHitEffectiveness, EnemyTookDamage,
+            // PlayerHandLimitReached) delegados a CombatFeedbackView.
         }
 
         private void OnDisable()
         {
-            if (turnManager != null)
-            {
-                turnManager.PlayerHitEffectiveness -= OnPlayerHitEffectiveness;
-                turnManager.EnemyTookDamage -= OnEnemyTookDamage;
-                turnManager.PlayerHandLimitReached -= OnPlayerHandLimitReached;
-            }
+            // Desuscripción de eventos de feedback delegada a CombatFeedbackView.
         }
 
         private void Update()
@@ -190,9 +153,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             UpdateInfoTexts();
-            SyncHandButtons();
-            UpdateHitFeedbackTimer();
-            UpdateHandLimitTimer();
+            _cardHandView?.SyncHandButtons();
+            // Hit feedback y hand limit timers delegados a CombatFeedbackView.
         }
 
         private void EnsureEventSystem()
@@ -474,6 +436,41 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             InitializePlayerAnimator();
             UpdateWorldVisuals();
+            InitializeExtractedViews();
+        }
+
+        /// <summary>
+        /// Crea e inicializa los componentes extraídos (CombatFeedbackView, CardHandView).
+        /// Les pasa las referencias de UI que necesitan después de BuildUI().
+        /// </summary>
+        private void InitializeExtractedViews()
+        {
+            _feedbackView = gameObject.AddComponent<CombatFeedbackView>();
+            _feedbackView.Initialize(
+                turnManager,
+                _hitFeedbackText,
+                _handLimitText,
+                _playerHpLabel,
+                _playerAvatarImage,
+                _enemyAvatarImage,
+                _enemyAvatarSpriteImage,
+                _energyPanelImage,
+                _worldPanelImage,
+                _enemyAnimator,
+                _canvas,
+                uiFont,
+                hitFeedbackDuration,
+                handLimitToastDuration,
+                handLimitToastCooldown);
+
+            _cardHandView = gameObject.AddComponent<CardHandView>();
+            _cardHandView.Initialize(
+                turnManager,
+                _handContainer,
+                _playerAnimator,
+                _feedbackView,
+                _energyPanelImage,
+                uiFont);
         }
         private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, Vector2 size, string label)
         {
@@ -657,78 +654,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             blockRect.offsetMax = Vector2.zero;
         }
 
-        private Button CreateCardButton(CardDeckEntry entry, Transform parent)
-        {
-            CardDefinition activeCard = turnManager.GetActiveCardDefinition(entry);
-            string label = activeCard != null ? activeCard.name : "Card";
-
-            GameObject buttonGO = new GameObject(label + "_Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonGO.transform.SetParent(parent, false);
-
-            RectTransform rect = buttonGO.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(HandCardWidthBase, HandCardHeightBase);
-
-            Image image = buttonGO.GetComponent<Image>();
-            image.color = CardButtonNormalColor;
-
-            LayoutElement layout = buttonGO.GetComponent<LayoutElement>();
-            layout.preferredWidth = HandCardWidthBase;
-            layout.preferredHeight = HandCardHeightBase;
-
-            Button button = buttonGO.GetComponent<Button>();
-
-            Text labelText = CreateText("Label", rect, BuildCardLabel(entry), 20, TextAnchor.MiddleCenter);
-            labelText.fontStyle = FontStyle.Bold;
-
-            button.onClick.AddListener(() => OnCardButtonClicked(entry));
-
-            return button;
-        }
+        // CreateCardButton extraído a CardHandView.
 
         private void OnEndTurnButtonClicked()
         {
             if (turnManager == null || !turnManager.IsPlayerTurn())
             {
-                FlashPanel(_energyPanelImage);
+                _feedbackView?.FlashPanel(_energyPanelImage);
                 return;
             }
 
             turnManager.EndPlayerTurn();
         }
 
-        private void OnCardButtonClicked(CardDeckEntry entry)
-        {
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance.CardPlaySFX);
-            if (turnManager == null || entry == null || _isPlayingAttack)
-            {
-                return;
-            }
-
-            if (!turnManager.TryPrepareCardPlay(entry, out PreparedCardPlay prepared))
-            {
-                FlashPanel(_energyPanelImage);
-                return;
-            }
-
-            SyncHandButtons(forceRebuild: true);
-
-            if (prepared.IsAttackCard && _playerAnimator != null)
-            {
-                _isPlayingAttack = true;
-                SetCardButtonsInteractable(false);
-                _playerAnimator.PlayAttackOnce(() =>
-                {
-                    turnManager.ResolvePreparedCardPlay(prepared);
-                    _isPlayingAttack = false;
-                    SyncHandButtons(forceRebuild: true);
-                });
-            }
-            else
-            {
-                turnManager.ResolvePreparedCardPlay(prepared);
-                SyncHandButtons(forceRebuild: true);
-            }
-        }
+        // OnCardButtonClicked extraído a CardHandView.
 
         private void UpdateInfoTexts()
         {
@@ -798,217 +737,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             return new Color(color.r * factor, color.g * factor, color.b * factor, color.a);
         }
 
-        private void SetCardButtonsInteractable(bool interactable)
-        {
-            foreach (CardButtonBinding binding in _cardButtons)
-            {
-                if (binding?.Button != null)
-                {
-                    binding.Button.interactable = interactable;
-                }
-            }
-        }
-
-        private void SyncHandButtons(bool forceRebuild = false)
-        {
-            if (turnManager == null)
-            {
-                return;
-            }
-
-            if (forceRebuild || !IsHandCacheValid())
-            {
-                RebuildHandButtons();
-            }
-
-            bool canInteract = turnManager.IsPlayerTurn();
-            foreach (CardButtonBinding binding in _cardButtons)
-            {
-                bool canPlay = turnManager.CanPlayCard(binding.CardEntry);
-                binding.Button.interactable = canInteract && canPlay;
-                binding.Label.text = BuildCardLabel(binding.CardEntry);
-                if (binding.Label != null)
-                {
-                    binding.Label.color = binding.Button.interactable ? Color.white : DisabledLabelColor;
-                }
-                Image image = binding.Button.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = binding.Button.interactable ? CardButtonNormalColor : CardButtonDisabledColor;
-                }
-            }
-
-            UpdateHandLayout();
-        }
-
-        private void UpdateHitFeedbackTimer()
-        {
-            if (_hitFeedbackText == null || !_hitFeedbackText.gameObject.activeSelf)
-            {
-                return;
-            }
-
-            _hitFeedbackTimer -= Time.deltaTime;
-            if (_hitFeedbackTimer <= 0f)
-            {
-                _hitFeedbackText.gameObject.SetActive(false);
-            }
-        }
-
-        private void UpdateHandLimitTimer()
-        {
-            if (_handLimitText == null || !_handLimitText.gameObject.activeSelf)
-            {
-                return;
-            }
-
-            _handLimitTimer -= Time.deltaTime;
-            if (_handLimitTimer <= 0f)
-            {
-                _handLimitText.gameObject.SetActive(false);
-            }
-        }
-
-        private void OnPlayerHitEffectiveness(Effectiveness effectiveness, bool momentumGranted)
-        {
-            if (_hitFeedbackText == null)
-            {
-                return;
-            }
-
-            string message = effectiveness switch
-            {
-                Effectiveness.SuperEficaz => momentumGranted ? "WEAK!\nMOMENTUM +1" : "WEAK!",
-                Effectiveness.PocoEficaz => "RESIST",
-                _ => string.Empty
-            };
-
-            if (string.IsNullOrEmpty(message))
-            {
-                _hitFeedbackText.gameObject.SetActive(false);
-                return;
-            }
-
-            _hitFeedbackText.text = message;
-            _hitFeedbackText.gameObject.SetActive(true);
-            _hitFeedbackTimer = hitFeedbackDuration;
-
-            // ── Juice: player avatar shake + HP label red flash + SFX ──
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance.HitSFX);
-            if (_playerAvatarImage != null)
-            {
-                UIAnimationHelper.Punch(_playerAvatarImage.transform, 0.15f, 0.3f);
-            }
-
-            if (_playerHpLabel != null)
-            {
-                _playerHpLabel.color = new Color(1f, 0.3f, 0.3f, 1f);
-                DOTween.To(
-                    () => _playerHpLabel.color,
-                    x => _playerHpLabel.color = x,
-                    Color.white, 0.4f)
-                    .SetTarget(_playerHpLabel)
-                    .SetUpdate(true);
-            }
-        }
-
-        private void OnEnemyTookDamage(int damage)
-        {
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance.HitSFX);
-            if (damage <= 0)
-            {
-                return;
-            }
-
-            if (_enemyAnimator != null && enemyHitFrames != null && enemyHitFrames.Count > 0)
-            {
-                _enemyAnimator.Configure(_enemyAvatarSpriteImage, new List<Sprite>(), enemyHitFrames, enemyHitFps);
-                _enemyAnimator.PlayAttackOnce();
-            }
-            else
-            {
-                // ── Juice: DOTween-based enemy shake (replaces coroutine) ──
-                if (_enemyAvatarImage != null)
-                {
-                    UIAnimationHelper.Punch(_enemyAvatarImage.transform, 0.2f, 0.25f);
-                }
-
-                if (_enemyAvatarSpriteImage != null)
-                {
-                    Color originalColor = _enemyAvatarSpriteImage.color;
-                    _enemyAvatarSpriteImage.color = Color.white;
-                    DOTween.To(
-                        () => _enemyAvatarSpriteImage.color,
-                        x => _enemyAvatarSpriteImage.color = x,
-                        originalColor, 0.15f)
-                        .SetTarget(_enemyAvatarSpriteImage)
-                        .SetUpdate(true);
-                }
-            }
-        }
-
-        private bool IsHandCacheValid()
-        {
-            if (turnManager == null)
-            {
-                return false;
-            }
-
-            IReadOnlyList<CardDeckEntry> hand = turnManager.PlayerHand;
-            if (hand.Count != _handCache.Count)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < hand.Count; i++)
-            {
-                if (hand[i] != _handCache[i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private void RebuildHandButtons()
-        {
-            foreach (CardButtonBinding binding in _cardButtons)
-            {
-                if (binding?.Button != null)
-                {
-                    DOTween.Kill(binding.Button.GetComponent<RectTransform>());
-                    if (binding.Group != null) DOTween.Kill(binding.Group);
-                    Destroy(binding.Button.gameObject);
-                }
-            }
-
-            _cardButtons.Clear();
-            _handCache.Clear();
-
-            IReadOnlyList<CardDeckEntry> hand = turnManager.PlayerHand;
-            for (int i = 0; i < hand.Count; i++)
-            {
-                CardDeckEntry entry = hand[i];
-                Button button = CreateCardButton(entry, _handContainer);
-                Text label = button.GetComponentInChildren<Text>();
-
-                // ── Juice: staggered fade-in only (no scale/slide — LayoutGroup controls position and scale) ──
-                CanvasGroup cardGroup = button.gameObject.AddComponent<CanvasGroup>();
-                cardGroup.alpha = 0f;
-                float delay = i * 0.05f;
-                UIAnimationHelper.FadeIn(cardGroup, 0.2f).SetDelay(delay);
-
-                _cardButtons.Add(new CardButtonBinding
-                {
-                    CardEntry = entry,
-                    Button = button,
-                    Label = label,
-                    Group = cardGroup
-                });
-                _handCache.Add(entry);
-            }
-        }
+        // SetCardButtonsInteractable, SyncHandButtons, IsHandCacheValid,
+        // RebuildHandButtons extraídos a CardHandView.
 
         private void InitializePlayerAnimator()
         {
@@ -1068,31 +798,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _enemyAnimator.Configure(_enemyAvatarSpriteImage, new List<Sprite>(), enemyHitFrames, enemyHitFps);
         }
 
-        private string BuildCardLabel(CardDeckEntry entry)
-        {
-            if (entry == null)
-            {
-                return "Unknown Card";
-            }
-
-            CardDefinition activeCard = turnManager != null ? turnManager.GetActiveCardDefinition(entry) : null;
-            if (activeCard == null)
-            {
-                return "Unknown Card";
-            }
-
-            string prefix = string.Empty;
-            if (entry.DualCard != null)
-            {
-                prefix = turnManager.CurrentWorld == TurnManager.WorldSide.A ? "[A] " : "[B] ";
-            }
-
-            string typePrefix = activeCard.ElementType != ElementType.None ? $"[{activeCard.ElementType}] " : string.Empty;
-            string title = string.IsNullOrEmpty(prefix)
-                ? $"{typePrefix}{activeCard.CardName}"
-                : $"{prefix}{typePrefix}{activeCard.CardName}";
-            return $"{title} (Cost {activeCard.Cost})\n{activeCard.Description}";
-        }
+        // BuildCardLabel extraído a CardHandView.
 
         private string BuildEnemyIntentLabel()
         {
@@ -1147,118 +853,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             bool changed = turnManager.TryChangeWorld();
             UpdateWorldVisuals();
-            SyncHandButtons(forceRebuild: true);
+            _cardHandView?.SyncHandButtons(forceRebuild: true);
             if (!changed)
             {
-                FlashPanel(_worldPanelImage);
+                _feedbackView?.FlashPanel(_worldPanelImage);
             }
         }
 
-        private void OnPlayerHandLimitReached(int maxHandSize)
-        {
-            if (_handLimitText == null)
-            {
-                return;
-            }
-
-            if (_handLimitCooldown > 0f)
-            {
-                return;
-            }
-
-            _handLimitText.text = $"Hand limit: {maxHandSize}";
-            _handLimitText.gameObject.SetActive(true);
-            _handLimitText.transform.SetAsLastSibling();
-            _handLimitTimer = handLimitToastDuration;
-            _handLimitCooldown = handLimitToastCooldown;
-            StartCoroutine(HandLimitCooldownRoutine());
-        }
-
-        private IEnumerator HandLimitCooldownRoutine()
-        {
-            while (_handLimitCooldown > 0f)
-            {
-                _handLimitCooldown -= Time.deltaTime;
-                yield return null;
-            }
-
-            _handLimitCooldown = 0f;
-        }
-
-        /// <summary>
-        /// Ajusta tamaño y espaciado de la mano para mantenerla centrada y visible.
-        /// Usa preferredWidth/Height (no sizeDelta) porque HorizontalLayoutGroup se guía por LayoutElement.
-        /// Se fuerza un rebuild para evitar que el layout quede desplazado.
-        /// </summary>
-        private void UpdateHandLayout()
-        {
-            if (_handContainer == null)
-            {
-                return;
-            }
-
-            int count = _cardButtons.Count;
-            float availableWidth = _handContainer.rect.width;
-            if (count <= 0 || availableWidth <= 0f)
-            {
-                return;
-            }
-
-            if (Mathf.Abs(availableWidth - _lastHandWidth) < 1f && count == _lastHandCount)
-            {
-                return;
-            }
-
-            _lastHandWidth = availableWidth;
-            _lastHandCount = count;
-
-            float padding = 32f; // coincide con padding izquierdo/derecho del layout
-            float targetWidth = Mathf.Max(0f, availableWidth - padding);
-            float spacing = HandSpacingBase;
-            float cardWidth = HandCardWidthBase;
-
-            float totalWidth = (count * cardWidth) + ((count - 1) * spacing);
-            if (totalWidth > targetWidth)
-            {
-                float scale = targetWidth / totalWidth;
-                cardWidth = Mathf.Max(HandCardWidthMin, cardWidth * scale);
-                spacing = Mathf.Max(HandSpacingMin, spacing * scale);
-            }
-
-            float cardHeight = Mathf.Max(HandCardHeightMin, HandCardHeightBase * (cardWidth / HandCardWidthBase));
-
-            HorizontalLayoutGroup layout = _handContainer.GetComponent<HorizontalLayoutGroup>();
-            if (layout != null)
-            {
-                layout.spacing = spacing;
-            }
-
-            bool layoutChanged = false;
-            foreach (CardButtonBinding binding in _cardButtons)
-            {
-                if (binding?.Button == null)
-                {
-                    continue;
-                }
-
-                LayoutElement element = binding.Button.GetComponent<LayoutElement>();
-                if (element != null)
-                {
-                    if (!Mathf.Approximately(element.preferredWidth, cardWidth)
-                        || !Mathf.Approximately(element.preferredHeight, cardHeight))
-                    {
-                        element.preferredWidth = cardWidth;
-                        element.preferredHeight = cardHeight;
-                        layoutChanged = true;
-                    }
-                }
-            }
-
-            if (layoutChanged)
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(_handContainer);
-            }
-        }
+        // OnPlayerHandLimitReached, HandLimitCooldownRoutine extraídos a CombatFeedbackView.
+        // UpdateHandLayout extraído a CardHandView.
 
         private void ApplyButtonStyle(Button button)
         {
@@ -1277,28 +880,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             button.colors = colors;
         }
 
-        private void FlashPanel(Image panelImage)
-        {
-            if (panelImage == null)
-            {
-                return;
-            }
-
-            if (_panelFlashRoutine != null)
-            {
-                StopCoroutine(_panelFlashRoutine);
-            }
-            _panelFlashRoutine = StartCoroutine(FlashPanelRoutine(panelImage));
-        }
-
-        private IEnumerator FlashPanelRoutine(Image panelImage)
-        {
-            Color original = panelImage.color;
-            panelImage.color = HudFlashColor;
-            yield return new WaitForSeconds(0.12f);
-            panelImage.color = original;
-            _panelFlashRoutine = null;
-        }
+        // FlashPanel y FlashPanelRoutine extraídos a CombatFeedbackView.
 
         private void UpdateWorldVisuals()
         {
@@ -1388,86 +970,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             rectTransform.localScale = scale;
         }
 
-        // ────────────────────────────────────────────────────────
-        // Juice: combat result text + DOTween cleanup
-        // ────────────────────────────────────────────────────────
+        // ShowVictoryText, ShowDefeatText, ShowCombatResultText extraídos a CombatFeedbackView.
+        // Acceso público via: _feedbackView.ShowVictoryText() / _feedbackView.ShowDefeatText()
 
-        /// <summary>
-        /// Shows an animated "VICTORY" text centered on screen.
-        /// Not connected to any event yet — call from BattleFlowController in a future issue.
-        /// </summary>
-        public void ShowVictoryText()
-        {
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance.VictorySFX);
-            ShowCombatResultText("VICTORY", new Color(0.2f, 1f, 0.4f));
-        }
-
-        /// <summary>
-        /// Shows an animated "DEFEAT" text centered on screen.
-        /// Not connected to any event yet — call from BattleFlowController in a future issue.
-        /// </summary>
-        public void ShowDefeatText()
-        {
-            AudioManager.Instance?.PlaySFX(AudioManager.Instance.DefeatSFX);
-            ShowCombatResultText("DEFEAT", new Color(1f, 0.3f, 0.3f));
-        }
-
-        /// <summary>
-        /// Creates a large centered text with scale-in + fade-in animation, auto-destroys after 2s.
-        /// </summary>
-        private void ShowCombatResultText(string message, Color color)
-        {
-            if (_canvas == null)
-            {
-                return;
-            }
-
-            RectTransform canvasRect = _canvas.GetComponent<RectTransform>();
-            Text resultText = CreateText("CombatResultText", canvasRect, message, 60, TextAnchor.MiddleCenter);
-            resultText.fontStyle = FontStyle.Bold;
-            resultText.color = color;
-
-            RectTransform textRect = resultText.GetComponent<RectTransform>();
-            textRect.anchorMin = new Vector2(0.1f, 0.3f);
-            textRect.anchorMax = new Vector2(0.9f, 0.7f);
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-
-            CanvasGroup group = resultText.gameObject.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-
-            UIAnimationHelper.ScaleIn(textRect.transform, 0.4f);
-            UIAnimationHelper.FadeIn(group, 0.3f);
-
-            Destroy(resultText.gameObject, 2f);
-        }
-
-        /// <summary>
-        /// Cleanup: kill all active DOTween tweens owned by this controller's UI elements.
-        /// </summary>
-        private void OnDestroy()
-        {
-            // Kill tweens on card buttons
-            foreach (CardButtonBinding binding in _cardButtons)
-            {
-                if (binding?.Button != null)
-                {
-                    DOTween.Kill(binding.Button.GetComponent<RectTransform>());
-                }
-                if (binding?.Group != null)
-                {
-                    DOTween.Kill(binding.Group);
-                }
-            }
-
-            // Kill tweens on avatars
-            if (_playerAvatarImage != null) DOTween.Kill(_playerAvatarImage.transform);
-            if (_enemyAvatarImage != null) DOTween.Kill(_enemyAvatarImage.transform);
-
-            // Kill tweens on labels
-            if (_playerHpLabel != null) DOTween.Kill(_playerHpLabel);
-            if (_enemyAvatarSpriteImage != null) DOTween.Kill(_enemyAvatarSpriteImage);
-        }
+        // OnDestroy: tweens de card buttons limpiados por CardHandView.OnDestroy(),
+        // tweens de avatares/labels limpiados por CombatFeedbackView.OnDestroy().
     }
 }
 

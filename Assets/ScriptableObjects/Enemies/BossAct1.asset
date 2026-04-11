@@ -59,9 +59,9 @@ MonoBehaviour:
     intentType: 2
   - id: boss_recover
     moveName: Regenerate
-    description: Recovers 10 HP.
+    description: Gains 10 Block and recovers.
     effects:
-    - effectType: 2
+    - effectType: 1
       value: 10
       target: 0
       statusType: 0
