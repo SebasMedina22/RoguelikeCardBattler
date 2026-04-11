@@ -1,6 +1,10 @@
-# Prompt Master y Programming Master — Workflow de desarrollo
+> **DEPRECATED**: Este workflow dual-agent ha sido reemplazado por un solo agente usando
+> Claude Code Plan mode + `CLAUDE.md` como guardrails. Se mantiene como referencia histórica.
+> Ver `CLAUDE.md` en la raíz del proyecto para el workflow actual.
 
-Este documento describe cómo está organizado el proceso de desarrollo del proyecto: la arquitectura de software que seguimos, la separación de roles entre **Prompt Master** y **Programming Master**, y las reglas que garantizan consistencia y calidad.
+# Prompt Master y Programming Master — Workflow de desarrollo (HISTÓRICO)
+
+Este documento describe el proceso de desarrollo original del proyecto: la arquitectura de software que seguimos, la separación de roles entre **Prompt Master** y **Programming Master**, y las reglas que garantizan consistencia y calidad.
 
 ---
 
@@ -29,9 +33,8 @@ MainMenu → RunScene (mapa) → BattleScene (combate) → RunScene (resultado) 
 
 ### Archivos y responsabilidades
 
-- **No tocar on-chain**: Nunca modificar contratos Anchor, IDL, ni lógica que interactúe directamente con la blockchain.
-- **No tocar lógica de bids/combate core**: TurnManager, ActionQueue, PlayerCombatActor manejan la mecánica. Los controllers orquestan, no implementan.
-- **Helpers reutilizables**: Funciones como `isAuctionClosed`, `getAuctionStatusLabel` en `lib/utils` deben usarse en vez de duplicar lógica.
+- **No tocar core de combate**: TurnManager, ActionQueue, PlayerCombatActor manejan la mecánica. Los controllers orquestan, no implementan.
+- **Helpers reutilizables**: Métodos en `Core/UI/UIAnimationHelper.cs` y `Core/Audio/AudioManager.cs` deben usarse en vez de duplicar lógica.
 
 ---
 
