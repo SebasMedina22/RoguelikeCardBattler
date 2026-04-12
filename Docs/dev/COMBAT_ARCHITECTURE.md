@@ -70,6 +70,42 @@ flowchart TD
 - Cambio de mundo: 1 uso por combate; flag de debug permite ilimitado.
 - UI se construye en runtime por `CombatUIController`; sprites de avatares se configuran vía inspector/captura inicial.
 
+### CombatUIController — Plan de descomposicion
+
+`CombatUIController.cs` es un monolito de 1400+ lineas con 5 responsabilidades mezcladas.
+Se descompone incrementalmente en componentes independientes, cada uno un MonoBehaviour
+que se suscribe a eventos de TurnManager y recibe referencias de UI necesarias.
+
+**Acoplamiento clave**: BattleFlowController NO referencia CombatUIController. Ambos
+se conectan a TurnManager de forma independiente. Esto permite extraer componentes
+sin tocar BattleFlowController.
+
+#### Componentes objetivo (en orden de extraccion)
+
+| Componente | Responsabilidad | Dependencias | Estado |
+|------------|----------------|--------------|--------|
+| `CombatFeedbackView` | Popups WEAK/RESIST/MOMENTUM, enemy shake, victory/defeat text, hand limit toast, panel flash | TurnManager events, UIAnimationHelper, AudioManager | **Fase 1** |
+| `CardHandView` | Mano de cartas, CardButtonBinding, sync, layout adaptivo, click → TurnManager | TurnManager (card play API), UI builders | Fase 2 |
+| `CombatHudView` | Paneles de HP, energia, momentum, mundo, block overlays, intents | TurnManager (read state), UI builders | Fase 3 |
+| `CombatBackgroundView` | Fondos sky/ground por mundo, CoverFill, sprites A/B | TurnManager.CurrentWorld | Fase 4 |
+
+#### Patron de integracion
+
+Cada componente extraido:
+1. Vive en el mismo GameObject que CombatUIController (o hijo directo).
+2. Se suscribe a TurnManager events en OnEnable/OnDisable.
+3. Recibe referencias de UI via campos internos (no SerializeField).
+4. CombatUIController le pasa las referencias despues de BuildUI() via metodo `Initialize()`.
+5. Es **solo presentacion** — nunca muta estado de gameplay.
+
+#### Reglas de extraccion
+
+- Cada fase es un commit/PR independiente.
+- Despues de cada fase: zero console errors + gameplay funcional = criterio de aceptacion.
+- CombatUIController se adelgaza pero sigue siendo el orquestador de BuildUI().
+- Los UI builder helpers (CreatePanel, CreateText, etc.) permanecen en CombatUIController
+  hasta que se extraigan todos los componentes; luego se mueven a un utility compartido.
+
 ### Troubleshooting
 - No aparecen tests en Test Runner:
   - Verifica asmdefs: runtime (`Assets/Scripts/RoguelikeCardBattler.asmdef`) y tests (`Assets/Tests/EditMode/EditModeTests.asmdef`). Usa pestaña EditMode en `Window > General > Test Runner`.
