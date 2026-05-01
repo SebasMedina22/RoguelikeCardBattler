@@ -7,8 +7,8 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-04-27 — post extracción de CombatFeedbackView
-> y CardHandView (PR #83 mergeado a main)
+> **Última actualización:** 2026-05-01 — post extracción de CombatBackgroundView
+> (Fase 4); CombatUIController 980 → 710 loc
 
 ---
 
@@ -58,7 +58,7 @@ DontDestroyOnLoad.
 MainMenu Scene  →  MainMenuController
 RunScene        →  RunFlowController + RunSession (DDOL)
 BattleScene     →  BattleFlowController + RunSession (DDOL) + CombatUIController
-                                            (con CombatFeedbackView, CardHandView)
+                                            (con CombatFeedbackView, CardHandView, CombatHudView)
 ```
 
 ### Únicos DontDestroyOnLoad
@@ -101,7 +101,7 @@ Exclusivamente vía `RunSession.State` (= `RunState`). Flags principales:
 
 [CombatUIController.Start]
     └─ BuildUI() construye canvas en runtime (HUD, paneles, fondos)
-    └─ InitializeExtractedViews() crea CombatFeedbackView y CardHandView
+    └─ InitializeExtractedViews() crea CombatFeedbackView, CardHandView y CombatHudView
     └─ Cada view se suscribe a TurnManager events de forma independiente
 
 [Loop de combate]
@@ -174,9 +174,11 @@ Gameplay/
     ICombatActor.cs, IGameAction.cs, ActionContext.cs
     ElementTypes.cs              ← 7 tipos + matriz de efectividad
     SpriteFrameAnimatorUI.cs
-    CombatUIController.cs        ← 980 loc (era 1473)
+    CombatUIController.cs        ← 710 loc (era 1473)
     CombatFeedbackView.cs        ← 357 loc (extraído en Fase 1)
     CardHandView.cs              ← 400 loc (extraído en Fase 2)
+    CombatHudView.cs             ← 327 loc (extraído en Fase 3)
+    CombatBackgroundView.cs      ← 182 loc (extraído en Fase 4)
     CombatAmbientParticles.cs
     Actions/
       DamageAction.cs, BlockAction.cs, DrawCardsAction.cs
@@ -295,8 +297,8 @@ de tocar.
 - **No CI/CD** configurado. Tests se corren localmente vía Unity Test Runner.
 - **No gh CLI** instalado. PRs se crean manualmente desde la URL que devuelve `git push`.
 - **Comentarios mezclados español/inglés** sin criterio fijo (deuda menor, ver roadmap).
-- **CombatUIController sigue grande** (980 loc). Hay plan de extracción documentado
-  en `COMBAT_ARCHITECTURE.md` para Fases 3-4 (CombatHudView, CombatBackgroundView).
+- **CombatUIController** (710 loc post-Fase 4). Descomposición completa — es ahora
+  un orquestador puro de BuildUI y lifecycle. Listo para recibir features de M2.
 - **TurnManager tiene gaps conocidos** que requieren tocar el archivo protegido:
   - PhaseBased AI declarado en enum pero sin implementación en `SelectEnemyMove()`
   - `EffectType.Heal` no existe (BossAct1 Regenerate usa Block como workaround)

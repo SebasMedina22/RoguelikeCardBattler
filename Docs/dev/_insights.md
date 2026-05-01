@@ -31,4 +31,14 @@
 <!-- Los insights se agregan aquí en orden cronológico (más reciente arriba). -->
 <!-- No editar insights pasados sin pedido explícito. -->
 
-(Vacío. El primer insight se registrará cuando aparezca uno.)
+## Insight 1 — Validación de fase de extracción debe abrir Unity, no solo revisar el diff — 2026-05-01
+
+**Contexto:** durante la validación de la Fase 4 (extracción de CombatBackgroundView), al abrir Unity por primera vez post-merge me salió el editor en Safe Mode con 6 errores CS0246/CS0103 en CombatHudView.cs. El error venía latente desde Fase 3: `BuildEnemyIntentLabel()` se movió de CombatUIController a CombatHudView pero el `using RoguelikeCardBattler.Gameplay.Enemies;` no se replicó. Como el code review de Fase 3 fue por inspección de diff y no abriendo Unity, el error pasó. Recién apareció en Fase 4 cuando volví a abrir el editor.
+
+**Idea:** la validación de una fase de refactor que mueve código entre archivos NO es completa hasta que Unity compile sin errores. El code review del diff puede pasar y aún así el proyecto no compilar (typically por usings faltantes, asmdefs mal referenciados, o tipos del namespace destino que no existen en el origen).
+
+**Conexión con sistemas:** proceso de desarrollo / validación. No afecta gameplay directamente, pero afecta cómo cerramos sub-tareas en `_roadmap.md`.
+
+**Potencial:** agregar al protocolo de extracción de combate (y refactors en general) un checkbox explícito: "Abrir Unity y verificar zero compilation errors antes de marcar como validada". Esto es independiente y previo a "validar comportamiento en BattleScene". Para M2 (que va a tocar mucho más código y reescribir tests), este chequeo es no-negociable porque la cantidad de errores potenciales se multiplica.
+
+**Estado:** aplicado — la regla queda registrada acá para que se aplique en M2 y siguientes. El protocolo de futuros specs de refactor debe incluirla en la sección de validación.
