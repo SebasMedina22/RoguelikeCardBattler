@@ -103,5 +103,31 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
         }
     }
+
+    /// <summary>
+    /// Multiplicadores de efectividad centralizados (DD-018). Antes vivían como
+    /// literales dentro de TurnManager.AdjustDamageForEffectiveness; ahora se
+    /// declaran aquí para que sub-PRs siguientes (efectividad bidireccional,
+    /// daño x1.5 al jugador, cartas neutras al 90%) los reutilicen sin
+    /// duplicación.
+    /// </summary>
+    public static class EffectivenessMultipliers
+    {
+        public const float SuperEficaz = 1.5f;
+        public const float Neutro = 1.0f;
+        public const float PocoEficaz = 0.75f;
+
+        // Cartas con tipo None aplican este multiplicador adicional al daño base
+        // (DD-002). Declarado en sub-PR A; sub-PR C lo aplica.
+        public const float NeutralCardDamage = 0.9f;
+
+        public static float For(Effectiveness effectiveness) =>
+            effectiveness switch
+            {
+                Effectiveness.SuperEficaz => SuperEficaz,
+                Effectiveness.PocoEficaz => PocoEficaz,
+                _ => Neutro
+            };
+    }
 }
 
