@@ -7,10 +7,10 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** post-procesamiento del GDD v2. Cerrando deuda técnica de UI antes de M2.
-> **Milestone activo:** M-tech — Deuda técnica acumulada (solo queda `gh` CLI)
-> **Próximo gran bloque:** M2 — TurnManager v2 (mecánica core nueva + bundle de deuda)
-> **Última actualización:** 2026-05-01 (post-validación Fase 4 CombatBackgroundView)
+> **Fase actual:** entrando a M2 — reescritura de la mecánica core sobre TurnManager.
+> **Milestone activo:** M2 — TurnManager v2 (mecánica core nueva + bundle de deuda)
+> **Próximo bloque:** M3 — Personalización del run (Retazos, Tienda, Hoguera)
+> **Última actualización:** 2026-05-01 (post-cierre M-tech, gh CLI instalado)
 
 ---
 
@@ -44,75 +44,6 @@
 
 ## Activo
 
-### M-tech — Deuda técnica acumulada
-
-**Objetivo:** terminar la descomposición de CombatUIController y pagar deuda
-técnica de tooling antes de entrar a M2 (que reescribe TurnManager). Las deudas
-que tocan archivos protegidos se **bundlean con M2** porque su PR va a tocar
-TurnManager igual — abrirlo dos veces sería desperdicio.
-
-**Por qué se mantiene activo:** Fase 4 es refactor puro de UI sin tocar
-protegidos. Pagarla ahora deja CombatUIController listo para recibir las
-features nuevas de M2 (Contador de Estilo en HUD, indicador de tipo activo,
-etc.) sin reabrir el monolito.
-
-**Sub-tareas independientes (paralelas, sin protegidos):**
-
-#### Fase 3 — Extracción de CombatHudView (✅ CERRADA 2026-04-28)
-- [x] Spec en `modo:diseno`
-- [x] Implementación con los 10 pasos del spec
-- [x] Validación manual en BattleScene (14 casos de prueba)
-- [x] Revisión de código (`modo:revision`)
-- [x] Merge
-
-**Resultado:** CombatUIController de 980 → **842 loc** (-14%). CombatHudView.cs
-creado con **330 loc** (HUD textos, botones End Turn / Change World, highlight
-de avatares por turno). Comportamiento idéntico al anterior. Cero errores en
-consola.
-
-#### Fase 4 — Extracción de CombatBackgroundView (✅ CERRADA 2026-05-01)
-- [x] Spec en `modo:diseno`
-- [x] Implementación
-- [x] Revisión de código
-- [x] Validación manual en BattleScene
-- [ ] Merge *(pendiente del usuario)*
-
-**Resultado:** CombatUIController de 842 → **710 loc** (-16%). CombatBackgroundView.cs
-creado con **182 loc** (sky/ground, sprites/colores A/B, CoverFill, polling autónomo
-de CurrentWorld). `_owner` eliminado de CombatHudView.
-
-**Bug surfaced + fixed durante validación:** CombatHudView.cs no tenía
-`using RoguelikeCardBattler.Gameplay.Enemies;` (latente desde Fase 3, donde
-`BuildEnemyIntentLabel` se movió sin replicar el using). 6 errores CS0246/CS0103
-en consola al abrir Unity. Fix: agregada la línea de using. Ver `_insights.md`
-para el aprendizaje sobre validación de compilación en Unity.
-
-#### Tooling
-- [ ] Instalar `gh` CLI para automatizar creación de PRs desde terminal (no
-      requiere prompt — son 2-3 comandos en terminal)
-- [ ] Verificar que el otro developer también lo instala
-
-**Sub-tareas que se BUNDLEAN con M2 (tocan TurnManager protegido):**
-
-- ~~PhaseBased AI~~ — se implementa dentro de M2 al reescribir `SelectEnemyMove()`.
-- ~~`EffectType.Heal` + `HealAction`~~ — se implementa dentro de M2 al reescribir
-  el case dispatch de `CreateAction()`.
-- ~~`CalculateIntentValue` gaps~~ — se amplía dentro de M2.
-
-Razón: cada uno toca `TurnManager.cs` (PROTEGIDO). En lugar de abrir el archivo
-protegido 4 veces (una por cada deuda más una por M2), se abre 1 sola vez en
-M2 con todas las features cohesivas a la vez. Aprobación de Sebastián una sola
-vez en lugar de cuatro.
-
-**Dependencias:** ninguna específica para Fase 4 / gh CLI.
-**Criterios de cierre del milestone:** Fase 4 mergeada + gh CLI funcional.
-Las deudas bundleadas con M2 NO bloquean el cierre de M-tech — se cierran
-cuando M2 se cierra.
-
----
-
-## Pendientes
-
 ### M2 — TurnManager v2: mecánica core nueva + deuda técnica
 
 **Objetivo:** instalar el sistema de cargas (Contador de Estilo) y todas las
@@ -133,12 +64,12 @@ limpio.
       combate)
 - [ ] Cambios múltiples de mundo por combate (cap dinámico: 1 base + extras por
       cargas / cartas / Retazos)
-- [ ] Tipo activo del jugador (campo derivado del mundo, viene de los 2 tipos
-      elegidos al inicio del run)
+- [x] Tipo activo del jugador (campo derivado del mundo, viene de los 2 tipos
+      elegidos al inicio del run) *(Sub-PR A — PR #86)*
 - [ ] Daño enemigo SuperEficaz contra el jugador: aplicar multiplicador x1.5
       (DD-018) — multiplicador configurable como constante
-- [ ] Hacer configurables los multiplicadores de efectividad (1.5 / 1.0 / 0.75)
-      como constantes en código
+- [x] Hacer configurables los multiplicadores de efectividad (1.5 / 1.0 / 0.75)
+      como constantes en código *(Sub-PR A — PR #86)*
 - [ ] Cartas neutras al 90% del daño base (DD-002)
 
 #### Deuda técnica que se cierra aquí (bundle de M-tech)
@@ -161,24 +92,32 @@ PlayerCombatActorTests deberán reescribirse).
 **Toca archivos protegidos:** **SÍ** — TurnManager + PlayerCombatActor.
 **REQUIERE APROBACIÓN EXPLÍCITA** antes de empezar implementación.
 
-**Dependencias:** M-tech Fase 4 cerrada (CombatHudView ya extraído facilita
-la modificación del HUD para cargas; CombatBackgroundView libera el monolito
-para tocar HUD/state sin pisar fondos).
+**Dependencias:** M-tech cerrada ✅ (CombatHudView ya extraído facilita la
+modificación del HUD para cargas; CombatBackgroundView libera el monolito
+para tocar HUD/state sin pisar fondos; gh CLI listo para PRs ágiles).
 
-**Estrategia de PRs:** subdividir en 3-4 sub-PRs cohesivos:
+**Estrategia de PRs:** subdividir en 4 sub-PRs cohesivos:
 - Sub-PR A: tipo activo del jugador + multiplicadores configurables (sin tocar
   comportamiento todavía)
 - Sub-PR B: efectividad bidireccional + daño x1.5 al jugador
 - Sub-PR C: Contador de Estilo + cambios múltiples (reemplaza Momentum)
 - Sub-PR D: PhaseBased AI + Heal + CalculateIntentValue (deuda técnica)
 
+**Validación obligatoria por sub-PR (lección de Fase 3-4, ver `_insights.md`):**
+- Compilación de Unity sin errores antes de marcar como mergeable.
+- Tests EditMode en verde.
+- BattleScene jugable y manualmente verificada.
+
 **Complejidad:** alta. Es el cambio que más riesgo de regresión introduce en el
 motor de combate.
 
 **Criterios de cierre:** todos los tests pasan + comportamiento verificado en
-BattleScene + Momentum completamente eliminado del código.
+BattleScene + Momentum completamente eliminado del código + UI del HUD refleja
+Cargas y tipo activo del jugador.
 
 ---
+
+## Pendientes
 
 ### M3 — Personalización del run
 
@@ -285,6 +224,30 @@ toca TurnManager).
 ---
 
 ## Completados
+
+### M-tech — Deuda técnica acumulada
+**Fecha cierre:** 2026-05-01
+**Resumen:**
+- **Fase 3 — `CombatHudView`** (327 loc): textos del HUD, botones End Turn /
+  Change World, highlight de avatares por turno. Mergeada en PR previo a #85.
+- **Fase 4 — `CombatBackgroundView`** (182 loc): sky/ground, sprites/colores
+  A/B, CoverFill, polling autónomo de `CurrentWorld` (decisión Opción B —
+  pensada para que cartas/Retazos futuros que cambien mundo refresquen fondos
+  sin coordinación). Mergeada en PR #85.
+- **CombatUIController**: 1473 → **710 loc** (-52% acumulado). Quedó como puro
+  orquestador (BuildUI + helpers de creación) + InitializeExtractedViews.
+- **`_owner` eliminado de CombatHudView**: andamio temporal de Fase 3 cerrado.
+  HudView ya no conoce a CombatUIController.
+- **Bug catcheado y fixeado**: CombatHudView no tenía `using
+  RoguelikeCardBattler.Gameplay.Enemies;` (latente desde Fase 3, surfaced al
+  abrir Unity post-Fase 4). 6 errores CS0246/CS0103 resueltos con la línea
+  faltante. Insight 1 registrado en `_insights.md` para que validación de
+  refactors abra Unity como criterio de cierre.
+- **`gh` CLI instalado y autenticado**: `winget install --id GitHub.cli`.
+  Habilita creación de PRs desde terminal sin copy-paste manual.
+- **Deudas técnicas BUNDLEADAS con M2** (no se cerraron aquí porque tocan
+  TurnManager protegido): PhaseBased AI, `EffectType.Heal`, `CalculateIntentValue`
+  gaps. Se resuelven dentro del refactor coordinado de M2.
 
 ### M0 — Setup del sistema de modos
 **Fecha cierre:** 2026-04-28

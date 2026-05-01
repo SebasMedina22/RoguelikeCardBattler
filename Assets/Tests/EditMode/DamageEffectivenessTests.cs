@@ -114,6 +114,43 @@ namespace RoguelikeCardBattler.Tests.EditMode
         }
 
         [Test]
+        public void PlayerActiveType_FollowsCurrentWorld()
+        {
+            var damage = CreateEffect(EffectType.Damage, 0, EffectTarget.SingleEnemy);
+            var card = CreateCardWithElement(
+                "filler",
+                CardType.Attack,
+                CardTarget.SingleEnemy,
+                cost: 0,
+                elementType: ElementType.None,
+                damage);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_none",
+                "Enemy None",
+                maxHp: 10,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove>(),
+                elementType: ElementType.None);
+
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.InitializeCombat();
+
+            // Mundo A → tipo de A (Rojo).
+            Assert.AreEqual(TurnManager.WorldSide.A, manager.CurrentWorld);
+            Assert.AreEqual(ElementType.Rojo, manager.PlayerActiveType);
+
+            // Mundo B → tipo de B (Amarillo).
+            manager.SetCurrentWorldForTest(TurnManager.WorldSide.B);
+            Assert.AreEqual(ElementType.Amarillo, manager.PlayerActiveType);
+
+            // Volver a A → vuelve al tipo de A.
+            manager.SetCurrentWorldForTest(TurnManager.WorldSide.A);
+            Assert.AreEqual(ElementType.Rojo, manager.PlayerActiveType);
+        }
+
+        [Test]
         public void SuperEffectiveHit_GrantsFreePlay()
         {
             var damage = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);

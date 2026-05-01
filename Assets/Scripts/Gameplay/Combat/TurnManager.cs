@@ -25,6 +25,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField, Min(1)] private int startingHandSize = 5;
         [SerializeField, Min(1)] private int cardsPerTurn = 5;
         [SerializeField, Min(1)] private int maxHandSize = 7;
+        [Header("Player Element Types (defaults; override via ConfigureCombat)")]
+        [SerializeField] private ElementType playerWorldATypeDefault = ElementType.Rojo;
+        [SerializeField] private ElementType playerWorldBTypeDefault = ElementType.Amarillo;
         [Header("World Switch Settings")]
         [SerializeField, Min(1)] private int maxWorldSwitchesPerCombat = 1;
         [SerializeField] private bool debugUnlimitedWorldSwitches = false;
@@ -49,6 +52,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private WorldSide currentWorld = WorldSide.A;
         private int _worldSwitchesUsed;
         private int _freePlays;
+        // Tipos elegidos al inicio del run (uno por mundo). Inyectados desde
+        // RunState via ConfigureCombat; en escenas independientes (BattleScene
+        // standalone, tests) caen al default del SerializeField.
+        private ElementType _playerWorldAType;
+        private ElementType _playerWorldBType;
         private bool _autoEndedThisTurn;
         private bool _resolvingCard;
 
@@ -80,6 +88,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public EnemyIntentType PlannedEnemyIntentType => _plannedEnemyMove?.IntentType ?? EnemyIntentType.Unknown;
         public int PlannedEnemyIntentValue => CalculateIntentValue(_plannedEnemyMove);
         public WorldSide CurrentWorld => currentWorld;
+
+        /// <summary>
+        /// Tipo activo del jugador, derivado del mundo actual y los 2 tipos
+        /// elegidos al inicio del run. Sub-PR A solo lo expone — sub-PR B lo
+        /// consume para aplicar efectividad bidireccional al daño enemigo.
+        /// </summary>
+        public ElementType PlayerActiveType =>
+            currentWorld == WorldSide.A ? _playerWorldAType : _playerWorldBType;
+
         public float CurrentEnemyAvatarScale => enemyDefinition != null ? Mathf.Max(0.1f, enemyDefinition.AvatarScale) : 1f;
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
@@ -162,6 +179,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _freePlays = Mathf.Max(0, value);
         }
 
+        public void SetPlayerTypesForTest(ElementType worldAType, ElementType worldBType)
+        {
+            _playerWorldAType = worldAType;
+            _playerWorldBType = worldBType;
+        }
+
+        public void SetCurrentWorldForTest(WorldSide world)
+        {
+            currentWorld = world;
+        }
+
         public void SetWorldSwitchesForTest(int used, int? maxPerCombat = null, bool? unlimited = null)
         {
             _worldSwitchesUsed = Mathf.Max(0, used);
@@ -190,6 +218,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 Debug.LogError("Enemy definition is missing.");
                 return;
             }
+
+            // Fallback a defaults del inspector cuando ConfigureCombat no inyectó
+            // tipos válidos (escenas standalone, tests sin override explícito).
+            if (_playerWorldAType == ElementType.None) _playerWorldAType = playerWorldATypeDefault;
+            if (_playerWorldBType == ElementType.None) _playerWorldBType = playerWorldBTypeDefault;
 
             int maxHp = _initialPlayerMaxHpOverride.HasValue
                 ? Mathf.Max(1, _initialPlayerMaxHpOverride.Value)
@@ -229,7 +262,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             EnemyDefinition enemy,
             int? playerCurrentHpOverride = null,
             int? playerMaxHpOverride = null,
-            bool initializeImmediately = true)
+            bool initializeImmediately = true,
+            ElementType playerWorldAType = ElementType.None,
+            ElementType playerWorldBType = ElementType.None)
         {
             if (deck == null || deck.Count == 0)
             {
@@ -247,6 +282,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             enemyDefinition = enemy;
             _initialPlayerHpOverride = playerCurrentHpOverride;
             _initialPlayerMaxHpOverride = playerMaxHpOverride;
+            // None marca "sin override"; InitializeCombat aplica el default del
+            // SerializeField si los campos quedan en None.
+            _playerWorldAType = playerWorldAType;
+            _playerWorldBType = playerWorldBType;
             _externalConfigApplied = true;
 
             if (initializeImmediately)
@@ -451,12 +490,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
             Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(sourceElementType, defenderType);
-            float multiplier = effectiveness switch
-            {
-                Effectiveness.SuperEficaz => 1.5f,
-                Effectiveness.PocoEficaz => 0.75f,
-                _ => 1f
-            };
+            float multiplier = EffectivenessMultipliers.For(effectiveness);
 
             int adjusted = Mathf.RoundToInt(baseAmount * multiplier);
             int finalAmount = Math.Max(0, adjusted);

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RoguelikeCardBattler.Gameplay.Cards;
+using RoguelikeCardBattler.Gameplay.Combat;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -28,6 +29,13 @@ namespace RoguelikeCardBattler.Run
         public NodeOutcome LastNodeOutcome { get; set; } = NodeOutcome.None;
         public bool RunFailed { get; set; }
         public bool ActoCompleted { get; set; } = false;
+
+        // Los 2 tipos elegidos al inicio del run (uno por mundo). Sub-PR A los
+        // declara con defaults Rojo/Amarillo; futuras pantallas de selección
+        // (M3) los sobreescribirán. TurnManager los lee en ConfigureCombat
+        // para derivar PlayerActiveType según el mundo activo.
+        public ElementType PlayerWorldAType { get; set; } = ElementType.Rojo;
+        public ElementType PlayerWorldBType { get; set; } = ElementType.Amarillo;
 
         public void EnsureInitialized(ActMap map)
         {
@@ -62,6 +70,8 @@ namespace RoguelikeCardBattler.Run
             LastNodeOutcome = NodeOutcome.None;
             RunFailed = false;
             ActoCompleted = false;
+            PlayerWorldAType = ElementType.Rojo;
+            PlayerWorldBType = ElementType.Amarillo;
             EnsureInitialized(map);
         }
 
