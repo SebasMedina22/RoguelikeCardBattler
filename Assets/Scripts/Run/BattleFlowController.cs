@@ -175,7 +175,14 @@ namespace RoguelikeCardBattler.Run
 #if UNITY_EDITOR
             Debug.Log($"[BattleFlow] Deck size: {deck.Count}, Enemy: {enemyToUse.EnemyName}, IsBoss: {_isBossBattle}, HP: {currentHp}/{maxHp}");
 #endif
-            _turnManager.ConfigureCombat(deck, enemyToUse, currentHp, maxHp);
+            _turnManager.ConfigureCombat(
+                deck,
+                enemyToUse,
+                playerCurrentHpOverride: currentHp,
+                playerMaxHpOverride: maxHp,
+                initializeImmediately: true,
+                playerWorldAType: session.State.PlayerWorldAType,
+                playerWorldBType: session.State.PlayerWorldBType);
             _configured = true;
         }
 
