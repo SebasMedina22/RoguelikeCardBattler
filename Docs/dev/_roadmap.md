@@ -66,8 +66,8 @@ limpio.
       cargas / cartas / Retazos)
 - [x] Tipo activo del jugador (campo derivado del mundo, viene de los 2 tipos
       elegidos al inicio del run) *(Sub-PR A — PR #86)*
-- [ ] Daño enemigo SuperEficaz contra el jugador: aplicar multiplicador x1.5
-      (DD-018) — multiplicador configurable como constante
+- [x] Daño enemigo SuperEficaz contra el jugador: aplicar multiplicador x1.5
+      (DD-018) — multiplicador configurable como constante *(Sub-PR B)*
 - [x] Hacer configurables los multiplicadores de efectividad (1.5 / 1.0 / 0.75)
       como constantes en código *(Sub-PR A — PR #86)*
 - [ ] Cartas neutras al 90% del daño base (DD-002)

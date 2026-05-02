@@ -123,6 +123,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// </summary>
         public event Action<int> PlayerHandLimitReached;
 
+        /// <summary>
+        /// Evento disparado cuando el enemigo aplica daño al jugador y hubo efectividad
+        /// calculada (incluido Neutro). Sub-PR C lo consume para ajustar cargas del
+        /// Contador de Estilo (-1 si SuperEficaz). En Sub-PR B no hay suscriptores;
+        /// el evento existe pero queda silente hasta que la UI lo enchufe en C.
+        /// </summary>
+        public event Action<Effectiveness> EnemyHitEffectiveness;
+
         private void Start()
         {
             if (_externalConfigApplied)
@@ -482,18 +490,33 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return 0;
             }
 
-            // Apply elemental modifiers only for player card damage against the enemy.
-            if (source != _player || target != _enemy)
+            // Dirección 1: jugador ataca al enemigo. Mantiene Momentum y emite
+            // PlayerHitEffectiveness para popups WEAK/RESIST/MOMENTUM en UI.
+            if (source == _player && target == _enemy)
             {
-                return baseAmount;
+                return ApplyPlayerToEnemyEffectiveness(sourceElementType, baseAmount);
             }
 
+            // Dirección 2 (DD-018, Sub-PR B): enemigo ataca al jugador. El defensor
+            // es PlayerActiveType (derivado del mundo activo). Sin Momentum — ese
+            // sistema desaparece en Sub-PR C. Emite EnemyHitEffectiveness para que
+            // Sub-PR C aplique cargas y la UI muestre feedback cuando se enchufe.
+            if (source == _enemy && target == _player)
+            {
+                return ApplyEnemyToPlayerEffectiveness(sourceElementType, baseAmount);
+            }
+
+            // Cualquier otra combinación (self-damage, tests sintéticos): sin modificadores.
+            return baseAmount;
+        }
+
+        private int ApplyPlayerToEnemyEffectiveness(ElementType attackerType, int baseAmount)
+        {
             ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
-            Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(sourceElementType, defenderType);
+            Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(attackerType, defenderType);
             float multiplier = EffectivenessMultipliers.For(effectiveness);
 
-            int adjusted = Mathf.RoundToInt(baseAmount * multiplier);
-            int finalAmount = Math.Max(0, adjusted);
+            int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));
 
             bool momentumGranted = false;
             if (effectiveness == Effectiveness.SuperEficaz && finalAmount > 0)
@@ -504,6 +527,18 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             PlayerHitEffectiveness?.Invoke(effectiveness, momentumGranted);
+            return finalAmount;
+        }
+
+        private int ApplyEnemyToPlayerEffectiveness(ElementType attackerType, int baseAmount)
+        {
+            ElementType defenderType = PlayerActiveType;
+            Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(attackerType, defenderType);
+            float multiplier = EffectivenessMultipliers.For(effectiveness);
+
+            int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));
+
+            EnemyHitEffectiveness?.Invoke(effectiveness);
             return finalAmount;
         }
 

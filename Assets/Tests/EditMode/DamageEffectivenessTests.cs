@@ -150,6 +150,87 @@ namespace RoguelikeCardBattler.Tests.EditMode
             Assert.AreEqual(ElementType.Rojo, manager.PlayerActiveType);
         }
 
+        // ── Tests de efectividad Enemy → Player (DD-018, Sub-PR B) ──────────────
+
+        [Test]
+        public void EnemyDamage_SuperEffectiveAgainstPlayer_DealsIncreasedDamage()
+        {
+            // enemy=Amarillo, player=Rojo. Amarillo→Rojo es SuperEficaz.
+            // Daño base 10 → round(10 * 1.5) = 15. HP: 30 - 15 = 15.
+            var attackEffect = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var attackMove = CreateEnemyMove("attack", "Attack", "Ataca",
+                new List<EffectRef> { attackEffect }, weight: 1, intentType: EnemyIntentType.Attack);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_amarillo", "Enemy Amarillo", maxHp: 30,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove> { attackMove },
+                elementType: ElementType.Amarillo);
+
+            var card = CreateCardWithElement("dummy", CardType.Skill, CardTarget.Self, cost: 99, ElementType.None);
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.InitializeCombat();
+
+            int hpBefore = manager.PlayerHP;
+            manager.EndPlayerTurn();
+
+            Assert.AreEqual(hpBefore - 15, manager.PlayerHP); // round(10 * 1.5) = 15
+        }
+
+        [Test]
+        public void EnemyDamage_LessEffectiveAgainstPlayer_DealsReducedDamage()
+        {
+            // enemy=Rojo, player=Amarillo. Rojo→Amarillo es PocoEficaz.
+            // Daño base 10 → round(10 * 0.75) = round(7.5). Mathf.RoundToInt
+            // usa "round half away from zero" → 8. HP: 30 - 8 = 22.
+            var attackEffect = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var attackMove = CreateEnemyMove("attack", "Attack", "Ataca",
+                new List<EffectRef> { attackEffect }, weight: 1, intentType: EnemyIntentType.Attack);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_rojo", "Enemy Rojo", maxHp: 30,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove> { attackMove },
+                elementType: ElementType.Rojo);
+
+            var card = CreateCardWithElement("dummy", CardType.Skill, CardTarget.Self, cost: 99, ElementType.None);
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Amarillo, ElementType.Rojo);
+            manager.InitializeCombat();
+
+            int hpBefore = manager.PlayerHP;
+            manager.EndPlayerTurn();
+
+            Assert.AreEqual(hpBefore - 8, manager.PlayerHP); // round(10 * 0.75) = 8
+        }
+
+        [Test]
+        public void EnemyDamage_NeutralAgainstPlayer_DealsBaseDamage()
+        {
+            // enemy=Rojo, player=Morado. Rojo→Morado es Neutro.
+            // Daño base 10 → 10. HP: 30 - 10 = 20.
+            var attackEffect = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var attackMove = CreateEnemyMove("attack", "Attack", "Ataca",
+                new List<EffectRef> { attackEffect }, weight: 1, intentType: EnemyIntentType.Attack);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_rojo_neutro", "Enemy Rojo", maxHp: 30,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove> { attackMove },
+                elementType: ElementType.Rojo);
+
+            var card = CreateCardWithElement("dummy", CardType.Skill, CardTarget.Self, cost: 99, ElementType.None);
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Morado, ElementType.Amarillo);
+            manager.InitializeCombat();
+
+            int hpBefore = manager.PlayerHP;
+            manager.EndPlayerTurn();
+
+            Assert.AreEqual(hpBefore - 10, manager.PlayerHP); // Neutro: sin modificador
+        }
+
         [Test]
         public void SuperEffectiveHit_GrantsFreePlay()
         {
