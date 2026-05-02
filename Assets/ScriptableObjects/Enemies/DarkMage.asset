@@ -71,5 +71,5 @@ MonoBehaviour:
     intentType: 1
   avatarScale: 1
   avatarOffset: {x: 0, y: 0}
-  elementType: 0
+  elementType: 3
   avatar: {fileID: 0}
