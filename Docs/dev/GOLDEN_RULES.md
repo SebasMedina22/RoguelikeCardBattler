@@ -100,7 +100,7 @@
 - Multiplicadores: SuperEficaz **1.5x**, Neutro **1.0x**, PocoEficaz **0.75x**
 - Multiplicadores configurables (constantes en codigo, ajustables sin cambiar logica)
 - ✓ Aplica a: dano de carta del jugador vs tipo del enemigo (multiplicador + cargas de Estilo)
-- ⏳ Aplica a: dano del enemigo vs tipo activo del jugador (multiplicador + cargas de Estilo, DD-018)
+- ✓ Aplica a: dano del enemigo vs tipo activo del jugador — multiplicador (DD-018, Sub-PR B). Cargas de Estilo pendientes (Sub-PR C, marcado ⏳ en §4).
 - NO aplica a: bloqueo, robo de cartas, ni ningun otro efecto fuera de dano
 - None vs cualquier tipo = Neutro (no genera ni quita cargas)
 - La tabla es ASIMETRICA: Rojo->Amarillo es SuperEficaz, pero Amarillo->Rojo es Neutro
