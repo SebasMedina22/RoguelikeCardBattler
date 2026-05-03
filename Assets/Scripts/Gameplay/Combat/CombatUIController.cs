@@ -294,7 +294,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 HudPanelColor);
             Image energyPanelImage = energyPanel.GetComponent<Image>();
             Text playerEnergyText = CreateText("PlayerEnergy", energyPanel, "Energy 0/0", 26, TextAnchor.UpperCenter);
-            Text freePlaysText = CreateText("FreePlays", energyPanel, "Momentum: 0", 18, TextAnchor.LowerCenter);
+            Text styleChargesText = CreateText("StyleCharges", energyPanel, "Estilo: 0/5", 18, TextAnchor.LowerCenter);
 
             RectTransform worldPanel = CreatePanel(
                 "WorldPanel",
@@ -397,7 +397,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             InitializeExtractedViews(
                 hitFeedbackText, handLimitText,
                 energyPanelImage, worldPanelImage,
-                playerEnergyText, freePlaysText,
+                playerEnergyText, styleChargesText,
                 playerHpLabel, enemyHpLabel, enemyTypeLabel,
                 playerBlockText, enemyBlockText,
                 drawPileText, discardPileText,
@@ -415,7 +415,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private void InitializeExtractedViews(
             Text hitFeedbackText, Text handLimitText,
             Image energyPanelImage, Image worldPanelImage,
-            Text playerEnergyText, Text freePlaysText,
+            Text playerEnergyText, Text styleChargesText,
             Text playerHpLabel, Text enemyHpLabel, Text enemyTypeLabel,
             Text playerBlockText, Text enemyBlockText,
             Text drawPileText, Text discardPileText,
@@ -455,7 +455,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _hudView = gameObject.AddComponent<CombatHudView>();
             _hudView.Initialize(
                 turnManager,
-                playerEnergyText, freePlaysText,
+                playerEnergyText, styleChargesText,
                 playerHpLabel, enemyHpLabel, enemyTypeLabel,
                 playerBlockText, enemyBlockText,
                 drawPileText, discardPileText,

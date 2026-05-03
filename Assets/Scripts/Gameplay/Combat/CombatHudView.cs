@@ -26,7 +26,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         // Textos del HUD
         private Text _playerEnergyText;
-        private Text _freePlaysText;
+        private Text _styleChargesText;
         private Text _playerHpLabel;
         private Text _enemyHpLabel;
         private Text _enemyTypeLabel;
@@ -76,7 +76,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public void Initialize(
             TurnManager turnManager,
             // Textos
-            Text playerEnergyText, Text freePlaysText,
+            Text playerEnergyText, Text styleChargesText,
             Text playerHpLabel, Text enemyHpLabel, Text enemyTypeLabel,
             Text playerBlockText, Text enemyBlockText,
             Text drawPileText, Text discardPileText,
@@ -97,7 +97,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             _turnManager = turnManager;
             _playerEnergyText = playerEnergyText;
-            _freePlaysText = freePlaysText;
+            _styleChargesText = styleChargesText;
             _playerHpLabel = playerHpLabel;
             _enemyHpLabel = enemyHpLabel;
             _enemyTypeLabel = enemyTypeLabel;
@@ -151,15 +151,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (!_initialized || _turnManager == null) return;
 
             _playerEnergyText.text = $"Energy {_turnManager.PlayerEnergy}/{_turnManager.PlayerMaxEnergy}";
-            if (_freePlaysText != null)
+            if (_styleChargesText != null)
             {
-                _freePlaysText.text = $"Momentum: {_turnManager.FreePlays}";
+                _styleChargesText.text = $"Estilo: {_turnManager.StyleCharges}/5";
             }
             if (_worldSwitchesText != null)
             {
                 string switchesLabel = _turnManager.DebugUnlimitedWorldSwitches
                     ? "Switches: ∞"
-                    : $"Switches: {_turnManager.WorldSwitchesUsed}/{_turnManager.MaxWorldSwitchesPerCombat}";
+                    : $"Switches: {_turnManager.WorldSwitchesUsed}/{_turnManager.TotalAvailableWorldSwitches}";
                 _worldSwitchesText.text = switchesLabel;
             }
             _playerHpLabel.text = $"{_turnManager.PlayerHP}/{_turnManager.PlayerMaxHP}";
@@ -186,7 +186,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 _endTurnLabel.color = _endTurnButton.interactable ? Color.white : DisabledLabelColor;
             }
             bool worldSwitchAvailable = _turnManager.DebugUnlimitedWorldSwitches
-                || _turnManager.WorldSwitchesUsed < _turnManager.MaxWorldSwitchesPerCombat;
+                || _turnManager.WorldSwitchesUsed < _turnManager.TotalAvailableWorldSwitches;
             _changeWorldButton.interactable = playerTurn
                 && !_turnManager.IsCombatFinished
                 && worldSwitchAvailable;
