@@ -51,7 +51,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private EnemyMove _plannedEnemyMove;
         [SerializeField] private WorldSide currentWorld = WorldSide.A;
         private int _worldSwitchesUsed;
-        private int _freePlays;
+        private int _styleCharges;
+        // Switches extra otorgados al llegar a 5 cargas de Estilo. No acumulable: máx 1 a la vez.
+        private int _bonusWorldSwitches;
         // Tipos elegidos al inicio del run (uno por mundo). Inyectados desde
         // RunState via ConfigureCombat; en escenas independientes (BattleScene
         // standalone, tests) caen al default del SerializeField.
@@ -101,15 +103,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
         public EnemyDefinition CurrentEnemyDefinition => enemyDefinition;
-        public int FreePlays => _freePlays;
+        public int StyleCharges => _styleCharges;
+        /// <summary>
+        /// Cap dinámico de cambios de mundo = base + bonus acumulado por Contador de Estilo.
+        /// Reemplaza MaxWorldSwitchesPerCombat como límite operativo en TryChangeWorld.
+        /// </summary>
+        public int TotalAvailableWorldSwitches => maxWorldSwitchesPerCombat + _bonusWorldSwitches;
         public int WorldSwitchesUsed => _worldSwitchesUsed;
         public int MaxWorldSwitchesPerCombat => maxWorldSwitchesPerCombat;
         public bool DebugUnlimitedWorldSwitches => debugUnlimitedWorldSwitches;
 
         /// <summary>
         /// Evento disparado al aplicar daño de carta del jugador al enemigo.
-        /// Entrega la efectividad (WEAK/RESIST/NEUTRAL) y si se otorgó Momentum (+1 free play).
-        /// Consumido por la UI para mostrar popups/labels.
+        /// Entrega la efectividad (WEAK/RESIST/NEUTRAL) y si se otorgó una carga de Estilo.
+        /// Consumido por CombatFeedbackView para mostrar popups WEAK/RESIST/+ESTILO.
         /// </summary>
         public event Action<Effectiveness, bool> PlayerHitEffectiveness;
 
@@ -182,9 +189,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             cardsPerTurn = Mathf.Max(1, cardsPerTurnCount);
         }
 
-        public void SetFreePlaysForTest(int value)
+        public void SetStyleChargesForTest(int value)
         {
-            _freePlays = Mathf.Max(0, value);
+            _styleCharges = Mathf.Clamp(value, 0, 5);
+        }
+
+        public void SetBonusWorldSwitchesForTest(int value)
+        {
+            _bonusWorldSwitches = Mathf.Max(0, value);
         }
 
         public void SetPlayerTypesForTest(ElementType worldAType, ElementType worldBType)
@@ -255,7 +267,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             _player.HandLimitReached += OnPlayerHandLimitReached;
             _worldSwitchesUsed = 0;
-            _freePlays = 0;
+            _styleCharges = 0;
+            _bonusWorldSwitches = 0;
             _initialized = true;
 
             PlanNextEnemyMove();
@@ -490,8 +503,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return 0;
             }
 
-            // Dirección 1: jugador ataca al enemigo. Mantiene Momentum y emite
-            // PlayerHitEffectiveness para popups WEAK/RESIST/MOMENTUM en UI.
+            // Dirección 1: jugador ataca al enemigo. Emite PlayerHitEffectiveness
+            // para popups WEAK/RESIST/+ESTILO en UI.
             if (source == _player && target == _enemy)
             {
                 return ApplyPlayerToEnemyEffectiveness(sourceElementType, baseAmount);
@@ -512,21 +525,34 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         private int ApplyPlayerToEnemyEffectiveness(ElementType attackerType, int baseAmount)
         {
+            // Cartas sin tipo (None) aplican 90% del daño base (DD-002).
+            // No pasan por la tabla de efectividad ni modifican cargas.
+            if (attackerType == ElementType.None)
+            {
+                return Math.Max(0, Mathf.RoundToInt(baseAmount * EffectivenessMultipliers.NeutralCardDamage));
+            }
+
             ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
             Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(attackerType, defenderType);
             float multiplier = EffectivenessMultipliers.For(effectiveness);
-
             int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));
 
-            bool momentumGranted = false;
+            // Contador de Estilo: +1 carga al hacer SuperEficaz con daño real.
+            // Al llegar a 5 cargas, otorgar 1 switch de mundo extra (no acumulable)
+            // y resetear las cargas.
+            bool styleChargeGranted = false;
             if (effectiveness == Effectiveness.SuperEficaz && finalAmount > 0)
             {
-                _freePlays++;
-                momentumGranted = true;
-                Debug.Log("MOMENTUM: Free Play +1");
+                _styleCharges++;
+                styleChargeGranted = true;
+                if (_styleCharges >= 5 && _bonusWorldSwitches == 0)
+                {
+                    _bonusWorldSwitches = 1;
+                    _styleCharges = 0;
+                }
             }
 
-            PlayerHitEffectiveness?.Invoke(effectiveness, momentumGranted);
+            PlayerHitEffectiveness?.Invoke(effectiveness, styleChargeGranted);
             return finalAmount;
         }
 
@@ -537,6 +563,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             float multiplier = EffectivenessMultipliers.For(effectiveness);
 
             int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));
+
+            // Contador de Estilo: recibir un hit SuperEficaz enemigo resta 1 carga.
+            if (effectiveness == Effectiveness.SuperEficaz && _styleCharges > 0)
+            {
+                _styleCharges--;
+            }
 
             EnemyHitEffectiveness?.Invoke(effectiveness);
             return finalAmount;
@@ -606,7 +638,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return false;
             }
 
-            if (!debugUnlimitedWorldSwitches && _worldSwitchesUsed >= maxWorldSwitchesPerCombat)
+            if (!debugUnlimitedWorldSwitches && _worldSwitchesUsed >= TotalAvailableWorldSwitches)
             {
                 Debug.LogWarning("World change limit reached for this combat.");
                 return false;
@@ -657,13 +689,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return false;
             }
 
-            bool usedFreePlay = false;
-            if (_freePlays > 0)
-            {
-                _freePlays--;
-                usedFreePlay = true;
-            }
-            else if (!_player.SpendEnergy(activeCard.Cost))
+            if (!_player.SpendEnergy(activeCard.Cost))
             {
                 Debug.LogWarning("Not enough energy to play card.");
                 return false;
@@ -674,7 +700,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             ICombatActor target = explicitTarget ?? GetDefaultOpponent(_player);
             QueueEffects(activeCard.Effects, _player, target, activeCard.ElementType);
 
-            prepared = new PreparedCardPlay(cardEntry, activeCard, target, activeCard.Type == CardType.Attack, usedFreePlay);
+            prepared = new PreparedCardPlay(cardEntry, activeCard, target, activeCard.Type == CardType.Attack);
             return true;
         }
 
@@ -726,7 +752,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         }
 
         /// <summary>
-        /// Devuelve si una carta es jugable en el estado actual, considerando Momentum (free plays).
+        /// Devuelve si una carta es jugable en el estado actual.
         /// No tiene side effects ni consume recursos; úsalo desde UI y auto-end turn.
         /// </summary>
         public bool CanPlayCard(CardDeckEntry entry)
@@ -747,7 +773,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return false;
             }
 
-            return _freePlays > 0 || _player.CanPayEnergy(activeCard.Cost);
+            return _player.CanPayEnergy(activeCard.Cost);
         }
 
         private int CalculateIntentValue(EnemyMove move)
@@ -789,15 +815,13 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public CardDefinition ActiveCard { get; }
         public ICombatActor Target { get; }
         public bool IsAttackCard { get; }
-        public bool UsedFreePlay { get; }
 
-        public PreparedCardPlay(CardDeckEntry entry, CardDefinition activeCard, ICombatActor target, bool isAttackCard, bool usedFreePlay)
+        public PreparedCardPlay(CardDeckEntry entry, CardDefinition activeCard, ICombatActor target, bool isAttackCard)
         {
             Entry = entry;
             ActiveCard = activeCard;
             Target = target;
             IsAttackCard = isAttackCard;
-            UsedFreePlay = usedFreePlay;
         }
     }
 }

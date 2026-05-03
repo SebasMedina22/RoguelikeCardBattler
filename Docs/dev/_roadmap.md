@@ -58,19 +58,19 @@ limpio.
 **Features incluidas:**
 
 #### Mecánica core nueva (cierra DDs del GDD v2)
-- [ ] Eliminar Momentum (todas sus referencias en TurnManager + UI)
-- [ ] Implementar Contador de Estilo (cargas: +1 por SuperEficaz hecho, -1 por
+- [x] Eliminar Momentum (todas sus referencias en TurnManager + UI) *(Sub-PR C)*
+- [x] Implementar Contador de Estilo (cargas: +1 por SuperEficaz hecho, -1 por
       SuperEficaz recibido, 5 cargas → 1 cambio extra no acumulable, reset cada
-      combate)
-- [ ] Cambios múltiples de mundo por combate (cap dinámico: 1 base + extras por
-      cargas / cartas / Retazos)
+      combate) *(Sub-PR C)*
+- [x] Cambios múltiples de mundo por combate (cap dinámico: 1 base + extras por
+      cargas / cartas / Retazos) *(Sub-PR C — cartas/Retazos quedan para M3)*
 - [x] Tipo activo del jugador (campo derivado del mundo, viene de los 2 tipos
       elegidos al inicio del run) *(Sub-PR A — PR #86)*
 - [x] Daño enemigo SuperEficaz contra el jugador: aplicar multiplicador x1.5
       (DD-018) — multiplicador configurable como constante *(Sub-PR B)*
 - [x] Hacer configurables los multiplicadores de efectividad (1.5 / 1.0 / 0.75)
       como constantes en código *(Sub-PR A — PR #86)*
-- [ ] Cartas neutras al 90% del daño base (DD-002)
+- [x] Cartas neutras al 90% del daño base (DD-002) *(Sub-PR C)*
 
 #### Deuda técnica que se cierra aquí (bundle de M-tech)
 - [ ] PhaseBased AI: implementar case en `SelectEnemyMove()` (HP thresholds o
@@ -80,8 +80,8 @@ limpio.
       Buff+StatusEffect, etc.)
 
 #### UI de M2
-- [ ] HUD: cambiar "Momentum: N" por "Cargas: N/5" (modificar CombatHudView ya
-      extraído)
+- [x] HUD: cambiar "Momentum: N" por "Estilo: N/5" (modificar CombatHudView ya
+      extraído) *(Sub-PR C)*
 - [ ] HUD: indicador de tipo activo del jugador (label nuevo)
 - [ ] HUD: contador de switches dinámico (ya no es "X/1", es "X/?" según cargas)
 

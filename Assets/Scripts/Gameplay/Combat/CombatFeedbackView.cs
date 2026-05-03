@@ -9,7 +9,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
     /// Maneja toda la retroalimentación visual de combate: popups de efectividad
-    /// (WEAK/RESIST/MOMENTUM), shake de enemigos al recibir daño, flash de paneles,
+    /// (WEAK/RESIST/+ESTILO), shake de enemigos al recibir daño, flash de paneles,
     /// toast de límite de mano, y textos de victoria/derrota.
     ///
     /// Extraído de CombatUIController como parte de la descomposición en componentes
@@ -127,16 +127,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         }
 
         // ────────────────────────────────────────────────────────
-        // Efectividad: popups WEAK / RESIST / MOMENTUM +1
+        // Efectividad: popups WEAK / RESIST / +ESTILO
         // ────────────────────────────────────────────────────────
 
-        private void OnPlayerHitEffectiveness(Effectiveness effectiveness, bool momentumGranted)
+        private void OnPlayerHitEffectiveness(Effectiveness effectiveness, bool styleChargeGranted)
         {
             if (_hitFeedbackText == null) return;
 
             string message = effectiveness switch
             {
-                Effectiveness.SuperEficaz => momentumGranted ? "WEAK!\nMOMENTUM +1" : "WEAK!",
+                Effectiveness.SuperEficaz => styleChargeGranted ? "WEAK!\n+ESTILO" : "WEAK!",
                 Effectiveness.PocoEficaz => "RESIST",
                 _ => string.Empty
             };
