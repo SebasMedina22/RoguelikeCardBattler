@@ -57,17 +57,14 @@
 - Si se intenta robar con mano llena, se descarta
 
 ### Cambio de mundo
-- ⏳ 1 cambio gratuito por combate (base, no acumulable entre combates)
-- ⏳ Cambios adicionales pueden venir de:
-  - Sistema de Contador de Estilo (ver §4): 5 cargas otorgan 1 cambio extra (no acumulable)
-  - Cartas con efecto de cambio de mundo
-  - Items (Retazos, ver §10)
-- ⏳ Cambiar de mundo afecta:
+- ✓ 1 cambio base por combate (configurable via SerializeField)
+- ✓ Cambio extra por Contador de Estilo: 5 cargas otorgan 1 cambio extra (no acumulable) — cap dinámico via TotalAvailableWorldSwitches
+- ⏳ Cambios adicionales pendientes: cartas con efecto WorldSwitch, Items (Retazos, ver §10)
+- ✓ Cambiar de mundo afecta:
   - Que lado de las cartas duales esta activo
   - El tipo activo del jugador (= tipo asignado al mundo)
-  - El tipo activo de enemigos transdimensionales (ver §6)
-  - NO afecta enemigos ancla (ver §6)
-- ✓ Hoy implementado: 1 cambio por combate (placeholder, sera reemplazado en M2)
+  - El tipo activo de enemigos transdimensionales (ver §6) — ⏳ pendiente
+  - NO afecta enemigos ancla (ver §6) — ⏳ pendiente
 
 ---
 
@@ -77,7 +74,7 @@
 - 6 tipos: Rojo, Amarillo, Azul, Morado, Negro, Blanco + None
 - Los nombres son placeholder; la mecanica se mantiene
 
-### Tipo activo del jugador (⏳ DD-002, DD-007)
+### Tipo activo del jugador (✓ DD-002, DD-007 — Sub-PR A+B)
 - El jugador elige 2 tipos elementales al inicio del run, asignando uno a cada mundo
 - El tipo activo del jugador = tipo asignado al mundo en que esta parado
 - El cambio de mundo cambia instantaneamente el tipo activo del jugador
@@ -100,12 +97,12 @@
 - Multiplicadores: SuperEficaz **1.5x**, Neutro **1.0x**, PocoEficaz **0.75x**
 - Multiplicadores configurables (constantes en codigo, ajustables sin cambiar logica)
 - ✓ Aplica a: dano de carta del jugador vs tipo del enemigo (multiplicador + cargas de Estilo)
-- ✓ Aplica a: dano del enemigo vs tipo activo del jugador — multiplicador (DD-018, Sub-PR B). Cargas de Estilo pendientes (Sub-PR C, marcado ⏳ en §4).
+- ✓ Aplica a: dano del enemigo vs tipo activo del jugador — multiplicador + cargas de Estilo (DD-018, Sub-PR B+C).
 - NO aplica a: bloqueo, robo de cartas, ni ningun otro efecto fuera de dano
 - None vs cualquier tipo = Neutro (no genera ni quita cargas)
 - La tabla es ASIMETRICA: Rojo->Amarillo es SuperEficaz, pero Amarillo->Rojo es Neutro
 
-### Cartas neutras (⏳ DD-002)
+### Cartas neutras (✓ DD-002 — Sub-PR C)
 - Cartas sin afinidad de tipo (None)
 - Infligen 90% del dano base (multiplicador adicional al base, configurable)
 - NO generan ni quitan cargas de Contador de Estilo
@@ -113,7 +110,7 @@
 
 ---
 
-## 4. CONTADOR DE ESTILO (⏳ DD-001 — reemplaza Momentum)
+## 4. CONTADOR DE ESTILO (✓ DD-001 — Sub-PR C; reemplaza Momentum)
 
 > Recurso por combate. Reemplaza completamente el sistema antiguo de Momentum.
 
