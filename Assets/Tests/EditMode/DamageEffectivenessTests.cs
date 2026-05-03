@@ -80,40 +80,6 @@ namespace RoguelikeCardBattler.Tests.EditMode
         }
 
         [Test]
-        public void FreePlay_AllowsCardWithoutEnergyAndConsumesCharge()
-        {
-            var damage = CreateEffect(EffectType.Damage, 5, EffectTarget.SingleEnemy);
-            var card = CreateCardWithElement(
-                "strike_cost1",
-                CardType.Attack,
-                CardTarget.SingleEnemy,
-                cost: 1,
-                elementType: ElementType.None,
-                damage);
-
-            var enemy = CreateEnemyDefinition(
-                "enemy_none",
-                "Enemy None",
-                maxHp: 10,
-                pattern: EnemyAIPattern.Sequence,
-                moves: new List<EnemyMove>(),
-                elementType: ElementType.None);
-
-            var manager = CreateTurnManager(card, enemy);
-            manager.SetTestConfig(maxHp: 30, energy: 0, startingHand: 1, cardsPerTurnCount: 1);
-            manager.InitializeCombat();
-            manager.SetFreePlaysForTest(1);
-
-            var cardEntry = manager.PlayerHand[0];
-            bool played = manager.PlayCard(cardEntry);
-
-            Assert.IsTrue(played, "Card should be playable using free play even with 0 energy.");
-            Assert.AreEqual(0, manager.FreePlays, "Free play should be consumed.");
-            Assert.AreEqual(0, manager.PlayerEnergy, "Energy should remain unchanged at 0.");
-            Assert.AreEqual(5, manager.EnemyHP, "Damage should still be applied.");
-        }
-
-        [Test]
         public void PlayerActiveType_FollowsCurrentWorld()
         {
             var damage = CreateEffect(EffectType.Damage, 0, EffectTarget.SingleEnemy);
@@ -232,7 +198,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         }
 
         [Test]
-        public void SuperEffectiveHit_GrantsFreePlay()
+        public void SuperEffectiveHit_GrantsStyleCharge()
         {
             var damage = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
             var card = CreateCardWithElement(
@@ -254,13 +220,150 @@ namespace RoguelikeCardBattler.Tests.EditMode
             var manager = CreateTurnManager(card, enemy);
             manager.InitializeCombat();
 
-            Assert.AreEqual(0, manager.FreePlays);
+            Assert.AreEqual(0, manager.StyleCharges);
 
             var cardEntry = manager.PlayerHand[0];
             bool played = manager.PlayCard(cardEntry);
 
             Assert.IsTrue(played);
-            Assert.AreEqual(1, manager.FreePlays, "Super effective hit should grant one free play.");
+            Assert.AreEqual(1, manager.StyleCharges, "Super effective hit should grant one style charge.");
+        }
+
+        // ── Tests de Contador de Estilo (Sub-PR C) ──────────────────────────────
+
+        [Test]
+        public void StyleCounter_DecreasesOnEnemySuperEffectiveHit()
+        {
+            // enemy=Amarillo, player=Rojo. Amarillo→Rojo es SuperEficaz → resta carga.
+            var attackEffect = CreateEffect(EffectType.Damage, 5, EffectTarget.SingleEnemy);
+            var attackMove = CreateEnemyMove("attack", "Attack", "Ataca",
+                new List<EffectRef> { attackEffect }, weight: 1, intentType: EnemyIntentType.Attack);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_amarillo", "Enemy Amarillo", maxHp: 30,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove> { attackMove },
+                elementType: ElementType.Amarillo);
+
+            var card = CreateCardWithElement("dummy", CardType.Skill, CardTarget.Self, cost: 99, ElementType.None);
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.InitializeCombat();
+            manager.SetStyleChargesForTest(2);
+
+            manager.EndPlayerTurn();
+
+            Assert.AreEqual(1, manager.StyleCharges, "Enemy super effective hit should decrease style charges by 1.");
+        }
+
+        [Test]
+        public void StyleCounter_NeverGoesBelowZero()
+        {
+            // enemy=Amarillo, player=Rojo. SuperEficaz con cargas en 0 → se queda en 0.
+            var attackEffect = CreateEffect(EffectType.Damage, 5, EffectTarget.SingleEnemy);
+            var attackMove = CreateEnemyMove("attack", "Attack", "Ataca",
+                new List<EffectRef> { attackEffect }, weight: 1, intentType: EnemyIntentType.Attack);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_amarillo_zero", "Enemy Amarillo", maxHp: 30,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove> { attackMove },
+                elementType: ElementType.Amarillo);
+
+            var card = CreateCardWithElement("dummy", CardType.Skill, CardTarget.Self, cost: 99, ElementType.None);
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.InitializeCombat();
+            // StyleCharges ya está en 0 por default.
+
+            manager.EndPlayerTurn();
+
+            Assert.AreEqual(0, manager.StyleCharges, "Style charges should not go below zero.");
+        }
+
+        [Test]
+        public void StyleCounter_At5ChargesGrantsBonusSwitch()
+        {
+            // player=Rojo, enemy=Azul. Rojo→Azul es SuperEficaz. Con 4 cargas + 1 hit → 5 → bonus switch.
+            var damage = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var card = CreateCardWithElement(
+                "strike_rojo", CardType.Attack, CardTarget.SingleEnemy,
+                cost: 0, elementType: ElementType.Rojo, damage);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_azul_bonus", "Enemy Azul", maxHp: 50,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove>(),
+                elementType: ElementType.Azul);
+
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.SetWorldSwitchesForTest(used: 0, maxPerCombat: 1, unlimited: false);
+            manager.InitializeCombat();
+            manager.SetStyleChargesForTest(4);
+
+            var cardEntry = manager.PlayerHand[0];
+            manager.PlayCard(cardEntry);
+
+            Assert.AreEqual(2, manager.TotalAvailableWorldSwitches, "5 charges should grant 1 bonus world switch (total 2).");
+            Assert.AreEqual(0, manager.StyleCharges, "Charges should reset to 0 after reaching 5.");
+        }
+
+        [Test]
+        public void StyleCounter_BonusSwitchNotAccumulated()
+        {
+            // Llegar a 5 cargas dos veces no acumula a 3 switches (máx 2).
+            var damage = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var card = CreateCardWithElement(
+                "strike_rojo_acc", CardType.Attack, CardTarget.SingleEnemy,
+                cost: 0, elementType: ElementType.Rojo, damage);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_azul_acc", "Enemy Azul", maxHp: 200,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove>(),
+                elementType: ElementType.Azul);
+
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.SetWorldSwitchesForTest(used: 0, maxPerCombat: 1, unlimited: false);
+
+            // Primer ciclo de 5 cargas: usar SetBonusWorldSwitchesForTest para simular
+            // que ya se otorgó un bonus (el bonus ya está en 1, bloqueando acumulación).
+            manager.InitializeCombat();
+            manager.SetBonusWorldSwitchesForTest(1);
+            manager.SetStyleChargesForTest(4);
+
+            // Siguiente hit SuperEficaz llevaría a 5 cargas, pero bonus ya es 1 → no se acumula.
+            var cardEntry = manager.PlayerHand[0];
+            manager.PlayCard(cardEntry);
+
+            Assert.AreEqual(2, manager.TotalAvailableWorldSwitches, "Bonus should stay at 1 (total 2), never accumulate to 2 (total 3).");
+        }
+
+        [Test]
+        public void StyleCounter_DoesNotIncreaseOnNeutralHit()
+        {
+            // player=Rojo, enemy=Morado. Rojo→Morado es Neutro → no da cargas.
+            var damage = CreateEffect(EffectType.Damage, 10, EffectTarget.SingleEnemy);
+            var card = CreateCardWithElement(
+                "strike_rojo_neutro", CardType.Attack, CardTarget.SingleEnemy,
+                cost: 0, elementType: ElementType.Rojo, damage);
+
+            var enemy = CreateEnemyDefinition(
+                "enemy_morado", "Enemy Morado", maxHp: 20,
+                pattern: EnemyAIPattern.Sequence,
+                moves: new List<EnemyMove>(),
+                elementType: ElementType.Morado);
+
+            var manager = CreateTurnManager(card, enemy);
+            manager.SetPlayerTypesForTest(ElementType.Rojo, ElementType.Amarillo);
+            manager.InitializeCombat();
+
+            var cardEntry = manager.PlayerHand[0];
+            manager.PlayCard(cardEntry);
+
+            Assert.AreEqual(0, manager.StyleCharges, "Neutral hit should not grant style charges.");
         }
     }
 }
