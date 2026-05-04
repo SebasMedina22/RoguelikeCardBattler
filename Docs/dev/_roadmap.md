@@ -82,8 +82,8 @@ limpio.
 #### UI de M2
 - [x] HUD: cambiar "Momentum: N" por "Estilo: N/5" (modificar CombatHudView ya
       extraído) *(Sub-PR C)*
-- [ ] HUD: indicador de tipo activo del jugador (label nuevo)
-- [ ] HUD: contador de switches dinámico (ya no es "X/1", es "X/?" según cargas)
+- [x] HUD: indicador de tipo activo del jugador (label nuevo) *(feat PR #90)*
+- [x] HUD: contador de switches dinámico (usa TotalAvailableWorldSwitches) *(Sub-PR C)*
 
 **Sistemas afectados:** TurnManager, PlayerCombatActor, RunState, ElementTypes,
 CombatHudView, tests existentes (WorldSwitchLimitTests, DamageEffectivenessTests,

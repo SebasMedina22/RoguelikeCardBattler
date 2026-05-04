@@ -304,6 +304,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 HudPanelColor);
             Image worldPanelImage = worldPanel.GetComponent<Image>();
             Text worldLabel = CreateText("WorldLabel", worldPanel, "World: A", 24, TextAnchor.UpperCenter);
+            Text playerTypeText = CreateText("PlayerType", worldPanel, "Tipo: —", 16, TextAnchor.MiddleCenter);
             Text worldSwitchesText = CreateText("WorldSwitches", worldPanel, "Switches: 0/0", 18, TextAnchor.LowerCenter);
 
             RectTransform handPanel = CreatePanel(
@@ -402,7 +403,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 playerBlockText, enemyBlockText,
                 drawPileText, discardPileText,
                 enemyIntentText,
-                worldLabel, worldSwitchesText,
+                worldLabel, playerTypeText, worldSwitchesText,
                 endTurnButton, endTurnLabel,
                 changeWorldButton, changeWorldLabel,
                 playerBlockOverlay, enemyBlockOverlay);
@@ -420,7 +421,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Text playerBlockText, Text enemyBlockText,
             Text drawPileText, Text discardPileText,
             Text enemyIntentText,
-            Text worldLabel, Text worldSwitchesText,
+            Text worldLabel, Text playerTypeText, Text worldSwitchesText,
             Button endTurnButton, Text endTurnLabel,
             Button changeWorldButton, Text changeWorldLabel,
             Image playerBlockOverlay, Image enemyBlockOverlay)
@@ -460,7 +461,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 playerBlockText, enemyBlockText,
                 drawPileText, discardPileText,
                 enemyIntentText,
-                worldLabel, worldSwitchesText,
+                worldLabel, playerTypeText, worldSwitchesText,
                 endTurnButton, endTurnLabel,
                 changeWorldButton, changeWorldLabel,
                 playerBlockOverlay, enemyBlockOverlay,

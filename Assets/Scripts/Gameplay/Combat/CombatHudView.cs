@@ -36,6 +36,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private Text _discardPileText;
         private Text _enemyIntentText;
         private Text _worldLabel;
+        private Text _playerTypeText;
         private Text _worldSwitchesText;
 
         // Botones
@@ -81,7 +82,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Text playerBlockText, Text enemyBlockText,
             Text drawPileText, Text discardPileText,
             Text enemyIntentText,
-            Text worldLabel, Text worldSwitchesText,
+            Text worldLabel, Text playerTypeText, Text worldSwitchesText,
             // Botones
             Button endTurnButton, Text endTurnLabel,
             Button changeWorldButton, Text changeWorldLabel,
@@ -107,6 +108,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _discardPileText = discardPileText;
             _enemyIntentText = enemyIntentText;
             _worldLabel = worldLabel;
+            _playerTypeText = playerTypeText;
             _worldSwitchesText = worldSwitchesText;
             _endTurnButton = endTurnButton;
             _endTurnLabel = endTurnLabel;
@@ -177,6 +179,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 string worldLabel = _turnManager.CurrentWorld == TurnManager.WorldSide.A ? "A" : "B";
                 _worldLabel.text = $"World: {worldLabel}";
+            }
+
+            if (_playerTypeText != null)
+            {
+                ElementType activeType = _turnManager.PlayerActiveType;
+                _playerTypeText.text = activeType == ElementType.None ? "Tipo: —" : $"Tipo: {activeType}";
             }
 
             bool playerTurn = _turnManager.IsPlayerTurn();
