@@ -7,8 +7,8 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-05-01 — post extracción de CombatBackgroundView
-> (Fase 4); CombatUIController 980 → 710 loc
+> **Última actualización:** 2026-05-08 — M3 Sub-PR 3A (foundations de Retazos):
+> nuevo módulo `Gameplay/Relics/` + `RelicHookDispatcher` ownership en `RunSession`
 
 ---
 
@@ -62,7 +62,9 @@ BattleScene     →  BattleFlowController + RunSession (DDOL) + CombatUIControll
 ```
 
 ### Únicos DontDestroyOnLoad
-- `RunSession` (gameplay)
+- `RunSession` (gameplay) — owner del `RelicHookDispatcher` (instanciado en
+  `Awake`, persiste con la run, lee `RunState.Relics` por referencia → sobrevive
+  a `State.Reset`)
 - `AudioManager` (audio bootstrap)
 - `SceneTransitionManager` (fade entre escenas)
 
@@ -188,6 +190,19 @@ Gameplay/
     EnemyDefinition.cs           ← SO de enemigo
     EnemyMove.cs                 ← struct de movimiento + IntentType enum
     EnemyEnums.cs                ← AIPattern (RandomWeighted, Sequence, PhaseBased)
+  Relics/                        ← Sub-PR 3A — sistema de Retazos
+    RelicCategory.cs             ← enum (Neutral, Switch, World)
+    RelicHook.cs                 ← enum de los 9 eventos expuestos
+    IRelicEffect.cs              ← contrato ejecutable
+    RelicDefinition.cs           ← SO con [SerializeReference] sobre IRelicEffect
+    RelicInstance.cs             ← runtime wrapper (AcquisitionOrder + Counters)
+    RelicHookDispatcher.cs       ← bus que TurnManager invoca; flag LogDispatches
+    Hooks/
+      RelicHookContext.cs        ← payload base + API limitada de 7 métodos
+      CombatStartHookData.cs, PlayerTurnStartHookData.cs
+      DamageDealtHookData.cs, DamageTakenHookData.cs   ← Amount mutable
+      WorldSwitchHookData.cs, CombatEndHookData.cs, CardPlayedHookData.cs
+      [Campfire/Shop hook data: diferidos a 3C/3D junto con sus tipos]
 
 Save/
   ISaveService.cs
@@ -197,7 +212,7 @@ Save/
   SaveSmokeTest.cs
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 8 archivos
+### Tests (`Assets/Tests/EditMode/`) — 10 archivos
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -208,6 +223,8 @@ ElementEffectivenessTests.cs
 PlayerCombatActorTests.cs
 DefinitionTypeDefaultsTests.cs
 WorldSwitchLimitTests.cs
+HealActionTests.cs               ← M2 Sub-PR D
+RelicHookDispatcherTests.cs      ← M3 Sub-PR 3A (8 casos de plomería)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
@@ -237,7 +254,7 @@ aprobación explícita de Sebastián antes de proceder:
 
 | Archivo | LOC | Por qué está protegido |
 |---------|-----|------------------------|
-| `TurnManager.cs` | 735 | Flujo de turnos, efectividad, energía, momentum, IA enemiga, world switch |
+| `TurnManager.cs` | ~960 | Flujo de turnos, efectividad, energía, Contador de Estilo, IA enemiga, world switch, hooks de Retazos (3A) + API delegada |
 | `ActionQueue.cs` | 85 | Orden determinista de ejecución (FIFO) |
 | `PlayerCombatActor.cs` | 236 | Mecánicas del jugador en combate |
 

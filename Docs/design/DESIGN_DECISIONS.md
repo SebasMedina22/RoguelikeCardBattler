@@ -8,9 +8,9 @@
 
 ## Estado actual
 
-GDD v2 (procesado el 2026-04-28) cerro **DD-001 a DD-016**. Las reglas resultantes viven en `GOLDEN_RULES.md`. En la revision post-GDD se abrieron **DD-017 a DD-021** y se cerraron todas excepto DD-017.
+GDD v2 (procesado el 2026-04-28) cerro **DD-001 a DD-016**. Las reglas resultantes viven en `GOLDEN_RULES.md`. En la revision post-GDD se abrieron **DD-017 a DD-021** y se cerraron todas excepto DD-017. **DD-017 fue cerrada el 2026-05-07** durante el diseño de M3.
 
-**Hoy queda abierta una sola decision: DD-017.**
+**Hoy no quedan decisiones de diseño abiertas.** Solo queda `DD-015` (narrativa) en estado `postponed`.
 
 ---
 
@@ -47,35 +47,11 @@ GDD v2 (procesado el 2026-04-28) cerro **DD-001 a DD-016**. Las reglas resultant
 
 ---
 
-## Abiertas
+## Cerradas en diseño de M3 (2026-05-07)
 
-### DD-017: Retazos de cambio en contenido base o post-launch
-
-#### Pregunta
-El GDD v2 (linea 129, dentro de DD-012) define 3 categorias de Retazos: neutros, de cambio y de mundo. Para los **Retazos de cambio** (los que se activan cada vez que el jugador ejecuta un cambio de mundo) el GDD textualmente dice: *"Estado actual: pendiente de decision de implementacion para contenido base"*.
-
-La pregunta es: cuando se implemente el sistema de Retazos (M3), ¿incluimos Retazos de cambio en el pool del **contenido base** del juego, o los dejamos para **contenido posterior** junto con los Retazos de mundo (que ya estan diferidos)?
-
-#### Opciones
-
-**A) Si, incluir Retazos de cambio en el contenido base.**
-- Pro: refuerzan la mecanica diferenciadora del juego (el cambio de mundo) desde el primer run.
-- Pro: dan otro vector de identidad de build ("build basada en cambiar mucho").
-- Contra: requiere disenar y balancear ~10-15 Retazos de cambio adicionales para que la categoria tenga variedad.
-- Contra: aumenta complejidad cognitiva del primer run.
-
-**B) No, dejarlos para contenido posterior.**
-- Pro: M3 entrega un sistema completo de Retazos sin sobrecargar el balance.
-- Pro: los Retazos de cambio quedan como "novedad" para una primera expansion / actualizacion.
-- Contra: el primer run no muestra una de las categorias mas vinculadas a la mecanica core.
-- Contra: hay que decidir si el UI menciona la categoria como "vacia por ahora" o la esconde.
-
-**C) Hibrido: 2-3 Retazos de cambio en base como demo de la categoria.**
-- Pro: existe la categoria sin la carga de balance de A.
-- Contra: poca variedad para que el jugador construya builds alrededor.
-
-#### Estado: POR DECIDIR
-**No bloqueante hoy.** La decision se puede cerrar al disenar M3 (sistema de Retazos), no antes.
+| DD  | Tema | Resolucion |
+|-----|------|------------|
+| DD-017 | Retazos de cambio en contenido base o post-launch | **Opción C — Híbrido**: 2-3 Retazos de cambio se incluyen en el contenido base como demo de la categoría. Razón: la categoría existe (refuerza la mecánica diferenciadora del cambio de mundo desde el primer run) sin la carga de diseñar y balancear 10-15 Retazos. Si en playtest la categoría es divertida, M4/M5 amplían el pool; si no, no se invirtió tiempo de más. Aplicado en Sub-PR 3B de M3 |
 
 ---
 
@@ -86,5 +62,5 @@ Tema: vinetas narrativas, dialogo de los hermanos, lore. **Postponed** hasta que
 
 ---
 
-> Ultima actualizacion: 2026-04-28
+> Ultima actualizacion: 2026-05-07 (DD-017 cerrada en diseño de M3)
 > Cuando una decision se cierra, su regla resultante se mueve a GOLDEN_RULES.md y se marca su entrada aqui con la referencia a la seccion correspondiente.
