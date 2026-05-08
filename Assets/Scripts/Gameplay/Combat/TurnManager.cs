@@ -9,7 +9,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
     /// Orquesta el flujo de combate: fases de turno, jugar cartas, encolar efectos
-    /// en la ActionQueue y aplicar efectividad/Momentum. Gestiona también Change World
+    /// en la ActionQueue y aplicar efectividad/Contador de Estilo. Gestiona también Change World
     /// (limitado por combate con override de debug) y expone eventos para feedback UI.
     /// </summary>
     public class TurnManager : MonoBehaviour
@@ -423,6 +423,44 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     _enemySequenceCursor++;
                     return sequenceMove;
 
+                case EnemyAIPattern.PhaseBased:
+                    // Filtra los moves cuyo rango [MinHpPercent, MaxHpPercent] incluye
+                    // el HP% actual del enemigo. Los campos default (0/100) cubren siempre,
+                    // por lo que PhaseBased es compatible con SOs sin configurar rangos.
+                    int currentHpPercent = (_enemy.MaxHP > 0)
+                        ? Mathf.RoundToInt(_enemy.CurrentHP * 100f / _enemy.MaxHP)
+                        : 0;
+                    List<EnemyMove> availableMoves = new List<EnemyMove>();
+                    foreach (EnemyMove candidate in moves)
+                    {
+                        if (currentHpPercent >= candidate.MinHpPercent &&
+                            currentHpPercent <= candidate.MaxHpPercent)
+                        {
+                            availableMoves.Add(candidate);
+                        }
+                    }
+                    // Fallback defensivo: SO mal configurado (ningún rango cubre el HP actual).
+                    if (availableMoves.Count == 0)
+                    {
+                        availableMoves.AddRange(moves);
+                    }
+                    int phaseTotal = 0;
+                    foreach (EnemyMove m in availableMoves)
+                    {
+                        phaseTotal += Math.Max(1, m.Weight);
+                    }
+                    int phaseRoll = _random.Next(Math.Max(1, phaseTotal));
+                    int phaseAccum = 0;
+                    foreach (EnemyMove m in availableMoves)
+                    {
+                        phaseAccum += Math.Max(1, m.Weight);
+                        if (phaseRoll < phaseAccum)
+                        {
+                            return m;
+                        }
+                    }
+                    return availableMoves[availableMoves.Count - 1];
+
                 default:
                     return moves[_random.Next(moves.Count)];
             }
@@ -490,6 +528,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     return new BlockAction(target, amount);
                 case EffectType.DrawCards:
                     return new DrawCardsAction(target, amount);
+                case EffectType.Heal:
+                    return new HealAction(target, amount);
                 default:
                     Debug.LogWarning($"Effect type {effect.effectType} not implemented for ActionQueue.");
                     return null;
@@ -666,7 +706,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         /// <summary>
         /// Prepara la jugada de una carta sin ejecutar acciones todavía (para animaciones).
-        /// Valida fase/energía/momentum, remueve la carta de la mano y encola acciones.
+        /// Valida fase/energía/cargas de Estilo, remueve la carta de la mano y encola acciones.
         /// </summary>
         public bool TryPrepareCardPlay(CardDeckEntry cardEntry, out PreparedCardPlay prepared, ICombatActor explicitTarget = null)
         {
@@ -797,6 +837,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                         total += effect.value;
                         break;
                     case EnemyIntentType.Defend when effect.effectType == EffectType.Block:
+                        total += effect.value;
+                        break;
+                    case EnemyIntentType.Defend when effect.effectType == EffectType.Heal:
                         total += effect.value;
                         break;
                 }

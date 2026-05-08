@@ -7,7 +7,7 @@ using RoguelikeCardBattler.Gameplay.Enemies;
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
-    /// Construye la UI de combate en runtime: HUD (energía, momentum, mundo, switches),
+    /// Construye la UI de combate en runtime: HUD (energía, Contador de Estilo, mundo, switches),
     /// mano de cartas y popups de feedback. Reconstruye el canvas y captura sprites
     /// existentes si fueron asignados en escena/inspector para que no se pierdan.
     /// </summary>
