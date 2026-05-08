@@ -4,6 +4,9 @@ using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat.Actions;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Gameplay.Relics.Hooks;
+using RoguelikeCardBattler.Run;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
@@ -273,6 +276,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             PlanNextEnemyMove();
             BeginPlayerTurn(useStartingHand: true);
+
+            // Hook OnCombatStart: insertado DESPUÉS de BeginPlayerTurn para que
+            // ClearBlock(_player) (parte de BeginPlayerTurn) no borre el bloque
+            // que un Retazo "+N bloque al iniciar combate" otorgue. En el primer
+            // turno ClearBlock es no-op (block = 0), así que disparar aquí es
+            // semánticamente correcto: combate inicializado, primer turno comenzó.
+            if (TryGetRelicContext(out RunState csRs, out RelicHookDispatcher csDisp))
+            {
+                CombatStartHookData csData = new CombatStartHookData(csRs, this, csDisp, enemyDefinition);
+                csDisp.Dispatch(RelicHook.OnCombatStart, csData);
+            }
         }
 
         /// <summary>
@@ -354,6 +368,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _autoEndedThisTurn = false;
             _player.ResetEnergy();
             ClearBlock(_player);
+
+            // Hook OnPlayerTurnStart: post-ResetEnergy + ClearBlock, pre-DrawCards.
+            // Permite Retazos que modifican draw size, energía extra, etc.
+            if (TryGetRelicContext(out RunState ptRs, out RelicHookDispatcher ptDisp))
+            {
+                PlayerTurnStartHookData ptData = new PlayerTurnStartHookData(ptRs, this, ptDisp, currentWorld);
+                ptDisp.Dispatch(RelicHook.OnPlayerTurnStart, ptData);
+            }
 
             int cardsToDraw = useStartingHand ? startingHandSize : cardsPerTurn;
             if (cardsToDraw > 0)
@@ -567,6 +589,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             // Cartas sin tipo (None) aplican 90% del daño base (DD-002).
             // No pasan por la tabla de efectividad ni modifican cargas.
+            // Nota (3A): el spec aprueba la dispatch de OnDamageDealt SOLO en el
+            // path tipado ("antes de PlayerHitEffectiveness?.Invoke", que no se
+            // invoca aquí). Si en 3B un Retazo necesita modificar daño de cartas
+            // None, surface inconsistencia y agregar la invocación con aprobación.
             if (attackerType == ElementType.None)
             {
                 return Math.Max(0, Mathf.RoundToInt(baseAmount * EffectivenessMultipliers.NeutralCardDamage));
@@ -578,18 +604,25 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));
 
             // Contador de Estilo: +1 carga al hacer SuperEficaz con daño real.
-            // Al llegar a 5 cargas, otorgar 1 switch de mundo extra (no acumulable)
-            // y resetear las cargas.
+            // Lógica de "5 cargas → +1 switch (no acumulable) + reset" centralizada
+            // en IncrementStyleCharges (golden rule §4) — la comparten este path
+            // orgánico y RelicGrantStyleCharge para Retazos.
             bool styleChargeGranted = false;
             if (effectiveness == Effectiveness.SuperEficaz && finalAmount > 0)
             {
-                _styleCharges++;
+                IncrementStyleCharges(1);
                 styleChargeGranted = true;
-                if (_styleCharges >= 5 && _bonusWorldSwitches == 0)
-                {
-                    _bonusWorldSwitches = 1;
-                    _styleCharges = 0;
-                }
+            }
+
+            // Hook OnDamageDealt: post-efectividad y post-style-charge, pre-event.
+            // Los Retazos pueden mutar finalAmount; el valor final es el que se
+            // pasa a new DamageAction(...). Cadena secuencial por AcquisitionOrder.
+            if (TryGetRelicContext(out RunState ddRs, out RelicHookDispatcher ddDisp))
+            {
+                DamageDealtHookData ddData = new DamageDealtHookData(
+                    ddRs, this, ddDisp, finalAmount, effectiveness, attackerType, _enemy);
+                ddDisp.Dispatch(RelicHook.OnDamageDealt, ddData);
+                finalAmount = Math.Max(0, ddData.Amount);
             }
 
             PlayerHitEffectiveness?.Invoke(effectiveness, styleChargeGranted);
@@ -608,6 +641,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             if (effectiveness == Effectiveness.SuperEficaz && _styleCharges > 0)
             {
                 _styleCharges--;
+            }
+
+            // Hook OnDamageTaken: post-efectividad, pre-event. Retazos defensivos
+            // ("daño recibido -1") mutan Amount aquí.
+            if (TryGetRelicContext(out RunState dtRs, out RelicHookDispatcher dtDisp))
+            {
+                DamageTakenHookData dtData = new DamageTakenHookData(
+                    dtRs, this, dtDisp, finalAmount, effectiveness, attackerType, _enemy);
+                dtDisp.Dispatch(RelicHook.OnDamageTaken, dtData);
+                finalAmount = Math.Max(0, dtData.Amount);
             }
 
             EnemyHitEffectiveness?.Invoke(effectiveness);
@@ -654,6 +697,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 _phase = CombatPhase.Victory;
                 Debug.Log("Player wins the combat.");
+                DispatchCombatEnd(victory: true);
                 return;
             }
 
@@ -661,6 +705,19 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 _phase = CombatPhase.Defeat;
                 Debug.Log("Player was defeated.");
+                DispatchCombatEnd(victory: false);
+            }
+        }
+
+        // Hook OnCombatEnd: invocado inmediatamente tras setear Victory/Defeat.
+        // Los Retazos mutan RunState directamente (Gold += N, etc.) — la
+        // ActionQueue ya no se procesa post-fin de combate ([CERRADO 3]).
+        private void DispatchCombatEnd(bool victory)
+        {
+            if (TryGetRelicContext(out RunState ceRs, out RelicHookDispatcher ceDisp))
+            {
+                CombatEndHookData ceData = new CombatEndHookData(ceRs, this, ceDisp, victory, enemyDefinition);
+                ceDisp.Dispatch(RelicHook.OnCombatEnd, ceData);
             }
         }
 
@@ -684,7 +741,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return false;
             }
 
+            WorldSide previous = currentWorld;
             currentWorld = currentWorld == WorldSide.A ? WorldSide.B : WorldSide.A;
+
+            // Hook OnWorldSwitch: después de mutar currentWorld, antes de
+            // incrementar _worldSwitchesUsed. Permite Retazos de cambio (DD-017).
+            if (TryGetRelicContext(out RunState wsRs, out RelicHookDispatcher wsDisp))
+            {
+                WorldSwitchHookData wsData = new WorldSwitchHookData(wsRs, this, wsDisp, previous, currentWorld);
+                wsDisp.Dispatch(RelicHook.OnWorldSwitch, wsData);
+            }
 
             if (!debugUnlimitedWorldSwitches)
             {
@@ -759,6 +825,18 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 _actionQueue.ProcessAll();
                 _player.DiscardCard(prepared.Entry);
+
+                // Hook OnCardPlayed: post-ProcessAll y post-DiscardCard, pre-CheckCombatEndConditions
+                // ([CERRADO 2]). Si un Retazo encola daño extra que mata al enemigo,
+                // CheckCombatEndConditions detecta la victoria normalmente.
+                if (TryGetRelicContext(out RunState cpRs, out RelicHookDispatcher cpDisp))
+                {
+                    CardPlayedHookData cpData = new CardPlayedHookData(
+                        cpRs, this, cpDisp, prepared.ActiveCard, currentWorld,
+                        prepared.ActiveCard != null ? prepared.ActiveCard.Cost : 0);
+                    cpDisp.Dispatch(RelicHook.OnCardPlayed, cpData);
+                }
+
                 CheckCombatEndConditions();
             }
             finally
@@ -846,6 +924,120 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             return total;
+        }
+
+        // ───────── Retazos: API delegada y plomería del dispatcher ─────────
+        // Los métodos RelicGrant*/RelicEnqueueExtraDamage son el contrato que
+        // RelicHookContext consume desde los IRelicEffect. Viven aquí porque
+        // todos mutan estado privado de combate (energía del jugador, cargas
+        // de Estilo, _bonusWorldSwitches, _actionQueue). Guards comunes:
+        // early-return si IsCombatFinished, validación actor != null donde aplique.
+
+        /// <summary>
+        /// Pull silencioso del dispatcher de RunSession. Devuelve false (no-op
+        /// limpio) si no hay sesión — caso de tests legacy / escenas standalone
+        /// que instancian TurnManager sin pasar por RunSession.
+        /// </summary>
+        private bool TryGetRelicContext(out RunState runState, out RelicHookDispatcher dispatcher)
+        {
+            RunSession session = RunSession.Instance;
+            if (session != null && session.RelicDispatcher != null)
+            {
+                runState = session.State;
+                dispatcher = session.RelicDispatcher;
+                return true;
+            }
+            runState = null;
+            dispatcher = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Aplica la regla §4 de GOLDEN_RULES (Contador de Estilo): incrementa
+        /// _styleCharges por amount; si llega a 5 con _bonusWorldSwitches == 0,
+        /// otorga 1 switch extra (no acumulable) y resetea las cargas a 0.
+        /// Llamado desde ApplyPlayerToEnemyEffectiveness (cuando un SuperEficaz
+        /// orgánico genera +1 carga) y desde RelicGrantStyleCharge (cuando un
+        /// Retazo otorga cargas vía RelicHookContext). Una sola fuente de
+        /// verdad para la regla del threshold.
+        /// </summary>
+        private void IncrementStyleCharges(int amount)
+        {
+            _styleCharges += amount;
+            if (_styleCharges >= 5 && _bonusWorldSwitches == 0)
+            {
+                _bonusWorldSwitches = 1;
+                _styleCharges = 0;
+            }
+        }
+
+        internal void RelicGrantBlock(ICombatActor actor, int amount)
+        {
+            if (IsCombatFinished || actor == null || amount <= 0) return;
+            actor.GainBlock(amount);
+        }
+
+        internal void RelicGrantHeal(ICombatActor actor, int amount)
+        {
+            if (IsCombatFinished || actor == null || amount <= 0) return;
+            actor.Heal(amount);
+        }
+
+        internal void RelicGrantDrawCards(ICombatActor actor, int amount)
+        {
+            if (IsCombatFinished || actor == null || amount <= 0) return;
+            actor.DrawCards(amount);
+        }
+
+        internal void RelicGrantEnergy(ICombatActor actor, int amount)
+        {
+            if (IsCombatFinished || amount <= 0) return;
+            // La energía es concepto del jugador; non-player actors son no-op.
+            if (actor == _player && _player != null)
+            {
+                _player.GainEnergy(amount);
+            }
+        }
+
+        internal void RelicGrantStyleCharge(int amount)
+        {
+            if (IsCombatFinished || amount <= 0) return;
+            IncrementStyleCharges(amount);
+        }
+
+        internal void RelicGrantBonusWorldSwitch()
+        {
+            if (IsCombatFinished) return;
+            // Respeta el "no acumulable" de la golden rule §4.
+            if (_bonusWorldSwitches == 0)
+            {
+                _bonusWorldSwitches = 1;
+            }
+        }
+
+        internal void RelicEnqueueExtraDamage(ICombatActor target, int amount, ElementType type)
+        {
+            if (IsCombatFinished || target == null || amount <= 0 || _actionQueue == null) return;
+            // Daño RAW: NO pasa por ApplyPlayerToEnemyEffectiveness, NO aplica
+            // multiplicador WEAK/RESIST, NO otorga ni resta cargas de Estilo,
+            // y NO re-dispara OnDamageDealt (deliberado: previene loops infinitos
+            // cuando dos Retazos se modifican mutuamente). Para daño extra que
+            // SÍ se beneficie de la efectividad, mutar data.Amount en OnDamageDealt.
+            // El parámetro 'type' es metadata para futuros usos (animaciones/UI
+            // en 3B); en 3A no se aplica al cálculo porque sería duplicar la
+            // efectividad orgánica.
+            Action<int> onEnemyDamage = null;
+            if (target == _enemy)
+            {
+                onEnemyDamage = dmg =>
+                {
+                    if (dmg > 0)
+                    {
+                        EnemyTookDamage?.Invoke(dmg);
+                    }
+                };
+            }
+            _actionQueue.Enqueue(new DamageAction(_player, target, amount, onEnemyDamage));
         }
     }
 

@@ -7,10 +7,10 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** entrando a M2 — reescritura de la mecánica core sobre TurnManager.
-> **Milestone activo:** M2 — TurnManager v2 (mecánica core nueva + bundle de deuda)
-> **Próximo bloque:** M3 — Personalización del run (Retazos, Tienda, Hoguera)
-> **Última actualización:** 2026-05-04 (M2 Sub-PRs A/B/C/UI cerrados; Sub-PR D pendiente)
+> **Fase actual:** M2 cerrado completo (motor v2 estable). Diseño de M3 cerrado.
+> **Milestone activo:** M3 — Personalización del run (Retazos, Tienda, Hoguera, NewRunScene, mapa horizontal)
+> **Próximo bloque:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
+> **Última actualización:** 2026-05-07 (M2 cerrado; M3 activado con 6 sub-PRs acordados)
 
 ---
 
@@ -44,108 +44,154 @@
 
 ## Activo
 
-### M2 — TurnManager v2: mecánica core nueva + deuda técnica
+### M3 — Personalización del run
 
-**Objetivo:** instalar el sistema de cargas (Contador de Estilo) y todas las
-mecánicas que el GDD v2 introduce sobre el motor de combate, en un único refactor
-coordinado de los archivos protegidos. Bundle gigante intencional.
+**Objetivo:** entregar el ecosistema completo que convierte una secuencia de combates
+en un run con identidad: Retazos como sistema base de pasivos, Tienda y Hoguera
+funcionales como nodos del mapa, NewRunScene como flujo inicial (elección de tipos +
+draft de carta especial dual), y mapa con scroll horizontal según GDD.
 
-**Por qué bundle:** todas las features tocan `TurnManager.cs` (PROTEGIDO).
-Hacerlas en PRs separados obliga a reabrir el archivo cada vez, reescribir tests
-varias veces y reconciliar cambios. Una sola serie de sub-PRs cohesivos es más
-limpio.
+**Por qué bundle:** los 4 sistemas comparten una capa de infraestructura nueva
+(sistema de hooks/dispatcher de Retazos). Hacer cada sistema en milestones separados
+implicaría diseñar la infra varias veces o duplicar código. M3 instala la base + 4
+features que la usan + 1 refactor de UX (mapa horizontal).
 
-**Features incluidas:**
+**Decisiones cerradas durante diseño (2026-05-07):**
+- DD-017 → opción C: 2-3 Retazos de cambio en contenido base como demo de la categoría.
+- Tienda + Hoguera = paneles sobre RunScene (no escenas nuevas) con parallax 2D.
+- Hoguera con opciones extensibles vía hooks (Retazos pueden agregar opciones tipo
+  "excavar para encontrar Retazo común").
+- Tienda con stock extensible vía hooks (Retazos pueden modificar stock/precios).
+- Consumibles diferidos: no hay sistema base, se decide en futura sesión si entran
+  a M3 o M4.
+- NewRunScene = escena dedicada (no canvas en MainMenu) entre MainMenu y RunScene.
+  Razón: cambio de contexto (música, fondo, atmósfera) refuerza el "estoy empezando
+  algo"; mantiene MainMenu liviano para meta-progresión futura.
+- Mapa horizontal incluido en M3 como refactor del scroll vertical actual (DD-005).
+- Inventario de Retazos = fila de iconos en HUD (estilo StS), visible siempre en
+  combate y mapa para reforzar identidad de build.
 
-#### Mecánica core nueva (cierra DDs del GDD v2)
-- [x] Eliminar Momentum (todas sus referencias en TurnManager + UI) *(Sub-PR C)*
-- [x] Implementar Contador de Estilo (cargas: +1 por SuperEficaz hecho, -1 por
-      SuperEficaz recibido, 5 cargas → 1 cambio extra no acumulable, reset cada
-      combate) *(Sub-PR C)*
-- [x] Cambios múltiples de mundo por combate (cap dinámico: 1 base + extras por
-      cargas / cartas / Retazos) *(Sub-PR C — cartas/Retazos quedan para M3)*
-- [x] Tipo activo del jugador (campo derivado del mundo, viene de los 2 tipos
-      elegidos al inicio del run) *(Sub-PR A — PR #86)*
-- [x] Daño enemigo SuperEficaz contra el jugador: aplicar multiplicador x1.5
-      (DD-018) — multiplicador configurable como constante *(Sub-PR B)*
-- [x] Hacer configurables los multiplicadores de efectividad (1.5 / 1.0 / 0.75)
-      como constantes en código *(Sub-PR A — PR #86)*
-- [x] Cartas neutras al 90% del daño base (DD-002) *(Sub-PR C)*
+**Diseño de Retazos:** las 6 categorías de hook definidas en Insight 3 de
+`_insights.md` son la base. Se diseñan partiendo de "qué evento del combate
+disparan", no de "qué efecto se nos ocurre".
 
-#### Deuda técnica que se cierra aquí (bundle de M-tech)
-- [ ] PhaseBased AI: implementar case en `SelectEnemyMove()` (HP thresholds o
-      turn count)
-- [ ] `EffectType.Heal` + `HealAction` + case en `CreateAction()`
-- [ ] `CalculateIntentValue` ampliado para combinaciones nuevas (Defend+Heal,
-      Buff+StatusEffect, etc.)
+**Sub-PRs (orden):**
 
-#### UI de M2
-- [x] HUD: cambiar "Momentum: N" por "Estilo: N/5" (modificar CombatHudView ya
-      extraído) *(Sub-PR C)*
-- [x] HUD: indicador de tipo activo del jugador (label nuevo) *(feat PR #90)*
-- [x] HUD: contador de switches dinámico (usa TotalAvailableWorldSwitches) *(Sub-PR C)*
+#### Sub-PR 3A — Foundations: hooks + dispatcher de Retazos
+- [x] **PASO 1 (sin código):** sesión `modo:diseno` dedicada al spec de hooks
+      (output: `Docs/dev/specs/m3_hooks_spec.md`). Define cada hook, signature,
+      datos que pasa, orden de ejecución, interacción con ActionQueue. **NO codear
+      hasta que el spec esté cerrado.**
+- [x] `RelicDefinition` SO + `IRelicEffect` interface + `RelicHook` enum
+- [x] `RelicHookDispatcher`: bus que TurnManager invoca en eventos clave
+- [x] Hooks expuestos (mínimo): OnCombatStart, OnPlayerTurnStart, OnDamageDealt,
+      OnDamageTaken, OnWorldSwitch, OnCombatEnd, OnCardPlayed,
+      OnCampfireOptionsBuilt, OnShopStockBuilt — los 7 de combate con payload;
+      los 2 de nodos solo declarados (call sites en 3C/3D, payloads diferidos)
+- [x] `RunState.Relics: List<RelicInstance>` + reset
+- [x] `RunSession.RelicDispatcher`: instanciado en Awake, persiste con la run
+- [x] `RelicHookContext` + API limitada (7 métodos: GrantBlock, GrantHeal,
+      GrantDrawCards, GrantEnergy, GrantStyleCharge, GrantBonusWorldSwitch,
+      EnqueueExtraDamage) con guards Victory/Defeat
+- [x] TurnManager: 7 invocaciones + 7 métodos `internal Relic*` + extracción
+      `IncrementStyleCharges` (golden rule §4 con una sola fuente de verdad)
+- [x] Tests EditMode: dispatcher invoca hooks en orden correcto, sin Retazos no
+      rompe nada, suscripciones múltiples se ejecutan en orden de adquisición
+      (8 casos en `RelicHookDispatcherTests.cs`)
+- **Toca archivos protegidos:** **SÍ** — TurnManager. **APROBACIÓN DADA** (7 puntos
+  + extracción `IncrementStyleCharges` aprobados explícitamente por Sebastián).
+- **5 campos de payload diferidos** (ver Insight 4): `TurnNumber`, `TurnsTaken`,
+  `WasFreeSwitch`, `IsBoss`, `IsElite`. Se reincorporan en la sub-PR donde un
+  Retazo concreto los justifique + cableen el dato fuente.
 
-**Sistemas afectados:** TurnManager, PlayerCombatActor, RunState, ElementTypes,
-CombatHudView, tests existentes (WorldSwitchLimitTests, DamageEffectivenessTests,
-PlayerCombatActorTests deberán reescribirse).
+#### Sub-PR 3B — Retazos: contenido placeholder + UI inventario
+- [ ] Diseño formal de ~23 Retazos placeholder (sesión `modo:diseno` específica)
+  - 15 neutros distribuidos por las 6 categorías de Insight 3
+  - 5 de Elite (drop garantizado al ganar Elite)
+  - 1 de Boss (drop tras vencer BossAct1, vinculado narrativamente)
+  - 2-3 de cambio (DD-017 opción C)
+- [ ] `RelicInventoryView`: fila de iconos en HUD de combate y de RunMapView
+      (mismo lugar en ambas vistas)
+- [ ] Tooltip al hover/tap con nombre + descripción + texto narrativo
+- [ ] Pulse + brillo cuando se obtiene uno nuevo (game feel barato, alto impacto)
+- [ ] Hook de drop al ganar Elite/Boss
+- [ ] Tests EditMode: cada Retazo aplica su efecto en el hook correcto
 
-**Toca archivos protegidos:** **SÍ** — TurnManager + PlayerCombatActor.
-**REQUIERE APROBACIÓN EXPLÍCITA** antes de empezar implementación.
+#### Sub-PR 3C — Hoguera (Campfire)
+- [ ] `CampfireNodeController` + `CampfireView` (panel sobre RunScene)
+- [ ] Opciones base: **Descansar** (heal X HP) | **Mejorar carta** (1 carta del mazo)
+- [ ] Mejora de cartas: toggle `IsUpgraded` en `CardDeckEntry` + campos upgraded
+      en `CardDefinition` (DD-013: cartas duales upgrade ambos lados)
+- [ ] Hook `OnCampfireOptionsBuilt` para que Retazos puedan agregar opciones
+- [ ] Parallax 2-3 capas placeholder (cielo nocturno + montañas + tronco con fuego)
+- [ ] Música ambiente distinta a combate
+- [ ] Tests: heal aplica HP correcto; upgrade marca flag y respeta dualidad;
+      opciones extra de Retazos aparecen en la lista
 
-**Dependencias:** M-tech cerrada ✅ (CombatHudView ya extraído facilita la
-modificación del HUD para cargas; CombatBackgroundView libera el monolito
-para tocar HUD/state sin pisar fondos; gh CLI listo para PRs ágiles).
+#### Sub-PR 3D — Tienda (Shop)
+- [ ] `ShopNodeController` + `ShopView` (panel sobre RunScene)
+- [ ] Stock generado por seed: cartas, Retazos, opción "Eliminar carta del mazo"
+- [ ] Filtrado de cartas por los 2 tipos elegidos al inicio del run
+- [ ] Hook `OnShopStockBuilt` para que Retazos puedan modificar stock/precios
+- [ ] Economía: precios desde SO config; gold del RunState
+- [ ] Parallax 2-3 capas placeholder (pared del local + estanterías + mostrador)
+- [ ] Vendedor con personalidad por mundo (placeholder ahora, arte después)
+- [ ] Consumibles **diferidos** (decidir en sesión futura si entran o se van a M4)
+- [ ] Tests: stock determinista por seed; compra resta gold y agrega item;
+      remove carta funciona; precios modificados por Retazos respetan tope mínimo
 
-**Estrategia de PRs:** subdividir en 4 sub-PRs cohesivos:
-- Sub-PR A: tipo activo del jugador + multiplicadores configurables (sin tocar
-  comportamiento todavía)
-- Sub-PR B: efectividad bidireccional + daño x1.5 al jugador
-- Sub-PR C: Contador de Estilo + cambios múltiples (reemplaza Momentum)
-- Sub-PR D: PhaseBased AI + Heal + CalculateIntentValue (deuda técnica)
+#### Sub-PR 3E — NewRunScene
+- [ ] Escena dedicada `Assets/Scenes/NewRunScene.unity` con `NewRunController.cs`
+- [ ] **Paso 1:** Selección de 2 tipos elementales (uno por mundo)
+- [ ] **Paso 2:** Draft de carta especial dual (6 opciones filtradas: 3 Mundo A
+      + 3 Mundo B según tipos elegidos en Paso 1, DD-020)
+- [ ] **Paso 3:** Confirmación + carga de RunScene
+- [ ] Feel: cards entrando con fade desde sus mundos, texto de peso ("esta carta
+      te acompañará todo el run"), sonido al confirmar
+- [ ] La carta seleccionada se inyecta en el mazo inicial del run
+- [ ] Botón volver a MainMenu en cada paso
+- [ ] Tests: draft genera 6 opciones válidas filtradas por tipos; carta
+      seleccionada entra al deck; cancelar vuelve a MainMenu sin estado sucio
 
-**Validación obligatoria por sub-PR (lección de Fase 3-4, ver `_insights.md`):**
+#### Sub-PR 3F — Mapa horizontal (refactor scroll)
+- [ ] Refactor `RunMapView` para scroll lateral (izquierda → derecha) por DD-005
+- [ ] Adaptar generación de `RunMapGenerator` a layout horizontal
+- [ ] Adaptar UI de nodos y aristas (`RunMapNodeView`, `RunMapEdgeView`) al
+      nuevo eje
+- [ ] `RelicInventoryView` integrado en HUD del mapa (consistencia con HUD de
+      combate)
+- [ ] Tests: misma seed = mismo mapa (no romper determinismo en el refactor)
+
+**Sistemas afectados:** TurnManager (hooks), RunState (Relics), RunFlowController
+(NewRunScene flow + Tienda/Hoguera nodes), RunMapView/Generator (horizontal),
+CombatUIController (RelicInventoryView). Nuevos: RelicHookDispatcher,
+RelicDefinition, IRelicEffect, NewRunController, CampfireNodeController,
+ShopNodeController, RelicInventoryView.
+
+**Toca archivos protegidos:** **SÍ** — TurnManager (hooks en eventos clave).
+**REQUIERE APROBACIÓN EXPLÍCITA** antes de empezar implementación de Sub-PR 3A.
+
+**Dependencias:** M2 cerrado ✅ (motor de combate v2 estable; hooks pueden
+colgarse en eventos confiables como Contador de Estilo, daño bidireccional,
+HealAction, PhaseBased AI).
+
+**Validación obligatoria por sub-PR:**
 - Compilación de Unity sin errores antes de marcar como mergeable.
 - Tests EditMode en verde.
-- BattleScene jugable y manualmente verificada.
+- Validación visual en la escena correspondiente (combate / hoguera / tienda /
+  new run / mapa).
 
-**Complejidad:** alta. Es el cambio que más riesgo de regresión introduce en el
-motor de combate.
+**Complejidad:** alta. Sub-PR 3A es la más crítica arquitectónicamente; el resto
+depende de que su contrato esté bien definido (lección reforzada por Insight 3).
 
-**Criterios de cierre:** todos los tests pasan + comportamiento verificado en
-BattleScene + Momentum completamente eliminado del código + UI del HUD refleja
-Cargas y tipo activo del jugador.
+**Criterios de cierre M3:** todos los sub-PRs mergeados + run completo jugable
+de inicio a fin (NewRunScene → mapa horizontal → combates con Retazos visibles
+y activos → Tienda y Hoguera funcionales → Boss con drop de Retazo único +
+zero console errors + tests EditMode al 100%.
 
 ---
 
 ## Pendientes
-
-### M3 — Personalización del run
-
-**Objetivo:** instalar el ecosistema de personalización del run según GDD v2:
-Retazos como sistema base, Tienda funcional, Hoguera con heal/upgrade, y draft
-de carta especial dual al inicio.
-
-**Sub-tareas (desagregar al activar):**
-- Sistema de Retazos: `RelicDefinition` SO, hooks (`RelicEffectHook`) en eventos
-  clave (init combate, draw, daño hecho/recibido, switch de mundo, fin combate),
-  `RunState.Relics`, UI
-- Tienda (Shop): controller, view, scene/canvas, lógica de selección por mundo,
-  compra/eliminar cartas
-- Hoguera (Campfire): controller, view, decisión heal vs upgrade
-- Carta especial dual inicial: draft de 6 opciones filtradas por los 2 tipos
-  elegidos (DD-020), UI panel
-- **Cerrar DD-017** (Retazos de cambio en contenido base) durante el diseño
-
-**Toca archivos protegidos:** parcial (TurnManager para hooks de Retazos en
-eventos del combate).
-
-**Dependencias:** M2 cerrado (Retazos de cambio dependen de cargas estables;
-hoguera depende de `EffectType.Heal`).
-
-**Complejidad:** alta. Retazos solos son alta complejidad por la cantidad de
-hooks y categorías.
-
----
 
 ### M4 — Resto del Acto 1 según GDD v2
 
@@ -225,6 +271,32 @@ toca TurnManager).
 
 ## Completados
 
+### M2 — TurnManager v2: mecánica core nueva + deuda técnica
+**Fecha cierre:** 2026-05-07
+**Resumen:**
+- **Sub-PR A (PR #86):** tipo activo del jugador derivado del mundo, multiplicadores
+  de efectividad como constantes configurables (1.5/1.0/0.75).
+- **Sub-PR B (PR #88):** efectividad bidireccional. Daño enemigo SuperEficaz contra
+  el tipo activo del jugador aplica multiplicador x1.5 (DD-018). Cargas de Estilo
+  enchufadas al lado defensivo.
+- **Sub-PR C (PR #89):** Contador de Estilo reemplaza Momentum por completo.
+  +1 carga por SuperEficaz hecho, -1 por SuperEficaz recibido, 5 cargas → 1 cambio
+  extra (no acumulable). Cap dinámico de switches via `TotalAvailableWorldSwitches`.
+  Cartas neutras al 90% del daño base. UI HUD actualizada (Estilo: N/5).
+- **UI auxiliar (PR #90):** label de tipo activo del jugador en WorldPanel del HUD.
+- **Sub-PR D (PR #91 + hotfix):** PhaseBased AI implementado en `SelectEnemyMove()`
+  con rangos `MinHpPercent`/`MaxHpPercent` en `EnemyMove`. `EffectType.Heal` +
+  `HealAction` end-to-end (interfaz, ambos actors, action, case en CreateAction,
+  tests). `CalculateIntentValue` cubre Defend+Heal. BossAct1 elementType asignado.
+  Hotfix de `ActionQueueTests.TestActor.Heal()` post-merge para desbloquear Safe Mode
+  → registrado como Insight 2 (grep por implementadores al ampliar interfaces).
+- **Bonus de cleanup (Sub-PR D):** referencias a Momentum en comentarios eliminadas
+  de TurnManager, CombatHudView, CombatUIController y `Combat/CLAUDE.md`. Doc del
+  combate al día con el motor v2.
+
+**Insights generados durante M2:** Insight 2 (interfaces) e Insight 3 (Retazos por
+categoría de hook) registrados en `_insights.md`.
+
 ### M-tech — Deuda técnica acumulada
 **Fecha cierre:** 2026-05-01
 **Resumen:**
@@ -297,8 +369,9 @@ toca TurnManager).
 
 ## Decisiones abiertas que afectan el roadmap
 
-- **DD-017** — Retazos de cambio en contenido base: se cierra al diseñar M3.
-  No bloquea M2.
+- Ninguna activa al 2026-05-07. **DD-017 cerrada** durante diseño de M3 → opción C
+  (2-3 Retazos de cambio en contenido base como demo de la categoría). Detalle en
+  `DESIGN_DECISIONS.md`.
 
 ---
 

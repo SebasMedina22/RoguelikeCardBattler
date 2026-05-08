@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Gameplay.Relics;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -14,6 +15,12 @@ namespace RoguelikeCardBattler.Run
         public RunState State { get; } = new RunState();
         public ActMap Map { get; private set; }
         public RunCombatConfig CombatConfig { get; private set; }
+
+        // Bus de eventos de Retazos. Se instancia con referencia al State actual
+        // y persiste con la RunSession (cruza escenas). Sobrevive a State.Reset
+        // porque lee Relics por referencia: tras un reset, la lista queda vacía
+        // y GetSubscribers devuelve 0 hasta ganar nuevos Retazos.
+        public RelicHookDispatcher RelicDispatcher { get; private set; }
         [SerializeField] private EnemyDefinition bossAct1Enemy;
         [SerializeField] private Act1MapConfig mapConfig;
         [SerializeField] private EnemyPoolConfig enemyPoolConfig;
@@ -54,6 +61,7 @@ namespace RoguelikeCardBattler.Run
             }
             State.EnsureInitialized(Map);
             AssignBossAct1();
+            RelicDispatcher = new RelicHookDispatcher(State);
         }
 
         /// <summary>

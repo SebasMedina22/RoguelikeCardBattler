@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
+using RoguelikeCardBattler.Gameplay.Relics;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -37,6 +38,11 @@ namespace RoguelikeCardBattler.Run
         public ElementType PlayerWorldAType { get; set; } = ElementType.Rojo;
         public ElementType PlayerWorldBType { get; set; } = ElementType.Amarillo;
 
+        // Inventario de Retazos del run. RelicHookDispatcher (en RunSession) los lee
+        // por hook al disparar eventos. El orden de la lista define AcquisitionOrder
+        // de cada instance (asc = adquirido primero = corre primero en cadena).
+        public List<RelicInstance> Relics { get; } = new List<RelicInstance>();
+
         public void EnsureInitialized(ActMap map)
         {
             if (map == null)
@@ -72,6 +78,7 @@ namespace RoguelikeCardBattler.Run
             ActoCompleted = false;
             PlayerWorldAType = ElementType.Rojo;
             PlayerWorldBType = ElementType.Amarillo;
+            Relics.Clear();
             EnsureInitialized(map);
         }
 
