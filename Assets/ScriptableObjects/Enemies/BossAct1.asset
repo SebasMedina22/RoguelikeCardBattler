@@ -71,5 +71,5 @@ MonoBehaviour:
     intentType: 2
   avatarScale: 1.2
   avatarOffset: {x: 0, y: -30}
-  elementType: 0
+  elementType: 3
   avatar: {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}

@@ -72,6 +72,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             // Enemigos básicos no roban cartas; reservado para futuras mecánicas.
         }
+
+        public void Heal(int amount)
+        {
+            if (amount <= 0) return;
+            CurrentHP = Math.Min(MaxHP, CurrentHP + amount);
+        }
     }
 }
 

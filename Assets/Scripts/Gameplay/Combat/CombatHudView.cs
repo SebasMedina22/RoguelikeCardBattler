@@ -6,7 +6,7 @@ using RoguelikeCardBattler.Gameplay.Enemies;
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
     /// <summary>
-    /// Maneja todos los textos y botones del HUD de combate: energía, momentum,
+    /// Maneja todos los textos y botones del HUD de combate: energía, Contador de Estilo,
     /// HP, bloqueo, intent del enemigo, tipo, mundo, switches, draw/discard, y los
     /// botones End Turn / Change World. También controla el highlight del avatar
     /// según el turno activo.

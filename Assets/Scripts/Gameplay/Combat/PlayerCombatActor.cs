@@ -130,6 +130,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Block = Math.Max(0, Block - amount);
         }
 
+        public void Heal(int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            CurrentHP = Math.Min(MaxHP, CurrentHP + amount);
+        }
+
         public void DrawCards(int amount)
         {
             if (amount <= 0)

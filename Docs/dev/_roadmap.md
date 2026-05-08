@@ -10,7 +10,7 @@
 > **Fase actual:** entrando a M2 — reescritura de la mecánica core sobre TurnManager.
 > **Milestone activo:** M2 — TurnManager v2 (mecánica core nueva + bundle de deuda)
 > **Próximo bloque:** M3 — Personalización del run (Retazos, Tienda, Hoguera)
-> **Última actualización:** 2026-05-01 (post-cierre M-tech, gh CLI instalado)
+> **Última actualización:** 2026-05-04 (M2 Sub-PRs A/B/C/UI cerrados; Sub-PR D pendiente)
 
 ---
 

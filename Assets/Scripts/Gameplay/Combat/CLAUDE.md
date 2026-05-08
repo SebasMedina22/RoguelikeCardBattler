@@ -26,7 +26,7 @@ PlayerCombatActor.cs    → 236 loc  PROTEGIDO
 ## Archivos protegidos (NO MODIFICAR sin aprobación explícita)
 
 - `TurnManager.cs` — orquesta turnos, juego de cartas, cambio de mundo,
-  momentum, cálculo de efectividad, IA enemiga (`SelectEnemyMove`,
+  Contador de Estilo, cálculo de efectividad, IA enemiga (`SelectEnemyMove`,
   `CalculateIntentValue`).
 - `ActionQueue.cs` — cola de acciones determinista FIFO.
 - `PlayerCombatActor.cs` — HP, bloqueo, aplicación de daño del jugador.
@@ -50,11 +50,11 @@ explícita a Sebastián antes de continuar.** Esto aplica a:
 3. **Solo presentación.** Nunca mutar gameplay state desde aquí.
 4. **No es referenciado por BattleFlowController** — son independientes. Ambos
    se conectan a TurnManager por separado.
-5. **Plan de extracción en progreso** (ver `Docs/dev/COMBAT_ARCHITECTURE.md`):
+5. **Plan de extracción** (ver `Docs/dev/COMBAT_ARCHITECTURE.md`):
    - ✓ `CombatFeedbackView` (Fase 1 — completo)
    - ✓ `CardHandView` (Fase 2 — completo)
-   - ⏳ `CombatHudView` (Fase 3 — pendiente, ver `_roadmap.md` M-tech)
-   - ⏳ `CombatBackgroundView` (Fase 4 — pendiente, ver `_roadmap.md` M-tech)
+   - ✓ `CombatHudView` (Fase 3 — completo, M-tech cerrado 2026-05-01)
+   - ✓ `CombatBackgroundView` (Fase 4 — completo, M-tech cerrado 2026-05-01)
 
 ---
 
@@ -84,8 +84,9 @@ Cada componente extraído sigue este patrón (ver `CombatFeedbackView` y
 
 - **Efectividad**: SOLO aplica a daño de carta del jugador vs tipo del enemigo.
   NUNCA a daño del enemigo, bloqueo, robo de cartas ni ningún otro efecto.
-- **Momentum**: se otorga en hit SuperEficaz con daño > 0. Se consume al jugar
-  la siguiente carta (gratis). Nunca al seleccionar.
+- **Contador de Estilo**: +1 carga al hacer SuperEficaz con daño real; -1 al
+  recibir SuperEficaz del enemigo. 5 cargas → 1 switch de mundo extra (no
+  acumulable), reset de cargas. Se lee vía `TurnManager.StyleCharges`.
 - **Cambio de mundo**: limitado por combate (configurable, default 1, debug
   ilimitado). Afecta lado activo de cartas duales.
 - **Acciones**: `DamageAction`, `BlockAction`, `DrawCardsAction` implementan
@@ -93,16 +94,14 @@ Cada componente extraído sigue este patrón (ver `CombatFeedbackView` y
 
 ---
 
-## Bugs conocidos (NO arreglar sin pedir, ver `_roadmap.md` M-tech)
+## Deuda técnica resuelta en Sub-PR D (2026-05-07)
 
-- **PhaseBased AI** declarado en `EnemyEnums.AIPattern` pero sin implementación
-  en `SelectEnemyMove()`. El default cae en random simple.
-- **EffectType.Heal** no existe. BossAct1 Regenerate usa Block como workaround.
-- **CalculateIntentValue** solo cubre Attack+Damage y Defend+Block. Si se
-  agregan combinaciones, el intent UI muestra "?".
-
-Si el GDD nuevo requiere arreglarlos, se discute primero antes de tocar
-TurnManager.
+- **PhaseBased AI**: implementado en `SelectEnemyMove()`. Filtra moves por
+  `MinHpPercent`/`MaxHpPercent`; fallback a todos los moves si ningún rango cubre.
+- **EffectType.Heal + HealAction**: `ICombatActor.Heal()` implementado en Player
+  y Enemy; `HealAction` resuelve vía ActionQueue; `CreateAction()` tiene su case.
+- **CalculateIntentValue**: cubre `Defend+Heal` además de `Attack+Damage` y
+  `Defend+Block`.
 
 ---
 
@@ -117,5 +116,5 @@ TurnManager.
    CombatUIController. Wirear en `InitializeExtractedViews()`.
 5. **Nuevos datos**: agregar campos en ScriptableObjects. Nunca hardcodear.
 6. **Nuevos enemigos/patrones**: definir en `EnemyDefinition` SO.
-   `AiPattern.PhaseBased` está declarado pero NO implementado — usar
-   `RandomWeighted` o `Sequence` hasta que se implemente Phase.
+   `AiPattern.PhaseBased` está implementado — configurar `MinHpPercent`/
+   `MaxHpPercent` en cada `EnemyMove` del SO para definir fases.

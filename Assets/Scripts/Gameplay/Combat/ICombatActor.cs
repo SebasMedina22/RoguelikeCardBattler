@@ -15,6 +15,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         void GainBlock(int amount);
         void LoseBlock(int amount);
         void DrawCards(int amount);
+        void Heal(int amount);
     }
 }
 
