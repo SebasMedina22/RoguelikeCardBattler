@@ -7,8 +7,15 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-05-08 — M3 Sub-PR 3A (foundations de Retazos):
-> nuevo módulo `Gameplay/Relics/` + `RelicHookDispatcher` ownership en `RunSession`
+> **Última actualización:** 2026-05-08 (cierre) — M3 Sub-PR 3B cerrado:
+> 23 efectos concretos en `Gameplay/Relics/Effects/`, `RelicInventoryView` en
+> HUD de combate, drops Elite/Boss en `BattleFlowController`, editor script
+> `Assets/Editor/RelicSoGenerator.cs`. Cableado de `IsElite`/`IsBoss` en
+> payloads via `ConfigureCombat`; 8º dispatch de `OnDamageDealt` en path
+> de cartas neutras de `TurnManager`. 23 iconos PNG en `Assets/Art/Relics/Icons/`.
+> `RelicDebugOverlay` (`Assets/Scripts/Debug/`, `#if UNITY_EDITOR`) — overlay
+> IMGUI auto-instanciado vía `RuntimeInitializeOnLoadMethod` para agregar/quitar
+> Retazos en runtime (toggle ` o F2).
 
 ---
 
@@ -203,6 +210,19 @@ Gameplay/
       DamageDealtHookData.cs, DamageTakenHookData.cs   ← Amount mutable
       WorldSwitchHookData.cs, CombatEndHookData.cs, CardPlayedHookData.cs
       [Campfire/Shop hook data: diferidos a 3C/3D junto con sus tipos]
+    Effects/                     ← Sub-PR 3B — 23 IRelicEffect concretos
+      RelicOpenBlockEffect.cs, RelicOpenDrawEffect.cs, RelicOpenEnergyEffect.cs
+      RelicTurnDrawEffect.cs, RelicTurnBlockEffect.cs, RelicTurnEnergyEveryNEffect.cs
+      RelicDmgFlatBoostEffect.cs, RelicDmgFirstHitEffect.cs, RelicDmgReduceEffect.cs
+      RelicAccSkillStackerEffect.cs, RelicAccEveryNthAttackEffect.cs
+      RelicEndGoldEffect.cs, RelicEndHealEffect.cs, RelicEndEliteGoldEffect.cs
+      RelicSwitchHealEffect.cs, RelicSwitchBlockEffect.cs
+      RelicSwitchStyleChargeEffect.cs, RelicSwitchDamageEffect.cs
+      RelicEliteVampiricEffect.cs, RelicEliteSpinesEffect.cs
+      RelicElitePuristEffect.cs, RelicEliteChargeBoostEffect.cs
+      RelicBossLastStitchEffect.cs
+    UI/
+      RelicInventoryView.cs      ← fila de iconos en HUD combate (3F: RunMapView)
 
 Save/
   ISaveService.cs
@@ -212,7 +232,16 @@ Save/
   SaveSmokeTest.cs
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 10 archivos
+### Editor scripts (`Assets/Editor/`) — Sub-PR 3B
+
+```
+RoguelikeCardBattler.Editor.asmdef   ← editor-only, references runtime asmdef
+RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Assets":
+                                        crea los 23 .asset en Assets/ScriptableObjects/Relics/
+                                        (idempotente — saltea archivos existentes)
+```
+
+### Tests (`Assets/Tests/EditMode/`) — 11 archivos
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -225,6 +254,9 @@ DefinitionTypeDefaultsTests.cs
 WorldSwitchLimitTests.cs
 HealActionTests.cs               ← M2 Sub-PR D
 RelicHookDispatcherTests.cs      ← M3 Sub-PR 3A (8 casos de plomería)
+RelicEffectsTests.cs             ← M3 Sub-PR 3B (efectos concretos: mutación,
+                                   counters, RunState directo, hook filtering,
+                                   guards con TurnManager null)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

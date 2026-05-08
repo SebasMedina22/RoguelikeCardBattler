@@ -37,3 +37,9 @@ MonoBehaviour:
     dualCard: {fileID: 11400000, guid: 9adafdc7d3964a2ba54afa9b5740d5af, type: 2}
   - singleCard: {fileID: 0}
     dualCard: {fileID: 11400000, guid: ce1ce5bd21da4478861f66b51d98d240, type: 2}
+  eliteRelicDropPool:
+  - {fileID: 11400000, guid: e0601204906f3d5439a5091b1b10e507, type: 2}
+  - {fileID: 11400000, guid: 092dd118b9c894949994675c5053c4a6, type: 2}
+  - {fileID: 11400000, guid: bc25c19b9021d8e4dba347390aeaa823, type: 2}
+  - {fileID: 11400000, guid: 49ace6d16ceaafe4894491891b34bdc0, type: 2}
+  bossRelicDrop: {fileID: 11400000, guid: 84c146f18b23a924885adc657331bd23, type: 2}

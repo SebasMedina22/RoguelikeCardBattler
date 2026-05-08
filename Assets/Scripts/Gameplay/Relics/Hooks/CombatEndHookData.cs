@@ -14,17 +14,23 @@ namespace RoguelikeCardBattler.Gameplay.Relics.Hooks
     {
         public bool Victory { get; }
         public EnemyDefinition Enemy { get; }
+        public bool IsBoss { get; }
+        public bool IsElite { get; }
 
         public CombatEndHookData(
             RunState runState,
             TurnManager turnManager,
             RelicHookDispatcher dispatcher,
             bool victory,
-            EnemyDefinition enemy)
+            EnemyDefinition enemy,
+            bool isBoss = false,
+            bool isElite = false)
             : base(runState, turnManager, dispatcher)
         {
             Victory = victory;
             Enemy = enemy;
+            IsBoss = isBoss;
+            IsElite = isElite;
         }
     }
 }

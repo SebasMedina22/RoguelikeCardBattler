@@ -10,7 +10,7 @@
 > **Fase actual:** M2 cerrado completo (motor v2 estable). Diseño de M3 cerrado.
 > **Milestone activo:** M3 — Personalización del run (Retazos, Tienda, Hoguera, NewRunScene, mapa horizontal)
 > **Próximo bloque:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
-> **Última actualización:** 2026-05-07 (M2 cerrado; M3 activado con 6 sub-PRs acordados)
+> **Última actualización:** 2026-05-08 (Sub-PR 3B cerrado: 23 assets generados + iconos asignados + RunCombatConfig poblado. RelicDebugOverlay agregado para playtesting.)
 
 ---
 
@@ -105,17 +105,37 @@ disparan", no de "qué efecto se nos ocurre".
   Retazo concreto los justifique + cableen el dato fuente.
 
 #### Sub-PR 3B — Retazos: contenido placeholder + UI inventario
-- [ ] Diseño formal de ~23 Retazos placeholder (sesión `modo:diseno` específica)
+- [x] **PASO 1 (diseño, sin código):** sesión `modo:diseno` cerrada en
+      `Docs/design/RELICS.md` — pool de 23 cerrado + 8 decisiones técnicas.
+- [x] **8º punto de inserción en TurnManager:** dispatch en path
+      `attackerType == ElementType.None` de `ApplyPlayerToEnemyEffectiveness`
+      (aprobación explícita dada en RELICS.md §Decisiones cerradas 1).
+- [x] Implementar 23 `RelicDefinition` SOs + sus `IRelicEffect` concretos:
   - 15 neutros distribuidos por las 6 categorías de Insight 3
-  - 5 de Elite (drop garantizado al ganar Elite)
+  - 4 de Elite (drop garantizado al ganar Elite)
   - 1 de Boss (drop tras vencer BossAct1, vinculado narrativamente)
-  - 2-3 de cambio (DD-017 opción C)
-- [ ] `RelicInventoryView`: fila de iconos en HUD de combate y de RunMapView
-      (mismo lugar en ambas vistas)
-- [ ] Tooltip al hover/tap con nombre + descripción + texto narrativo
-- [ ] Pulse + brillo cuando se obtiene uno nuevo (game feel barato, alto impacto)
-- [ ] Hook de drop al ganar Elite/Boss
-- [ ] Tests EditMode: cada Retazo aplica su efecto en el hook correcto
+  - 3 de cambio (DD-017 opción C)
+  - **Pendiente Sebastián:** correr `Roguelike > Generate Relic Assets` en
+    Unity para crear los 23 `.asset` en `Assets/ScriptableObjects/Relics/`.
+- [x] `RelicInventoryView`: fila de iconos en HUD de combate (RunMapView se
+      integra en Sub-PR 3F).
+- [x] Tooltip al hover/tap con nombre + descripción + texto narrativo
+      (FadeIn/FadeOut via UIAnimationHelper).
+- [x] Pulse + ScaleIn al adquirir un Retazo nuevo.
+- [x] Hook de drop al ganar Elite/Boss (`RunCombatConfig.eliteRelicDropPool`
+      + `BossRelicDrop`; `BattleFlowController.TryDropRelics`).
+      **Pendiente Sebastián:** asignar SOs en el inspector del RunCombatConfig.
+- [x] `IsElite`/`IsBoss` cableados en `CombatStartHookData` y
+      `CombatEndHookData` (vía `ConfigureCombat` desde `BattleFlowController`).
+- [x] Tests EditMode (`RelicEffectsTests.cs`): cobertura por tipo de efecto
+      (mutación Amount, RunState directo, counters, hook filtering, guards
+      con TurnManager null).
+- [x] **Cierre de sesión 2026-05-08:** 23 `.asset` generados, 23 iconos PNG en
+      `Assets/Art/Relics/Icons/` asignados, `RunCombatConfig_Act1` poblado
+      (Boss + Elite pool). `RelicDebugOverlay` (toggle ` o F2) creado para
+      playtesting de combinaciones — strip en builds via `#if UNITY_EDITOR`.
+      Pendiente futuro: refinar calidad de iconos + balance de combinaciones
+      (multiplicadores vs sumas, AcquisitionOrder).
 
 #### Sub-PR 3C — Hoguera (Campfire)
 - [ ] `CampfireNodeController` + `CampfireView` (panel sobre RunScene)

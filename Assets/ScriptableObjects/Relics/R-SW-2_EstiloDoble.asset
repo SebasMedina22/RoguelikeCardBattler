@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e9460e14f04d5b4395c28ee75c95a52, type: 3}
+  m_Name: R-SW-2_EstiloDoble
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Relics.RelicDefinition
+  DisplayName: Estilo Doble
+  Description: +1 carga de Estilo al cambiar de mundo.
+  FlavorText: Cada salto entre mundos te queda guardado en la cabeza.
+  Icon: {fileID: 6968601306763471993, guid: 9d16561119e60294e905d8312ffcde96, type: 3}
+  Category: 1
+  Hooks: 04000000
+  Effect:
+    rid: 2554562633269248083
+  references:
+    version: 2
+    RefIds:
+    - rid: 2554562633269248083
+      type: {class: RelicSwitchStyleChargeEffect, ns: RoguelikeCardBattler.Gameplay.Relics.Effects, asm: RoguelikeCardBattler}
+      data:
+        Amount: 1

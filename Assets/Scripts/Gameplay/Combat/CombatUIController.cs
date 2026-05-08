@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Gameplay.Relics.UI;
+using RoguelikeCardBattler.Run;
 
 namespace RoguelikeCardBattler.Gameplay.Combat
 {
@@ -48,6 +51,12 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private CombatFeedbackView _feedbackView;
         private CardHandView _cardHandView;
         private CombatHudView _hudView;
+        // Inventario de Retazos (Sub-PR 3B). Polling-based desde Update — no
+        // hay evento de "relic adquirido" todavía; el view detecta cambios de
+        // count para disparar el pulse on-acquire. Sub-PR 3F integrará una
+        // copia equivalente en RunMapView.
+        private RelicInventoryView _relicView;
+        private int _lastRelicCount;
 
         // Layout/estilo del HUD: constantes para mantener jerarquía visual y escalado.
         private const float TopBarMinY = 0.92f;
@@ -117,6 +126,28 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _hudView?.Sync();
             _cardHandView?.SyncHandButtons();
             // Hit feedback y hand limit timers delegados a CombatFeedbackView.
+            SyncRelicInventory();
+        }
+
+        // Polling minimalista del inventario de Retazos. Cuando crece la lista
+        // dispara AddRelic (pulse + scale-in) por cada Retazo nuevo y llama
+        // Refresh(). Si no cambia el count, no hace nada.
+        private void SyncRelicInventory()
+        {
+            if (_relicView == null) return;
+            RunSession session = RunSession.Instance;
+            IReadOnlyList<RelicInstance> relics = session != null ? session.State?.Relics : null;
+            int count = relics != null ? relics.Count : 0;
+            if (count == _lastRelicCount) return;
+            if (count > _lastRelicCount && relics != null)
+            {
+                for (int i = _lastRelicCount; i < count; i++)
+                {
+                    _relicView.AddRelic(relics[i]);
+                }
+            }
+            _relicView.Refresh(relics);
+            _lastRelicCount = count;
         }
 
         private void EnsureEventSystem()
@@ -393,6 +424,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 "Change World");
             Text changeWorldLabel = changeWorldButton.GetComponentInChildren<Text>();
             ApplyButtonStyle(changeWorldButton);
+
+            // Panel del inventario de Retazos: fila justo debajo del topBar
+            // (no usa el topBar para no chocar con worldPanel/changeWorldButton).
+            RectTransform relicBar = CreatePanel(
+                "RelicBar",
+                canvasRect,
+                new Vector2(0f, BattlefieldMaxY),
+                new Vector2(1f, TopBarMinY),
+                new Color(0f, 0f, 0f, 0f));
+            _relicView = new RelicInventoryView(relicBar, uiFont);
 
             InitializePlayerAnimator();
             InitializeExtractedViews(
