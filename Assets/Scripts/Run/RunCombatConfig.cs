@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Gameplay.Relics;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -13,11 +14,17 @@ namespace RoguelikeCardBattler.Run
         [SerializeField] private EnemyDefinition defaultEnemy;
         [SerializeField] private List<CardDeckEntry> starterDeck = new List<CardDeckEntry>();
         [SerializeField] private List<CardDeckEntry> rewardPool = new List<CardDeckEntry>();
+        // Pools de drop garantizados al ganar Elite/Boss (Sub-PR 3B). El Elite
+        // se randomiza sin duplicados; el Boss es único y siempre cae el mismo.
+        [SerializeField] private List<RelicDefinition> eliteRelicDropPool = new List<RelicDefinition>();
+        [SerializeField] private RelicDefinition bossRelicDrop;
 
         public int GoldReward => Mathf.Max(0, goldReward);
         public int ChoicesCount => Mathf.Max(1, choicesCount);
         public EnemyDefinition DefaultEnemy => defaultEnemy;
         public IReadOnlyList<CardDeckEntry> StarterDeck => starterDeck;
         public IReadOnlyList<CardDeckEntry> RewardPool => rewardPool;
+        public IReadOnlyList<RelicDefinition> EliteRelicDropPool => eliteRelicDropPool;
+        public RelicDefinition BossRelicDrop => bossRelicDrop;
     }
 }

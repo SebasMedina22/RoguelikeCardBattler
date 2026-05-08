@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Gameplay.Relics;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -19,6 +21,7 @@ namespace RoguelikeCardBattler.Run
         private bool _configErrorLogged;
         [SerializeField] private RunCombatConfig fallbackCombatConfig;
         private bool _isBossBattle;
+        private bool _isEliteBattle;
 
         private void Awake()
         {
@@ -100,6 +103,15 @@ namespace RoguelikeCardBattler.Run
 #endif
             }
 
+            // Drops de Retazos (Sub-PR 3B): Elite garantizado random sin duplicados,
+            // Boss garantizado y único. RelicInventoryView (HUD) los detecta vía
+            // polling y dispara el pulse on-acquire. Se aplican después de mutar
+            // RunState.PendingReturnFromBattle para que RunFlowController los vea.
+            if (victory)
+            {
+                TryDropRelics(session);
+            }
+
             if (_turnManager != null)
             {
                 session.State.PlayerCurrentHP = _turnManager.PlayerHP;
@@ -167,6 +179,7 @@ namespace RoguelikeCardBattler.Run
             
             // Detecta si es una batalla de boss basado en el tipo de nodo
             _isBossBattle = IsCurrentNodeBoss(session);
+            _isEliteBattle = IsCurrentNodeElite(session);
 
             session.State.EnsurePlayerHpInitialized(_turnManager.PlayerMaxHP);
             int currentHp = session.State.PlayerCurrentHP;
@@ -182,7 +195,9 @@ namespace RoguelikeCardBattler.Run
                 playerMaxHpOverride: maxHp,
                 initializeImmediately: true,
                 playerWorldAType: session.State.PlayerWorldAType,
-                playerWorldBType: session.State.PlayerWorldBType);
+                playerWorldBType: session.State.PlayerWorldBType,
+                isElite: _isEliteBattle,
+                isBoss: _isBossBattle);
             _configured = true;
         }
 
@@ -222,6 +237,88 @@ namespace RoguelikeCardBattler.Run
             }
 
             return node.SpecificEnemy;
+        }
+
+        /// <summary>
+        /// Aplica drops de Retazos para Elite (random sin duplicados desde el pool)
+        /// y Boss (drop único). Si el pool de Elite está agotado o el SO de Boss no
+        /// está asignado, hace nothing. Los duplicados se evitan comparando contra
+        /// los Definitions ya presentes en RunState.Relics.
+        /// </summary>
+        private void TryDropRelics(RunSession session)
+        {
+            RunCombatConfig config = session.CombatConfig;
+            if (config == null) return;
+
+            if (_isEliteBattle)
+            {
+                RelicDefinition drop = PickRelicDrop(config.EliteRelicDropPool, session.State);
+                if (drop != null)
+                {
+                    session.State.AddRelic(drop);
+#if UNITY_EDITOR
+                    Debug.Log($"[BattleFlow] Elite drop: {drop.DisplayName}");
+#endif
+                }
+            }
+
+            if (_isBossBattle && config.BossRelicDrop != null)
+            {
+                if (!HasRelic(session.State, config.BossRelicDrop))
+                {
+                    session.State.AddRelic(config.BossRelicDrop);
+#if UNITY_EDITOR
+                    Debug.Log($"[BattleFlow] Boss drop: {config.BossRelicDrop.DisplayName}");
+#endif
+                }
+            }
+        }
+
+        private static RelicDefinition PickRelicDrop(IReadOnlyList<RelicDefinition> pool, RunState state)
+        {
+            if (pool == null || pool.Count == 0) return null;
+            List<RelicDefinition> available = new List<RelicDefinition>();
+            for (int i = 0; i < pool.Count; i++)
+            {
+                RelicDefinition candidate = pool[i];
+                if (candidate == null) continue;
+                if (HasRelic(state, candidate)) continue;
+                available.Add(candidate);
+            }
+            if (available.Count == 0) return null;
+            int index = Random.Range(0, available.Count);
+            return available[index];
+        }
+
+        private static bool HasRelic(RunState state, RelicDefinition def)
+        {
+            if (state == null || def == null) return false;
+            for (int i = 0; i < state.Relics.Count; i++)
+            {
+                RelicInstance inst = state.Relics[i];
+                if (inst != null && inst.Definition == def) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Determina si el nodo actual es de tipo Elite.
+        /// </summary>
+        private bool IsCurrentNodeElite(RunSession session)
+        {
+            if (session.Map == null)
+            {
+                return false;
+            }
+
+            int currentNodeId = session.State.CurrentNodeId;
+            if (currentNodeId < 0 || currentNodeId >= session.Map.Nodes.Count)
+            {
+                return false;
+            }
+
+            MapNode node = session.Map.GetNode(currentNodeId);
+            return node != null && node.Type == NodeType.Elite;
         }
 
         /// <summary>

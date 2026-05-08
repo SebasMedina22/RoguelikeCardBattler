@@ -64,6 +64,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private ElementType _playerWorldBType;
         private bool _autoEndedThisTurn;
         private bool _resolvingCard;
+        // Flags del nodo actual cableados desde BattleFlowController via ConfigureCombat.
+        // Se inyectan en CombatStartHookData/CombatEndHookData para que Retazos como
+        // R-END-3 ("+oro extra al ganar Elite") puedan filtrar por contexto del combate.
+        private bool _isCurrentCombatElite;
+        private bool _isCurrentCombatBoss;
 
         public enum CombatPhase
         {
@@ -107,6 +112,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
         public EnemyDefinition CurrentEnemyDefinition => enemyDefinition;
         public int StyleCharges => _styleCharges;
+        // Refs read-only para que IRelicEffect (Sub-PR 3B) pueda invocar la API
+        // ctx.Grant*(ctx.TurnManager.Player, n). Solo getters — los Retazos no
+        // mutan el estado del actor directamente, sino vía RelicGrant*.
+        public ICombatActor Player => _player;
+        public ICombatActor Enemy => _enemy;
         /// <summary>
         /// Cap dinámico de cambios de mundo = base + bonus acumulado por Contador de Estilo.
         /// Reemplaza MaxWorldSwitchesPerCombat como límite operativo en TryChangeWorld.
@@ -284,7 +294,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             // semánticamente correcto: combate inicializado, primer turno comenzó.
             if (TryGetRelicContext(out RunState csRs, out RelicHookDispatcher csDisp))
             {
-                CombatStartHookData csData = new CombatStartHookData(csRs, this, csDisp, enemyDefinition);
+                CombatStartHookData csData = new CombatStartHookData(
+                    csRs, this, csDisp, enemyDefinition,
+                    isBoss: _isCurrentCombatBoss, isElite: _isCurrentCombatElite);
                 csDisp.Dispatch(RelicHook.OnCombatStart, csData);
             }
         }
@@ -299,7 +311,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             int? playerMaxHpOverride = null,
             bool initializeImmediately = true,
             ElementType playerWorldAType = ElementType.None,
-            ElementType playerWorldBType = ElementType.None)
+            ElementType playerWorldBType = ElementType.None,
+            bool isElite = false,
+            bool isBoss = false)
         {
             if (deck == null || deck.Count == 0)
             {
@@ -321,6 +335,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             // SerializeField si los campos quedan en None.
             _playerWorldAType = playerWorldAType;
             _playerWorldBType = playerWorldBType;
+            _isCurrentCombatElite = isElite;
+            _isCurrentCombatBoss = isBoss;
             _externalConfigApplied = true;
 
             if (initializeImmediately)
@@ -589,13 +605,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             // Cartas sin tipo (None) aplican 90% del daño base (DD-002).
             // No pasan por la tabla de efectividad ni modifican cargas.
-            // Nota (3A): el spec aprueba la dispatch de OnDamageDealt SOLO en el
-            // path tipado ("antes de PlayerHitEffectiveness?.Invoke", que no se
-            // invoca aquí). Si en 3B un Retazo necesita modificar daño de cartas
-            // None, surface inconsistencia y agregar la invocación con aprobación.
+            // 8º dispatch (Sub-PR 3B, aprobado): permitir que Retazos de modificador
+            // de daño afecten también cartas neutras. Mismo contrato mutable que el
+            // path tipado — los Retazos mutan data.Amount.
             if (attackerType == ElementType.None)
             {
-                return Math.Max(0, Mathf.RoundToInt(baseAmount * EffectivenessMultipliers.NeutralCardDamage));
+                int neutralAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * EffectivenessMultipliers.NeutralCardDamage));
+                if (TryGetRelicContext(out RunState ndRs, out RelicHookDispatcher ndDisp))
+                {
+                    DamageDealtHookData ndData = new DamageDealtHookData(
+                        ndRs, this, ndDisp, neutralAmount, Effectiveness.Neutro, ElementType.None, _enemy);
+                    ndDisp.Dispatch(RelicHook.OnDamageDealt, ndData);
+                    neutralAmount = Math.Max(0, ndData.Amount);
+                }
+                return neutralAmount;
             }
 
             ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
@@ -716,7 +739,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             if (TryGetRelicContext(out RunState ceRs, out RelicHookDispatcher ceDisp))
             {
-                CombatEndHookData ceData = new CombatEndHookData(ceRs, this, ceDisp, victory, enemyDefinition);
+                CombatEndHookData ceData = new CombatEndHookData(
+                    ceRs, this, ceDisp, victory, enemyDefinition,
+                    isBoss: _isCurrentCombatBoss, isElite: _isCurrentCombatElite);
                 ceDisp.Dispatch(RelicHook.OnCombatEnd, ceData);
             }
         }

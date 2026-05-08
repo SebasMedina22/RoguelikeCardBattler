@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e9460e14f04d5b4395c28ee75c95a52, type: 3}
+  m_Name: R-BOSS-1_HiloCosturaMaldita
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Relics.RelicDefinition
+  DisplayName: Hilo de Costura Maldita
+  Description: "Al ganar un combate, el siguiente arranca con +1 energ\xEDa y +5
+    bloque."
+  FlavorText: "Lo arrancaste de su pecho. Sigue movi\xE9ndose. Te ayuda en el pr\xF3ximo
+    combate, no sab\xE9s bien por qu\xE9."
+  Icon: {fileID: -8088098831392344231, guid: 470c40ba61a21374f957b56354ae2d2b, type: 3}
+  Category: 0
+  Hooks: 0500000000000000
+  Effect:
+    rid: 2554562633269248089
+  references:
+    version: 2
+    RefIds:
+    - rid: 2554562633269248089
+      type: {class: RelicBossLastStitchEffect, ns: RoguelikeCardBattler.Gameplay.Relics.Effects, asm: RoguelikeCardBattler}
+      data:
+        EnergyBonus: 1
+        BlockBonus: 5

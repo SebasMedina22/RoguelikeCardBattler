@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e9460e14f04d5b4395c28ee75c95a52, type: 3}
+  m_Name: R-SW-1_EscudoCosturas
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Relics.RelicDefinition
+  DisplayName: Escudo de Costuras
+  Description: +5 bloque al cambiar de mundo.
+  FlavorText: Mitad armadura medieval, mitad placa de circuito. Siempre te tapa.
+  Icon: {fileID: -285659224805689349, guid: dff3958bb8d35364ea899bcf2a5fc6e4, type: 3}
+  Category: 1
+  Hooks: 04000000
+  Effect:
+    rid: 2554562633269248082
+  references:
+    version: 2
+    RefIds:
+    - rid: 2554562633269248082
+      type: {class: RelicSwitchBlockEffect, ns: RoguelikeCardBattler.Gameplay.Relics.Effects, asm: RoguelikeCardBattler}
+      data:
+        Amount: 5

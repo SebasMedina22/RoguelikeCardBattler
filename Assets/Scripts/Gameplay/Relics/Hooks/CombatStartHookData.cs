@@ -8,24 +8,27 @@ namespace RoguelikeCardBattler.Gameplay.Relics.Hooks
     /// Disparado dentro de InitializeCombat, DESPUÉS del primer BeginPlayerTurn
     /// (para evitar que ClearBlock borre el bloque que un Retazo "+N bloque al
     /// iniciar combate" haya otorgado — ver §Cambios en TurnManager del spec).
-    /// Observable: no tiene campos mutables.
-    /// Nota (3A): IsBoss/IsElite removidos — viven en NodeType del MapNode, no
-    /// en EnemyDefinition, y TurnManager hoy no recibe la referencia del nodo.
-    /// Cuando un Retazo concreto lo necesite, extender ConfigureCombat/
-    /// RunCombatConfig para inyectar el NodeType activo (ver _insights.md).
+    /// Observable: no tiene campos mutables. IsBoss/IsElite cableados en 3B
+    /// vía ConfigureCombat (BattleFlowController los deriva del NodeType activo).
     /// </summary>
     public class CombatStartHookData : RelicHookContext
     {
         public EnemyDefinition Enemy { get; }
+        public bool IsBoss { get; }
+        public bool IsElite { get; }
 
         public CombatStartHookData(
             RunState runState,
             TurnManager turnManager,
             RelicHookDispatcher dispatcher,
-            EnemyDefinition enemy)
+            EnemyDefinition enemy,
+            bool isBoss = false,
+            bool isElite = false)
             : base(runState, turnManager, dispatcher)
         {
             Enemy = enemy;
+            IsBoss = isBoss;
+            IsElite = isElite;
         }
     }
 }

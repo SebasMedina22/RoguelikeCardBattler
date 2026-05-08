@@ -43,6 +43,17 @@ namespace RoguelikeCardBattler.Run
         // de cada instance (asc = adquirido primero = corre primero en cadena).
         public List<RelicInstance> Relics { get; } = new List<RelicInstance>();
 
+        /// <summary>
+        /// Helper para sumar un Retazo al run respetando la convención de
+        /// AcquisitionOrder (orden de la lista). Lo usan drops post-victoria
+        /// (BattleFlowController) y la Tienda (3D).
+        /// </summary>
+        public void AddRelic(RelicDefinition definition)
+        {
+            if (definition == null) return;
+            Relics.Add(new RelicInstance(definition, Relics.Count));
+        }
+
         public void EnsureInitialized(ActMap map)
         {
             if (map == null)

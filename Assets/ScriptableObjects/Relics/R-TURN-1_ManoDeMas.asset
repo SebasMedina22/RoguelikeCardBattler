@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e9460e14f04d5b4395c28ee75c95a52, type: 3}
+  m_Name: R-TURN-1_ManoDeMas
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Relics.RelicDefinition
+  DisplayName: "Mano de M\xE1s"
+  Description: +1 carta cada turno.
+  FlavorText: Te dibujaste una tercera mano en el codo. Funciona.
+  Icon: {fileID: -1630060835101077673, guid: 8e0b71701b6298340aa3c32aea313c63, type: 3}
+  Category: 0
+  Hooks: 01000000
+  Effect:
+    rid: 2554562633269248070
+  references:
+    version: 2
+    RefIds:
+    - rid: 2554562633269248070
+      type: {class: RelicTurnDrawEffect, ns: RoguelikeCardBattler.Gameplay.Relics.Effects, asm: RoguelikeCardBattler}
+      data:
+        Amount: 1
