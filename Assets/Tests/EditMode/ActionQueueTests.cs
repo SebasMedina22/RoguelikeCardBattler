@@ -36,6 +36,11 @@ namespace RoguelikeCardBattler.Tests.EditMode
             {
                 Log.Add($"Draw:{amount}");
             }
+
+            public void Heal(int amount)
+            {
+                Log.Add($"Heal:{amount}");
+            }
         }
 
         [Test]
