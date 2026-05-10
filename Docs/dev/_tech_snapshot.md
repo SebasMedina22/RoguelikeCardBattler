@@ -7,7 +7,31 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-05-08 (cierre) — M3 Sub-PR 3B cerrado:
+> **Última actualización:** 2026-05-10 — M3 Sub-PR 3C **validado en Unity** en
+> branch `feat/m3-sub-c-campfire` (rebaseada sobre `origin/main`). Nuevos:
+> `Assets/Scripts/Run/Campfire/{CampfireNodeController, CampfireConfig,
+> CampfireOption}.cs`, `CardUpgradeDef.cs`,
+> `Assets/Scripts/Gameplay/Relics/Hooks/CampfireOptionsBuiltHookData.cs`,
+> `Assets/Tests/EditMode/CampfireTests.cs`,
+> `Assets/Editor/CardUpgradeSetup.cs` (menú `Roguelike > Setup Placeholder
+> Card Upgrades` — sobreescritor, no idempotente — que pobla `upgradedEffects`
+> + `upgradedDescription` en los 6 SOs del starter deck).
+> Mejora de cartas "bake-in": `CardUpgradeDef` embebido en `CardDefinition` con
+> override de cost / effects / name / description; `CreateUpgradedClone()` en
+> single y dual; `CardDeckEntry` gana `IsUpgraded`/`CanUpgrade()`/`ApplyUpgrade()`;
+> el clon es una nueva instancia SO runtime (TurnManager no necesita cambios).
+> **Importante:** la descripción de la carta es un string fijo en el SO
+> (`description`), no se computa desde `effects` — los upgrades DEBEN actualizar
+> también la descripción para que el HUD refleje los números nuevos.
+> `AudioManager.CampfireAmbientClip` (clip programático loop-friendly).
+> `RunFlowController` instancia el `CampfireNodeController` en `BuildUI()` y
+> ramifica `EnterNode` en `NodeType.Campfire` antes del fallback ResolvePanel.
+> Hook `OnCampfireOptionsBuilt` con payload `CampfireOptionsBuiltHookData`
+> (Options mutable, TurnManager null por estar fuera de combate).
+> Sprites de parallax en `Assets/Art/Campfire/`, asignados al
+> `CampfireConfig.asset` (en `Assets/ScriptableObjects/`).
+>
+> **Última actualización previa:** 2026-05-08 — M3 Sub-PR 3B cerrado:
 > 23 efectos concretos en `Gameplay/Relics/Effects/`, `RelicInventoryView` en
 > HUD de combate, drops Elite/Boss en `BattleFlowController`, editor script
 > `Assets/Editor/RelicSoGenerator.cs`. Cableado de `IsElite`/`IsBoss` en

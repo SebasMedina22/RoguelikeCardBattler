@@ -6,6 +6,8 @@ using UnityEngine.EventSystems;
 using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
+using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Run.Campfire;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -17,6 +19,7 @@ namespace RoguelikeCardBattler.Run
     {
         [SerializeField] private Font uiFont;
         [SerializeField] private RunCombatConfig runCombatConfig;
+        [SerializeField] private CampfireConfig campfireConfig;
 
         private const string RunSceneName = "RunScene";
         private const string BattleSceneName = "BattleScene";
@@ -47,6 +50,7 @@ namespace RoguelikeCardBattler.Run
         private int _rewardNodeId = -1;
         private static Sprite _whiteSprite;
         private bool _rewardConfigErrorLogged;
+        private CampfireNodeController _campfireController;
 
         private void Awake()
         {
@@ -131,6 +135,16 @@ namespace RoguelikeCardBattler.Run
             BuildDefeatPanel();
             BuildRewardPanel();
             BuildActoCompletedPanel();
+            BuildCampfireController();
+        }
+
+        private void BuildCampfireController()
+        {
+            GameObject go = new GameObject("CampfireController");
+            go.transform.SetParent(transform, false);
+            _campfireController = go.AddComponent<CampfireNodeController>();
+            RelicHookDispatcher dispatcher = RunSession.GetOrCreate().RelicDispatcher;
+            _campfireController.Initialize(_canvas, _state, dispatcher, campfireConfig, OnCampfireComplete);
         }
 
         private void EnsureEventSystem()
@@ -241,7 +255,33 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
+            if (node != null && node.Type == NodeType.Campfire)
+            {
+                ShowCampfirePanel(index);
+                return;
+            }
+
             ShowResolvePanel(index);
+        }
+
+        private void ShowCampfirePanel(int index)
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
+            if (_campfireController != null)
+            {
+                _campfireController.Show(index);
+            }
+        }
+
+        private void OnCampfireComplete(int nodeId)
+        {
+            CompleteNode(nodeId);
+            _state.CurrentNodeId = -1;
+            ShowMap();
         }
 
         private void OnContinue()

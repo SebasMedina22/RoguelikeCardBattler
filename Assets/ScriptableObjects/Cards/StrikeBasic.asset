@@ -29,3 +29,14 @@ MonoBehaviour:
     statusType: 0
     extraParams: []
   elementType: 1
+  _upgrade:
+    overrideCost: 0
+    upgradedCost: 0
+    upgradedEffects:
+    - effectType: 0
+      value: 9
+      target: 1
+      statusType: 0
+      extraParams: []
+    upgradedName: 
+    upgradedDescription: Deal 9 damage to an enemy.

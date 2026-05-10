@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb24a8f6a0edfc742a649849996896ce, type: 3}
+  m_Name: CampfireConfig
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Campfire.CampfireConfig
+  campfireHealPercent: 30
+  skySprite: {fileID: 21300000, guid: 2ef4a04c08af80542991bcbd4193250d, type: 3}
+  midSprite: {fileID: 21300000, guid: 1d1c1d8914083c349a4ab1eeb501f7b2, type: 3}
+  fireSprite: {fileID: 21300000, guid: 969c35187811f2540ad86abdbd8fdee1, type: 3}

@@ -28,4 +28,15 @@ MonoBehaviour:
     target: 0
     statusType: 0
     extraParams: []
-
+  elementType: 0
+  _upgrade:
+    overrideCost: 0
+    upgradedCost: 0
+    upgradedEffects:
+    - effectType: 1
+      value: 13
+      target: 0
+      statusType: 0
+      extraParams: []
+    upgradedName: 
+    upgradedDescription: Gain 13 Block.
