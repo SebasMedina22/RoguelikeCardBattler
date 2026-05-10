@@ -10,7 +10,7 @@
 > **Fase actual:** M2 cerrado completo (motor v2 estable). Diseño de M3 cerrado.
 > **Milestone activo:** M3 — Personalización del run (Retazos, Tienda, Hoguera, NewRunScene, mapa horizontal)
 > **Próximo bloque:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
-> **Última actualización:** 2026-05-08 (Sub-PR 3B cerrado: 23 assets generados + iconos asignados + RunCombatConfig poblado. RelicDebugOverlay agregado para playtesting.)
+> **Última actualización:** 2026-05-10 (Sub-PR 3C **validado en Unity**: tests EditMode 8/8 verdes, parallax y heal funcionando, upgrade de cartas placeholder activo en starter deck via `CardUpgradeSetup` editor menu. Branch `feat/m3-sub-c-campfire` lista para commit + PR.)
 
 ---
 
@@ -138,15 +138,28 @@ disparan", no de "qué efecto se nos ocurre".
       (multiplicadores vs sumas, AcquisitionOrder).
 
 #### Sub-PR 3C — Hoguera (Campfire)
-- [ ] `CampfireNodeController` + `CampfireView` (panel sobre RunScene)
-- [ ] Opciones base: **Descansar** (heal X HP) | **Mejorar carta** (1 carta del mazo)
-- [ ] Mejora de cartas: toggle `IsUpgraded` en `CardDeckEntry` + campos upgraded
-      en `CardDefinition` (DD-013: cartas duales upgrade ambos lados)
-- [ ] Hook `OnCampfireOptionsBuilt` para que Retazos puedan agregar opciones
-- [ ] Parallax 2-3 capas placeholder (cielo nocturno + montañas + tronco con fuego)
-- [ ] Música ambiente distinta a combate
-- [ ] Tests: heal aplica HP correcto; upgrade marca flag y respeta dualidad;
-      opciones extra de Retazos aparecen en la lista
+- [x] `CampfireNodeController` (panel sobre RunScene auto-creado por RunFlowController)
+- [x] Opciones base: **Descansar** (heal % HP máx) | **Mejorar carta** (1 carta del mazo)
+- [x] Mejora de cartas: `CardUpgradeDef` embebido en `CardDefinition`, flag
+      `IsUpgraded` + `CanUpgrade`/`ApplyUpgrade` en `CardDeckEntry`,
+      `CreateUpgradedClone` en single/dual (DD-013: ambos lados de duales)
+- [x] Hook `OnCampfireOptionsBuilt` (`CampfireOptionsBuiltHookData` con `Options` mutable)
+- [x] Parallax 3 capas (Sky/Mid/Fire) con sprites del `CampfireConfig` SO o
+      colores de fallback (#1A1A2E / #2D2D2D / #FF6B00). DOTween Yoyo en Mid/Fire
+- [x] `AudioManager.CampfireAmbientClip` (clip placeholder programático
+      80/140 Hz + ruido). `PlayMusic` al abrir, `StopMusic` al cerrar
+- [x] Tests EditMode (`CampfireTests.cs`, 8 casos): heal 30% / cap / fullHp,
+      upgrade single bake-in, upgrade dual ambos lados, idempotencia, sin upgrade
+      definido, hook agrega opción extra
+- [x] **Validación Unity (2026-05-10):** `CampfireConfig.asset` creado con
+      sprites del parallax asignados; tests 8/8 verdes; flujo end-to-end
+      probado en BattleScene→RunScene→Campfire (heal aplica, upgrade de cartas
+      del starter deck funciona, descripción de la carta refleja el daño/bloqueo
+      mejorado en el HUD, cartas mejoradas no reaparecen en visitas siguientes).
+- [x] **`Assets/Editor/CardUpgradeSetup.cs`**: menú `Roguelike > Setup
+      Placeholder Card Upgrades` que pobla mejoras placeholder en los 6 SOs del
+      starter deck (Strike +3 dmg, Defend +5 block, BattleFocus −1 cost) +
+      actualiza `upgradedDescription` para que el HUD muestre los números nuevos.
 
 #### Sub-PR 3D — Tienda (Shop)
 - [ ] `ShopNodeController` + `ShopView` (panel sobre RunScene)

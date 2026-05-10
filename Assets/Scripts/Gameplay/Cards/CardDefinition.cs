@@ -20,6 +20,9 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         [SerializeField] private List<string> tags = new List<string>();
         [SerializeField] private List<EffectRef> effects = new List<EffectRef>();
         [SerializeField] private ElementType elementType = ElementType.None;
+        [SerializeField] private CardUpgradeDef _upgrade = new CardUpgradeDef();
+
+        public CardUpgradeDef Upgrade => _upgrade;
 
         public string Id => id;
         public string CardName => cardName;
@@ -54,6 +57,45 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             tags = newTags;
             effects = newEffects;
             elementType = newElementType;
+        }
+
+        /// <summary>
+        /// Crea una copia runtime de esta carta aplicando los overrides definidos
+        /// en <see cref="Upgrade"/>. Se usa al ejecutar la mejora en la Hoguera
+        /// (sub-PR 3C) — TurnManager no necesita cambios porque la carta clonada
+        /// conserva la API de CardDefinition.
+        /// </summary>
+        public CardDefinition CreateUpgradedClone()
+        {
+            CardDefinition clone = ScriptableObject.CreateInstance<CardDefinition>();
+
+            string newName = !string.IsNullOrEmpty(_upgrade.UpgradedName)
+                ? _upgrade.UpgradedName
+                : cardName + "+";
+
+            string newDescription = !string.IsNullOrEmpty(_upgrade.UpgradedDescription)
+                ? _upgrade.UpgradedDescription
+                : description;
+
+            int newCost = _upgrade.OverrideCost ? _upgrade.UpgradedCost : cost;
+
+            List<EffectRef> newEffects = _upgrade.UpgradedEffects != null && _upgrade.UpgradedEffects.Count > 0
+                ? new List<EffectRef>(_upgrade.UpgradedEffects)
+                : new List<EffectRef>(effects);
+
+            clone.SetDebugData(
+                id + "_upgraded",
+                newName,
+                newDescription,
+                newCost,
+                type,
+                rarity,
+                target,
+                new List<string>(tags),
+                newEffects,
+                elementType);
+
+            return clone;
         }
     }
 }

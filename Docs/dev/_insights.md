@@ -31,6 +31,24 @@
 <!-- Los insights se agregan aquí en orden cronológico (más reciente arriba). -->
 <!-- No editar insights pasados sin pedido explícito. -->
 
+## Insight 6 — La descripción de la carta es texto fijo en el SO, no se computa desde efectos — 2026-05-10
+
+**Contexto:** validando M3 Sub-PR 3C (Hoguera) en Unity, al mejorar una carta el nombre se actualizaba a "Strike (B)+" pero el cuerpo de texto seguía mostrando "Deal 9 damage" cuando el efecto real ya era 12. La primera versión de `CardUpgradeSetup.cs` solo seteaba `upgradedEffects` (los datos de gameplay). El daño al jugar la carta era correcto — pero el HUD mostraba el número viejo porque toma la string `description` del SO directamente.
+
+**Idea:** `CardDefinition.description` es un campo `string` que el HUD muestra tal cual (`CardHandView.BuildCardLabel` → `activeCard.Description`). Los números visibles ("Deal 6 damage", "Gain 5 Block") son texto pre-renderizado en el SO, no se calculan a partir de `Effects[i].value`. Cualquier sistema que mute los efectos (upgrades, Retazos modificadores permanentes, eventos de mejora futuros) tiene que mutar también la descripción si quiere que el HUD muestre el número nuevo — o se rompe la coherencia entre lo que la carta dice que hace y lo que hace.
+
+**Conexión con sistemas:** mejora de cartas (M3 Sub-PR 3C, M4), Retazos que modifican daño/bloqueo permanentemente (M3 3B+), eventos de transformación de carta (M4), HUD de combate (`CardHandView`).
+
+**Potencial:** dos caminos posibles a evaluar cuando aparezca el caso:
+- **A.** Mantener `description` como string fijo, todo sistema mutador debe actualizarla (lo que hace `CardUpgradeSetup` hoy). Pro: tradúce a otros idiomas trivialmente; el diseñador escribe la copy del cuerpo libremente. Contra: cada nueva mecánica que toca números tiene que recordar actualizar el texto.
+- **B.** Computar la descripción desde efectos (`description` es un template tipo "Deal {Damage} damage."). Pro: imposible desincronizar números y texto. Contra: pierde flexibilidad de copy editorial; lokalización requiere templating; cartas con efectos complejos (multi-hit, condicionales) se vuelven raras.
+
+Hoy el placeholder usa A. Si en M4 (mejora de cartas con UI dedicada, no placeholder) los upgrades empiezan a ser muchos, conviene re-evaluar B o un híbrido (template default con override manual).
+
+**Estado:** aplicado — `CardUpgradeSetup` ahora setea `upgradedDescription` además de `upgradedEffects`. Lección queda registrada para que la próxima mecánica que mute efectos no cometa el mismo error.
+
+---
+
 ## Insight 5 — Scope estricto en archivos protegidos puede dejar comportamiento no obvio en paths secundarios — 2026-05-08
 
 **Contexto:** durante implementación de M3 Sub-PR 3A, el agente respetó "7 puntos exactos de inserción en TurnManager" y no agregó el hook `OnDamageDealt` en el branch de cartas neutras (`ElementType.None`) dentro de `ApplyPlayerToEnemyEffectiveness` (líneas 588-630). Eso hubiera sido un 8º punto fuera del alcance aprobado del spec. La decisión es conservadora y correcta para el alcance — pero deja un comportamiento que para el jugador será contraintuitivo cuando lleguen los primeros Retazos en 3B.

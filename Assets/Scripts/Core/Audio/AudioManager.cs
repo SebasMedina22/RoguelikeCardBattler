@@ -43,6 +43,8 @@ namespace RoguelikeCardBattler.Core.Audio
         public AudioClip DefeatSFX { get; private set; }
         /// <summary>Double-pulse tone for world change.</summary>
         public AudioClip WorldChangeSFX { get; private set; }
+        /// <summary>Looping low-frequency ambient clip used by the Campfire node.</summary>
+        public AudioClip CampfireAmbientClip { get; private set; }
 
         // ──────────────────────────────────────────────
         // Lifecycle
@@ -74,6 +76,32 @@ namespace RoguelikeCardBattler.Core.Audio
             VictorySFX = GenerateTone("VictorySFX", 400f, 0.3f, ToneType.SweepUp);
             DefeatSFX = GenerateTone("DefeatSFX", 400f, 0.4f, ToneType.SweepDown);
             WorldChangeSFX = GenerateTone("WorldChangeSFX", 600f, 0.15f, ToneType.DoublePulse);
+            CampfireAmbientClip = GenerateCampfireAmbient("CampfireAmbient", 3f);
+        }
+
+        /// <summary>
+        /// Genera un clip ambiente loop-friendly: ruido filtrado modulado por
+        /// dos sinusoides de baja frecuencia (suma 80 Hz + 140 Hz). Sin envelope
+        /// de fade para evitar el clic al loopear; volumen moderado.
+        /// </summary>
+        private AudioClip GenerateCampfireAmbient(string clipName, float duration)
+        {
+            const int sampleRate = 44100;
+            int sampleCount = Mathf.CeilToInt(sampleRate * duration);
+            float[] samples = new float[sampleCount];
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float t = (float)i / sampleRate;
+                float low = 0.5f * Mathf.Sin(2f * Mathf.PI * 80f * t)
+                          + 0.5f * Mathf.Sin(2f * Mathf.PI * 140f * t);
+                float noise = Random.Range(-1f, 1f) * 0.15f;
+                samples[i] = (low * 0.4f + noise) * 0.35f;
+            }
+
+            AudioClip clip = AudioClip.Create(clipName, sampleCount, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
         }
 
         // ──────────────────────────────────────────────
