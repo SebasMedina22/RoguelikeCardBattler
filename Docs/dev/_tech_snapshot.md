@@ -7,7 +7,31 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-05-10 — M3 Sub-PR 3C **validado en Unity** en
+> **Última actualización:** 2026-06-04 — M3 Sub-PR 3D (Tienda) **implementado,
+> validación Unity pendiente** en branch `feat/m3-sub-d-tienda`. Nuevos:
+> `Assets/Scripts/Run/Shop/{ShopNodeController, ShopConfig, ShopItem}.cs`,
+> `Assets/Scripts/Gameplay/Relics/Hooks/ShopStockBuiltHookData.cs`,
+> `Assets/Tests/EditMode/ShopTests.cs`, `Assets/Editor/ShopConfigSetup.cs`
+> (menú `Roguelike > Setup Shop Config` — idempotente, sólo puebla pools).
+> Espejo de la Hoguera: `ShopNodeController` es un panel runtime sobre RunScene
+> auto-creado por `RunFlowController.BuildShopController()`; `EnterNode` ramifica
+> en `NodeType.Shop` → `ShowShopPanel`; `OnShopComplete` incrementa
+> `RunState.ShopsCompleted` + `CompleteNode`. La lógica de stock/compra vive en
+> helpers static puros `ShopNodeController.BuildStock(config, state, seed)` y
+> `TryPurchase(state, item, removalTarget=null)` (testeables sin UI). Stock = 3
+> cartas (filtro ESTRICTO por tipo: ElementType ∈ {WorldA, WorldB, None}) + 2
+> Retazos (excluye los ya poseídos) + 1 servicio "Eliminar carta" (precio
+> escalante `RemoveCardPriceFor(ShopsCompleted)` = 75 + 5×previas). `ShopConfig`
+> SO tiene pools dedicados (decisión: NO reusar `RunCombatConfig.RewardPool`).
+> `RunState`: nuevos `int ShopsCompleted` (reset en `Reset()`) y
+> `bool RemoveCardFromDeck(CardDeckEntry)` (remove por referencia). Hook
+> `OnShopStockBuilt` con payload `ShopStockBuiltHookData` (Stock mutable,
+> TurnManager null) disparado tras BuildStock y antes de dibujar. Parallax 3
+> capas (wall/shelf/counter) con fallback de color si los sprites son null.
+> **Pendiente:** abrir Unity → compilar → `ShopTests` 12/12 → flujo end-to-end +
+> correr el menú `Setup Shop Config` para crear `ShopConfig.asset`.
+>
+> **Última actualización previa:** 2026-05-10 — M3 Sub-PR 3C **validado en Unity** en
 > branch `feat/m3-sub-c-campfire` (rebaseada sobre `origin/main`). Nuevos:
 > `Assets/Scripts/Run/Campfire/{CampfireNodeController, CampfireConfig,
 > CampfireOption}.cs`, `CardUpgradeDef.cs`,

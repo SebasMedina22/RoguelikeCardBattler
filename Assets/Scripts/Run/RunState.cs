@@ -31,6 +31,11 @@ namespace RoguelikeCardBattler.Run
         public bool RunFailed { get; set; }
         public bool ActoCompleted { get; set; } = false;
 
+        // Cuántas tiendas completó el jugador en esta run. Lo incrementa
+        // RunFlowController al salir de una Tienda; la Tienda lo lee para escalar
+        // el precio del servicio "eliminar carta" (Sub-PR 3D). Reset en Reset().
+        public int ShopsCompleted { get; set; } = 0;
+
         // Los 2 tipos elegidos al inicio del run (uno por mundo). Sub-PR A los
         // declara con defaults Rojo/Amarillo; futuras pantallas de selección
         // (M3) los sobreescribirán. TurnManager los lee en ConfigureCombat
@@ -87,6 +92,7 @@ namespace RoguelikeCardBattler.Run
             LastNodeOutcome = NodeOutcome.None;
             RunFailed = false;
             ActoCompleted = false;
+            ShopsCompleted = 0;
             PlayerWorldAType = ElementType.Rojo;
             PlayerWorldBType = ElementType.Amarillo;
             Relics.Clear();
@@ -153,6 +159,17 @@ namespace RoguelikeCardBattler.Run
         public List<CardDeckEntry> GetDeckSnapshot()
         {
             return new List<CardDeckEntry>(Deck);
+        }
+
+        /// <summary>
+        /// Quita una entrada concreta del mazo (por referencia). Devuelve true si
+        /// estaba y se eliminó, false si no estaba. Lo usa el servicio "eliminar
+        /// carta" de la Tienda (Sub-PR 3D).
+        /// </summary>
+        public bool RemoveCardFromDeck(CardDeckEntry entry)
+        {
+            if (entry == null) return false;
+            return Deck.Remove(entry);
         }
     }
 }

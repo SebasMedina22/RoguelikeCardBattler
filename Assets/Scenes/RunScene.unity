@@ -478,6 +478,7 @@ MonoBehaviour:
   uiFont: {fileID: 0}
   runCombatConfig: {fileID: 11400000, guid: f1b2c3d4e5f67890abcdef1234567890, type: 2}
   campfireConfig: {fileID: 11400000, guid: a6e1f2735eaa7b143a06d91b31316706, type: 2}
+  shopConfig: {fileID: 11400000, guid: 3d07a6742450ebb4cad4c1fdc425226e, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
