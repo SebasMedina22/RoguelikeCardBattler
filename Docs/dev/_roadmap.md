@@ -162,16 +162,46 @@ disparan", no de "qué efecto se nos ocurre".
       actualiza `upgradedDescription` para que el HUD muestre los números nuevos.
 
 #### Sub-PR 3D — Tienda (Shop)
-- [ ] `ShopNodeController` + `ShopView` (panel sobre RunScene)
-- [ ] Stock generado por seed: cartas, Retazos, opción "Eliminar carta del mazo"
-- [ ] Filtrado de cartas por los 2 tipos elegidos al inicio del run
-- [ ] Hook `OnShopStockBuilt` para que Retazos puedan modificar stock/precios
-- [ ] Economía: precios desde SO config; gold del RunState
-- [ ] Parallax 2-3 capas placeholder (pared del local + estanterías + mostrador)
+- [x] `ShopNodeController` (panel sobre RunScene auto-creado por RunFlowController;
+      helpers static puros `BuildStock`/`TryPurchase` para tests)
+- [x] Stock generado por seed: 3 cartas + 2 Retazos + 1 servicio "Eliminar carta
+      del mazo" (servicio con sub-panel selector espejo de la Hoguera)
+- [x] Filtrado de cartas ESTRICTO por tipo (ElementType ∈ {WorldA, WorldB, None});
+      factor de sinergia mazo↔stock diferido post-3D (Insight 7)
+- [x] Hook `OnShopStockBuilt` (`ShopStockBuiltHookData` con `Stock` mutable);
+      call site disparado tras `BuildStock` y antes de dibujar
+- [x] Economía: precios desde `ShopConfig` SO. Balance ajustado 2026-06-04
+      (común 20 / poco común 35 / rara 55; Retazo 40) porque la economía da
+      ~10 oro/nodo y los precios originales (50/75/100) eran inalcanzables; gold
+      del RunState. Eliminar carta = precio escalante 30 + 5×(tiendas previas),
+      contador `RunState.ShopsCompleted`
+- [x] Parallax 3 capas (pared/estanterías/mostrador) con sprites del `ShopConfig`
+      SO o colores de fallback. DOTween Yoyo en shelf/counter
 - [ ] Vendedor con personalidad por mundo (placeholder ahora, arte después)
 - [ ] Consumibles **diferidos** (decidir en sesión futura si entran o se van a M4)
-- [ ] Tests: stock determinista por seed; compra resta gold y agrega item;
-      remove carta funciona; precios modificados por Retazos respetan tope mínimo
+- [x] Tests EditMode (`ShopTests.cs`, 13 casos): oro exacto / guard oro
+      insuficiente / ya comprado, carta clon al mazo, Retazo con AcquisitionOrder,
+      `RemoveCardFromDeck` present/missing, servicio eliminar reduce mazo /
+      requiere target / target ausente del mazo, stock determinista por seed,
+      filtro por tipo, excluye Retazos poseídos, servicio eliminar escala con
+      ShopsCompleted, hook agrega ítem
+- [x] **Fix layout (2026-06-04):** `DrawStock` repartía los ítems con un clamp
+      que recortaba el 6º botón ("Eliminar carta") cuando el stock estaba lleno
+      (3+2+1). Ahora el alto de cada ítem es adaptativo al conteo y "Salir" va en
+      franja inferior fija → entran los 6 + Salir (verificado en escena: 7 botones).
+- [x] **`Assets/Editor/ShopConfigSetup.cs`**: menú `Roguelike > Setup Shop Config`
+      que crea `ShopConfig.asset` idempotente y puebla pools placeholder (cartas
+      del starter deck + Retazos existentes)
+- [x] **Validación Unity (2026-06-04):** compilación limpia (zero errors), suite
+      EditMode 117/117 verde (incluye 12 `ShopTests`), `ShopConfig.asset` creado
+      vía el menú (pools: 6 cartas + 23 Retazos), `shopConfig` asignado al
+      `RunFlowController` en RunScene (persistido), Play mode sin errores de
+      consola al construir el `ShopController`.
+- [x] **Walk-through visual (2026-06-04):** sprites de la tienda (WallSprite/
+      ShelfSprite/CounterSprite) importados como Sprite Single, asignados al
+      `ShopConfig.asset` y encuadrados en 3 capas (pared full + estanterías arriba
+      + mostrador abajo, preserveAspect). Probado en una run: panel se ve bien,
+      comprar/eliminar/Salir funcionan. Falta solo `modo:revision` + PR.
 
 #### Sub-PR 3E — NewRunScene
 - [ ] Escena dedicada `Assets/Scenes/NewRunScene.unity` con `NewRunController.cs`

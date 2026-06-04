@@ -8,6 +8,7 @@ using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Relics;
 using RoguelikeCardBattler.Run.Campfire;
+using RoguelikeCardBattler.Run.Shop;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -20,6 +21,7 @@ namespace RoguelikeCardBattler.Run
         [SerializeField] private Font uiFont;
         [SerializeField] private RunCombatConfig runCombatConfig;
         [SerializeField] private CampfireConfig campfireConfig;
+        [SerializeField] private ShopConfig shopConfig;
 
         private const string RunSceneName = "RunScene";
         private const string BattleSceneName = "BattleScene";
@@ -51,6 +53,7 @@ namespace RoguelikeCardBattler.Run
         private static Sprite _whiteSprite;
         private bool _rewardConfigErrorLogged;
         private CampfireNodeController _campfireController;
+        private ShopNodeController _shopController;
 
         private void Awake()
         {
@@ -136,6 +139,7 @@ namespace RoguelikeCardBattler.Run
             BuildRewardPanel();
             BuildActoCompletedPanel();
             BuildCampfireController();
+            BuildShopController();
         }
 
         private void BuildCampfireController()
@@ -145,6 +149,15 @@ namespace RoguelikeCardBattler.Run
             _campfireController = go.AddComponent<CampfireNodeController>();
             RelicHookDispatcher dispatcher = RunSession.GetOrCreate().RelicDispatcher;
             _campfireController.Initialize(_canvas, _state, dispatcher, campfireConfig, OnCampfireComplete);
+        }
+
+        private void BuildShopController()
+        {
+            GameObject go = new GameObject("ShopController");
+            go.transform.SetParent(transform, false);
+            _shopController = go.AddComponent<ShopNodeController>();
+            RelicHookDispatcher dispatcher = RunSession.GetOrCreate().RelicDispatcher;
+            _shopController.Initialize(_canvas, _state, dispatcher, shopConfig, OnShopComplete);
         }
 
         private void EnsureEventSystem()
@@ -261,6 +274,12 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
+            if (node != null && node.Type == NodeType.Shop)
+            {
+                ShowShopPanel(index);
+                return;
+            }
+
             ShowResolvePanel(index);
         }
 
@@ -279,6 +298,30 @@ namespace RoguelikeCardBattler.Run
 
         private void OnCampfireComplete(int nodeId)
         {
+            CompleteNode(nodeId);
+            _state.CurrentNodeId = -1;
+            ShowMap();
+        }
+
+        private void ShowShopPanel(int index)
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
+            if (_shopController != null)
+            {
+                _shopController.Show(index);
+            }
+        }
+
+        private void OnShopComplete(int nodeId)
+        {
+            // Incrementar al COMPLETAR (al salir): el precio escalante de
+            // "eliminar carta" usa ShopsCompleted como tiendas previas, así que
+            // se incrementa después de armar el stock de esta tienda.
+            _state.ShopsCompleted++;
             CompleteNode(nodeId);
             _state.CurrentNodeId = -1;
             ShowMap();
