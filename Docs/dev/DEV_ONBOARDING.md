@@ -33,3 +33,31 @@
 - `Assets/Scripts/Gameplay/Cards/CardDefinition.cs`: datos de cartas, tipo incluido.
 - `Assets/Scripts/Gameplay/Enemies/EnemyDefinition.cs`: datos de enemigo, tipo incluido.
 
+### Tooling Claude Code + Unity
+
+El proyecto está configurado para trabajar con Claude Code conectado a Unity.
+Esto es lo mínimo que necesitas saber para que funcione; los **hábitos** de uso
+(prompting, ahorro de tokens, memoria persistente) viven en
+`Docs/dev/CLAUDE_WORKFLOW_GUIDE.md`.
+
+- **MCP de Unity** — servidor `ai-game-developer` (IvanMurzak), en modo **local**
+  (sin login ni token). Da ~73 tools para leer la consola, inspeccionar
+  escenas/GameObjects, correr tests NUnit y tomar screenshots desde el Editor.
+  Requiere Unity abierto con el plugin conectado (Connected verde). Si al reabrir
+  Unity cambia el puerto, actualiza la URL en `.mcp.json` (por defecto
+  `http://localhost:24348`).
+- **Permisos** — `.claude/settings.json` es **compartido** (commiteado, lo lee el
+  otro dev); `.claude/settings.local.json` es **personal** (gitignored, para tus
+  rutas absolutas y reglas propias). Precedencia: `deny > ask > allow`.
+- **Hook protect-files** — `.claude/hooks/protect-files.js` bloquea Edit/Write
+  sobre los 6 archivos protegidos (los 3 de combate: `TurnManager.cs`,
+  `ActionQueue.cs`, `PlayerCombatActor.cs`, más `GOLDEN_RULES.md`, `_gdd.md` y
+  `DESIGN_DECISIONS.md`). Para una edición autorizada, comenta el hook en
+  `settings.json` o edita a mano.
+- **Slash commands `/modo-*`** — `.claude/commands/modo-*.md` activan los 4 modos
+  (`/modo-gdd`, `/modo-diseno`, `/modo-implementacion`, `/modo-revision`). Cada
+  uno carga solo el ritual de lectura de ese modo, no todo `Docs/`.
+
+**Para hábitos de prompting, ahorro de tokens y memoria persistente →
+`Docs/dev/CLAUDE_WORKFLOW_GUIDE.md`.**
+

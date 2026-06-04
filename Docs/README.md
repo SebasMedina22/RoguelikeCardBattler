@@ -20,7 +20,8 @@
 | `_roadmap.md` | Milestones activos, sub-tareas, dependencias |
 | `_insights.md` | Observaciones de gameplay/playtesting |
 | `COMBAT_ARCHITECTURE.md` | Diagramas + flujo de combate |
-| `DEV_ONBOARDING.md` | Setup inicial, quickstart, test runner |
+| `DEV_ONBOARDING.md` | Setup inicial, quickstart, test runner, tooling Claude Code + Unity |
+| `CLAUDE_WORKFLOW_GUIDE.md` | Cómo trabajar con Claude Code: prompting, ahorro de tokens, memoria, tooling |
 | `GLOSSARY.md` | Terminología del proyecto |
 
 ## Documentación de diseño activa — `Docs/design/`
@@ -57,4 +58,4 @@ Documentos de fases anteriores del proyecto. No se editan.
 
 **Si vienes a entender el combate:** `Docs/dev/COMBAT_ARCHITECTURE.md` → `Docs/dev/GLOSSARY.md` → código en `Assets/Scripts/Gameplay/Combat/`
 
-**Si vienes a usar Claude Code/IA en el proyecto:** `CLAUDE.md` (raíz) — el sistema de modos está documentado ahí.
+**Si vienes a usar Claude Code/IA en el proyecto:** `CLAUDE.md` (raíz) → `Docs/dev/CLAUDE_WORKFLOW_GUIDE.md` (prompting, tokens, memoria, tooling) → `Docs/dev/DEV_ONBOARDING.md` (sección Tooling)
