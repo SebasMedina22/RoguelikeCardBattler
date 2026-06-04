@@ -99,4 +99,8 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 # Claude Code project-local settings
-.claude/
+.claude/*
+# ...except la config compartida del proyecto (permisos, hooks, comandos/modos)
+!.claude/settings.json
+!.claude/commands/
+!.claude/hooks/
