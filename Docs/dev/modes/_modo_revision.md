@@ -50,6 +50,21 @@ priorizados.
   no-manual-setup).
 - Detectar tests faltantes en lógica no trivial.
 
+## Verificación con Unity-MCP (si está disponible)
+
+Para auditar compilación y tests no alcanza con leer el diff (lección de
+Insight 1: un diff que pasa la revisión visual igual puede no compilar). Si el
+Unity-MCP (`ai-game-developer`) está conectado, usalo para verificar de forma
+objetiva los checklist items de compilación/tests del reporte:
+
+- Compilación limpia (leer consola) y suite EditMode en verde.
+- Detalles operativos (versión, comandos, skills) viven en la memoria de tooling
+  y en `CLAUDE_WORKFLOW_GUIDE.md §4` — no se duplican acá (son volátiles).
+- El game view no repinta sin foco vía CLI → la verificación de UI es por
+  diagnóstico de código, no por screenshot.
+- **Si el MCP NO está disponible:** marcá esos items del checklist como "no
+  verificado en esta sesión" en vez de asumir que pasan; no inventes resultados.
+
 ## Reglas de archivos
 
 - NO modificas código.

@@ -37,11 +37,20 @@ namespace RoguelikeCardBattler.Run
         public int ShopsCompleted { get; set; } = 0;
 
         // Los 2 tipos elegidos al inicio del run (uno por mundo). Sub-PR A los
-        // declara con defaults Rojo/Amarillo; futuras pantallas de selección
-        // (M3) los sobreescribirán. TurnManager los lee en ConfigureCombat
-        // para derivar PlayerActiveType según el mundo activo.
+        // declara con defaults Rojo/Amarillo; NewRunScene (Sub-PR 3E) los
+        // sobreescribe vía NewRunController.ApplySelection al confirmar.
+        // TurnManager los lee en ConfigureCombat para derivar PlayerActiveType
+        // según el mundo activo.
         public ElementType PlayerWorldAType { get; set; } = ElementType.Rojo;
         public ElementType PlayerWorldBType { get; set; } = ElementType.Amarillo;
+
+        // Carta especial dual drafteada en NewRunScene (Sub-PR 3E). Runtime-only,
+        // no serializada: la escribe NewRunController.ApplySelection al confirmar
+        // y la consume InitializeDeck para inyectarla como la "10ª carta" del mazo
+        // inicial (GDD §5). Se transporta aparte del Deck porque InitializeDeck
+        // sólo puebla cuando Deck.Count == 0 (poblarlo antes bloquearía el starter
+        // base). Reset a null en Reset().
+        public CardDeckEntry PendingStarterCard { get; set; } = null;
 
         // Inventario de Retazos del run. RelicHookDispatcher (en RunSession) los lee
         // por hook al disparar eventos. El orden de la lista define AcquisitionOrder
@@ -95,6 +104,7 @@ namespace RoguelikeCardBattler.Run
             ShopsCompleted = 0;
             PlayerWorldAType = ElementType.Rojo;
             PlayerWorldBType = ElementType.Amarillo;
+            PendingStarterCard = null;
             Relics.Clear();
             EnsureInitialized(map);
         }
@@ -117,6 +127,15 @@ namespace RoguelikeCardBattler.Run
                 }
 
                 Deck.Add(entry.Clone());
+            }
+
+            // Carta drafteada en NewRunScene (Sub-PR 3E): se inyecta clonada como
+            // la "10ª carta" del mazo inicial (GDD §5). Va aquí, tras el starter
+            // base, porque el transporte vía PendingStarterCard evita el guard
+            // Deck.Count == 0 que bloquearía cargar el starter si se poblara antes.
+            if (PendingStarterCard != null && PendingStarterCard.IsValid)
+            {
+                Deck.Add(PendingStarterCard.Clone());
             }
         }
 

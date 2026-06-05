@@ -7,7 +7,35 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-04 — M3 Sub-PR 3D (Tienda) **implementado,
+> **Última actualización:** 2026-06-04 — M3 Sub-PR 3E (NewRunScene) **implementado
+> y validado en Unity** en branch `feat/m3-sub-e-newrun`. Nuevos:
+> `Assets/Scripts/Run/NewRun/{NewRunController, NewRunConfig, StarterDraft}.cs`,
+> `Assets/Editor/NewRunConfigSetup.cs` (menú `Roguelike > Setup New Run Config`),
+> `Assets/Tests/EditMode/NewRunTests.cs`, `Assets/Scenes/NewRunScene.unity`.
+> Pantalla de arranque de run entre MainMenu y RunScene: máquina de 3 pasos
+> (elegir 2 tipos distintos uno por mundo → draftear carta dual componiendo 1 cara
+> A + 1 cara B filtradas por tipo → confirmar). `NewRunController` es scene-owned,
+> construye su UI en runtime (espejo estructural de `MainMenuController`); la lógica
+> del draft vive en helpers static puros `StarterDraft.BuildDraftOptions(config,
+> typeA, typeB, seed)` / `ComposeDualCard(sideA, sideB)` / `TypesValid` /
+> `ApplySelectionToState` (testeables sin UI, espejo de `ShopNodeController.BuildStock`).
+> El dual se compone en runtime vía `DualCardDefinition.InitRuntimeSides` (mismo
+> mecanismo que el upgrade de la Hoguera). `RunState` gana `CardDeckEntry
+> PendingStarterCard` (runtime-only, reset a null en `Reset()`): `NewRunController.
+> ApplySelection` la escribe al confirmar y `InitializeDeck` la inyecta clonada
+> tras el starter base (la "10ª carta" GDD §5, sin romper el guard `Deck.Count == 0`).
+> `MainMenuController.OnPlayClicked` ahora carga `NewRunScene` (sigue llamando
+> `ResetForNewRun` antes) y la validación de Build Settings la incluye.
+> `NewRunConfig` SO: pool `draftFaces` (caras single tipadas, ≥3 por tipo cubriendo
+> los 6), `selectableTypes`, `optionsPerWorld`, `confirmClip`. El menú editor crea
+> el asset + 18 caras placeholder en `Assets/ScriptableObjects/Cards/NewRunFaces/`.
+> **Importante:** `RunFlowController` sólo llama `State.Reset` dentro de handlers
+> de botones (Derrota/Acto completado), NO en carga de escena → los tipos y la
+> carta drafteada sobreviven el salto NewRunScene → RunScene.
+> **Validado:** compilación limpia, EditMode 126/126, NewRunScene en Build Settings,
+> `newRunConfig` asignado en la escena, E2E por código (mazo+1, filtro Tienda correcto).
+>
+> **Última actualización previa:** 2026-06-04 — M3 Sub-PR 3D (Tienda) **implementado,
 > validación Unity pendiente** en branch `feat/m3-sub-d-tienda`. Nuevos:
 > `Assets/Scripts/Run/Shop/{ShopNodeController, ShopConfig, ShopItem}.cs`,
 > `Assets/Scripts/Gameplay/Relics/Hooks/ShopStockBuiltHookData.cs`,
@@ -209,6 +237,14 @@ Run/
   RunFlowController.cs           ← flujo en RunScene
   BattleFlowController.cs        ← flujo en BattleScene
   RunAmbientParticles.cs
+  NewRun/                        ← Sub-PR 3E — pantalla de arranque de run
+    NewRunController.cs          ← scene-owned, máquina de 3 pasos, UI runtime
+    NewRunConfig.cs              ← SO: pool de caras, tipos, optionsPerWorld, confirmClip
+    StarterDraft.cs              ← helpers static puros (draft + composición dual)
+  Shop/                          ← Sub-PR 3D — Tienda
+    ShopNodeController.cs, ShopConfig.cs, ShopItem.cs
+  Campfire/                      ← Sub-PR 3C — Hoguera
+    CampfireNodeController.cs, CampfireConfig.cs, CampfireOption.cs
   Map/
     ActMap.cs, MapNode.cs, NodeState.cs, NodeType.cs
     RunMapGenerator.cs
