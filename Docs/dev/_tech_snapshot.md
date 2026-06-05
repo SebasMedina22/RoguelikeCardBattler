@@ -7,7 +7,23 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-05 — M3 Sub-PR 3F (Mapa horizontal) **implementado
+> **Última actualización:** 2026-06-05 — **Auditoría de arte, slot C8 (tinte por tipo
+> elemental, solo código, sin IA)** en branch `feat/element-type-color-tint`. Nuevo
+> `Assets/Scripts/Gameplay/Combat/ElementTypeColors.cs`: fuente única de verdad
+> `ElementType→Color` (los 6 tipos son placeholders por color). API: `For(type)`
+> (color canónico), `ReadableOnDark(type)` (levanta colores oscuros como Negro para
+> texto legible sobre fondos oscuros), `ReadableTextOn(bg)` (tinta negra/blanca por
+> luminancia), `Dim(color,factor)` (atenúa preservando alpha). Aplicado en 3 sitios
+> de presentación (sin tocar lógica): `NewRunController.BuildTypeColumn` (fondo de los
+> botones de tipo tintado por color + texto contrastado; dorado se reserva para
+> "elegido", deshabilitado = color atenuado), `CombatHudView.Sync` (labels de tipo del
+> jugador y del enemigo tintados), `CardHandView.BuildCardLabel` (prefijo `[Tipo]` de
+> la carta coloreado vía rich text). Nuevo `Assets/Tests/EditMode/ElementTypeColorsTests.cs`
+> (6 casos: opacidad, colores distintos por tipo, contraste de texto, levante de Negro
+> sobre oscuro, brillantes intactos, Dim preserva alpha). **Validado:** compilación
+> limpia, EditMode **137/137** (131 previos + 6 nuevos). Cubre C8 de `ART_NEEDS.md`.
+>
+> **Última actualización previa:** 2026-06-05 — M3 Sub-PR 3F (Mapa horizontal) **implementado
 > y validado en Unity** en branch `feat/m3-sub-f-horizontal-map`. **Cierra M3.**
 > Refactor de UX puro del mapa del run: scroll vertical → **scroll horizontal
 > izquierda→derecha** (DD-005, start a la izquierda / boss a la derecha). El eje vive
@@ -295,6 +311,7 @@ Gameplay/
     EnemyCombatActor.cs
     ICombatActor.cs, IGameAction.cs, ActionContext.cs
     ElementTypes.cs              ← 7 tipos + matriz de efectividad
+    ElementTypeColors.cs         ← C8: fuente única de verdad ElementType→Color (tinte UI)
     SpriteFrameAnimatorUI.cs
     CombatUIController.cs        ← 710 loc (era 1473)
     CombatFeedbackView.cs        ← 357 loc (extraído en Fase 1)
@@ -355,7 +372,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 15 archivos (suite EditMode 131/131)
+### Tests (`Assets/Tests/EditMode/`) — 16 archivos (suite EditMode 137/137)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -377,6 +394,9 @@ NewRunTests.cs                   ← M3 Sub-PR 3E (8 casos: draft/dual/tipos)
 RunMapGeneratorTests.cs          ← M3 Sub-PR 3F (5 casos: determinismo topología/
                                    enemigos, divergencia por seed, DAG válido,
                                    start/end forzados — blinda el refactor horizontal)
+ElementTypeColorsTests.cs        ← Auditoría de arte C8 (6 casos: tinte por tipo —
+                                   colores distintos, contraste de texto, levante de
+                                   Negro sobre oscuro, Dim preserva alpha)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

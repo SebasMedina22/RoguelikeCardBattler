@@ -225,9 +225,29 @@ namespace RoguelikeCardBattler.Run.NewRun
 
                 Button btn = CreateButtonAnchored(_typesPanel, $"{name}_{type}", type.ToString(),
                     xMin, yMin, xMax, yMax, !disabledByOther);
+
+                // Tinte por tipo (C8): cada tipo elemental ES un color → el botón lo
+                // refleja. El dorado se reserva para "elegido" (afordancia ya usada en
+                // el draft); deshabilitado = color del tipo atenuado pero aún legible.
                 if (isSelected)
                 {
                     btn.image.color = SelectedTint;
+                }
+                else if (disabledByOther)
+                {
+                    btn.image.color = ElementTypeColors.Dim(ElementTypeColors.For(type), 0.4f);
+                }
+                else
+                {
+                    btn.image.color = ElementTypeColors.For(type);
+                }
+
+                // El texto se adapta para contrastar sobre el fondo tintado
+                // (negro sobre amarillo/blanco, blanco sobre azul/rojo/etc.).
+                Text btnLabel = btn.GetComponentInChildren<Text>();
+                if (btnLabel != null)
+                {
+                    btnLabel.color = ElementTypeColors.ReadableTextOn(btn.image.color);
                 }
 
                 if (!disabledByOther)
