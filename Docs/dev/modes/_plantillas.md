@@ -136,6 +136,50 @@ qué inputs hay]
 - Complejidad: alta/media/baja
 - Sub-tareas: ...
 - Riesgo: ...
+
+## Prompt de handoff para `modo:implementacion`
+[Solo si el spec quedó cerrado, sin decisiones abiertas. Ver plantilla dedicada abajo.]
+```
+
+---
+
+## Plantilla: Prompt de handoff a implementación (cierre de `modo:diseno`)
+
+Se genera al final de un spec cerrado. Es texto que Sebastián copia/pega como
+mensaje nuevo para arrancar `modo:implementacion`. Va dentro de un bloque de
+código para facilitar el copy/paste.
+
+```markdown
+modo:implementacion
+
+Implementá el [Sub-PR / feature]. El spec cerrado está en
+`Docs/dev/specs/<nombre>.md` — leelo completo antes de tocar código; todas las
+decisiones de diseño ya están cerradas, no abras ninguna.
+
+Setup de branch ([dependencia previa: PR #N estado]):
+  git fetch --all --prune
+  git checkout -b feat/<rama> origin/main
+
+Qué construir (resumen; el detalle y los contratos están en el spec):
+- [Archivos a crear, una línea cada uno]
+- [Archivos a modificar, una línea cada uno]
+
+Reglas no negociables:
+- NO tocar archivos protegidos (TurnManager, ActionQueue, PlayerCombatActor)
+  [salvo aprobación explícita ya dada en el spec].
+- No manual editor setup: todo se auto-crea en runtime / por menú editor.
+- [Lo que quedó FUERA de scope por decisión cerrada]
+- [Reglas de feel / arquitectura específicas de la feature]
+
+Validación obligatoria antes de cerrar:
+- Compilación limpia (zero console errors).
+- Tests EditMode nuevos en verde + suite completa sin regresiones.
+- [Asset/menú editor a correr si aplica]
+- Flujo end-to-end [describir el camino jugable].
+- [Nota de la herramienta de validación del proyecto, p.ej. Unity-MCP].
+
+Al cerrar: actualizá `_roadmap.md` (checkboxes) y `_tech_snapshot.md` (nuevos
+archivos/subsistema), commit + push + PR a main (Closes #<issue> si aplica).
 ```
 
 ---

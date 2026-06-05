@@ -56,3 +56,29 @@ técnico implementable**. Es game design + arquitectura aplicada.
 ## Output esperado
 
 Plantilla de Spec Técnico en `Docs/dev/modes/_plantillas.md` (sección "Spec Técnico").
+
+## Cierre obligatorio: prompt de handoff para `modo:implementacion`
+
+Cuando un spec queda cerrado (sin decisiones abiertas), SIEMPRE generás un
+**prompt de handoff** que Sebastián pueda copiar/pegar como mensaje nuevo para
+arrancar `modo:implementacion` sobre ese spec. Es la última sección del output.
+
+Reglas del prompt de handoff:
+- Empieza con la línea `modo:implementacion`.
+- Apunta al archivo de spec persistido (`Docs/dev/specs/<nombre>.md`) e indica
+  leerlo completo antes de codear.
+- Incluye el setup de branch concreto (con `git fetch --all --prune` y el
+  `checkout -b feat/...` desde `origin/main`, confirmando antes el estado de
+  cualquier PR previo del que dependa).
+- Resume QUÉ construir (archivos a crear/modificar) sin re-explicar el diseño —
+  el spec ya lo tiene.
+- Lista las reglas no negociables relevantes (archivos protegidos, no manual
+  editor setup, lo que quedó fuera de scope por decisión cerrada).
+- Lista la validación obligatoria antes de cerrar (compilación, tests, flujo
+  end-to-end, herramienta de validación del proyecto).
+- Cierra indicando qué docs actualizar (`_roadmap.md`, `_tech_snapshot.md`) y el
+  flujo de commit/PR.
+
+Si el spec todavía tiene decisiones abiertas (`[ABIERTO]`), NO generás el prompt
+de handoff: primero se cierran las decisiones. La plantilla del prompt vive en
+`_plantillas.md` (sección "Prompt de handoff a implementación").

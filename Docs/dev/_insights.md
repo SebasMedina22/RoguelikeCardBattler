@@ -31,6 +31,20 @@
 <!-- Los insights se agregan aquí en orden cronológico (más reciente arriba). -->
 <!-- No editar insights pasados sin pedido explícito. -->
 
+## Insight 7 — Filtrado de stock de tienda: tipo estricto + factor de sinergia con el mazo (futuro) — 2026-06-04
+
+**Contexto:** diseñando M3 Sub-PR 3D (Tienda). Al cerrar el filtrado de cartas del stock (decisión abierta #6 del spec), Sebastián confirmó filtrado estricto por los 2 tipos del run para la base, pero pidió que más adelante exista un factor que incline qué cartas aparecen hacia las que combinan bien con el mazo actual.
+
+**Idea:** el filtrado de cartas de la tienda en 3D es **estricto por tipo**: solo aparecen cartas cuyo `ElementType` ∈ {tipo A del run, tipo B del run, None}. Sebastián quiere, además y más adelante, un **factor de sinergia**: que la probabilidad de que aparezca una carta se incline hacia las que combinan bien con el mazo que el jugador ya tiene (no solo por tipo elemental). No entra en 3D — la base es aleatorio estricto-por-tipo. Se difiere a una sub-PR posterior.
+
+**Conexión con sistemas:** economía/tienda (M3 3D), generación de stock por seed, sistema de mazo (`RunState.Deck`), futura heurística de "puntuación de sinergia".
+
+**Potencial:** requiere una heurística de sinergia para puntuar cartas candidatas. Opciones a evaluar cuando se aborde: peso por tags compartidos con cartas del mazo, por arquetipo, por curva de coste, o por afinidad con los Retazos activos. Define si la tienda se siente como herramienta dirigida de construcción de mazo vs aleatoriedad pura. Riesgo de balance: muy dirigida → mata variabilidad y vuelve obvias las builds; nula → las tiendas se sienten irrelevantes. Empezar simple (peso por tags compartidos con el mazo) cuando se implemente.
+
+**Estado:** crudo — diferido post-3D. La base de 3D usa filtrado estricto por tipo sin ponderación de sinergia.
+
+---
+
 ## Insight 6 — La descripción de la carta es texto fijo en el SO, no se computa desde efectos — 2026-05-10
 
 **Contexto:** validando M3 Sub-PR 3C (Hoguera) en Unity, al mejorar una carta el nombre se actualizaba a "Strike (B)+" pero el cuerpo de texto seguía mostrando "Deal 9 damage" cuando el efecto real ya era 12. La primera versión de `CardUpgradeSetup.cs` solo seteaba `upgradedEffects` (los datos de gameplay). El daño al jugar la carta era correcto — pero el HUD mostraba el número viejo porque toma la string `description` del SO directamente.

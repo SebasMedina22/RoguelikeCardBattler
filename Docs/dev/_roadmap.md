@@ -10,7 +10,7 @@
 > **Fase actual:** M2 cerrado completo (motor v2 estable). Diseño de M3 cerrado.
 > **Milestone activo:** M3 — Personalización del run (Retazos, Tienda, Hoguera, NewRunScene, mapa horizontal)
 > **Próximo bloque:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
-> **Última actualización:** 2026-05-10 (Sub-PR 3C **validado en Unity**: tests EditMode 8/8 verdes, parallax y heal funcionando, upgrade de cartas placeholder activo en starter deck via `CardUpgradeSetup` editor menu. Branch `feat/m3-sub-c-campfire` lista para commit + PR.)
+> **Última actualización:** 2026-06-04 (Sub-PR 3E NewRunScene **implementado y validado en Unity**: EditMode 126/126, NewRunScene en Build Settings con NewRunController + NewRunConfig asignado, draft "Componer" funcionando con pool placeholder de 18 caras. Branch `feat/m3-sub-e-newrun`. Falta sólo 3F para cerrar M3.)
 
 ---
 
@@ -204,17 +204,35 @@ disparan", no de "qué efecto se nos ocurre".
       comprar/eliminar/Salir funcionan. Falta solo `modo:revision` + PR.
 
 #### Sub-PR 3E — NewRunScene
-- [ ] Escena dedicada `Assets/Scenes/NewRunScene.unity` con `NewRunController.cs`
-- [ ] **Paso 1:** Selección de 2 tipos elementales (uno por mundo)
-- [ ] **Paso 2:** Draft de carta especial dual (6 opciones filtradas: 3 Mundo A
-      + 3 Mundo B según tipos elegidos en Paso 1, DD-020)
-- [ ] **Paso 3:** Confirmación + carga de RunScene
-- [ ] Feel: cards entrando con fade desde sus mundos, texto de peso ("esta carta
-      te acompañará todo el run"), sonido al confirmar
-- [ ] La carta seleccionada se inyecta en el mazo inicial del run
-- [ ] Botón volver a MainMenu en cada paso
-- [ ] Tests: draft genera 6 opciones válidas filtradas por tipos; carta
-      seleccionada entra al deck; cancelar vuelve a MainMenu sin estado sucio
+- [x] Escena dedicada `Assets/Scenes/NewRunScene.unity` con `NewRunController.cs`
+      (controller scene-owned, UI runtime espejo de MainMenuController, en Build
+      Settings tras MainMenuScene)
+- [x] **Paso 1:** Selección de 2 tipos elementales (uno por mundo); el tipo de A
+      se deshabilita en B (distintos); "Continuar" se habilita con dos distintos
+- [x] **Paso 2:** Draft "Componer" (decisión #1): 3 caras filtradas por el tipo
+      del Mundo A + 3 por el del B (DD-020); elegir 1 de cada → `DualCardDefinition`
+      compuesta en runtime vía `StarterDraft.ComposeDualCard` / `InitRuntimeSides`
+- [x] **Paso 3:** Resumen + confirmación + carga de RunScene
+- [x] Feel: cartas entran con fade+slide desde su lado de mundo (A izq / B der,
+      `UIAnimationHelper`), texto de peso ("Esta carta te acompañará todo el run"),
+      sonido al confirmar (`NewRunConfig.confirmClip` o ClickSFX)
+- [x] La carta drafteada se inyecta en el mazo inicial vía
+      `RunState.PendingStarterCard` consumido en `InitializeDeck` (10ª carta GDD §5)
+- [x] Botón "Volver al menú" en cada paso; `RunState` sólo muta en `ApplySelection`
+      (cancelar no deja estado sucio)
+- [x] **`Assets/Editor/NewRunConfigSetup.cs`**: menú `Roguelike > Setup New Run
+      Config` (idempotente) — crea `NewRunConfig.asset` + 18 caras placeholder
+      (3 por tipo × 6) en `Assets/ScriptableObjects/Cards/NewRunFaces/`
+- [x] Tests EditMode (`NewRunTests.cs`, 8 casos): filtrado por tipo, determinismo
+      por seed, composición dual (lados→mundos), carta drafteada entra al mazo,
+      `ApplySelection` escribe tipos, regla de tipos distintos, sin-estado-sucio,
+      guard de pool insuficiente
+- [x] **Validación Unity (2026-06-04):** compilación limpia (zero errors), suite
+      EditMode 126/126 verde (incluye 8 `NewRunTests`), `NewRunConfig.asset` creado
+      vía el menú (18 caras, [3,3,3,3,3,3] por tipo), `newRunConfig` asignado al
+      `NewRunController` en NewRunScene (persistido), NewRunScene en Build Settings.
+      E2E por código: tipos elegidos → mazo = starter+1 drafteada, filtro Tienda
+      respeta los tipos (Morado sí / Azul no)
 
 #### Sub-PR 3F — Mapa horizontal (refactor scroll)
 - [ ] Refactor `RunMapView` para scroll lateral (izquierda → derecha) por DD-005

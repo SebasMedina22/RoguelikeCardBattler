@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 829af9ee0e044e9f9aae0fd53295d85f, type: 3}
+  m_Name: Face_Rojo_3
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Cards.CardDefinition
+  id: face_rojo_3
+  cardName: Golpe Rojo
+  description: "Inflige 8 de da\xF1o."
+  cost: 1
+  type: 0
+  rarity: 1
+  target: 2
+  tags: []
+  effects:
+  - effectType: 0
+    value: 8
+    target: 1
+    statusType: 0
+    extraParams: []
+  elementType: 1
+  _upgrade:
+    overrideCost: 0
+    upgradedCost: 0
+    upgradedEffects: []
+    upgradedName: 
+    upgradedDescription: 

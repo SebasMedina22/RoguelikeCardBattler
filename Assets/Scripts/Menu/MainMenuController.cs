@@ -16,6 +16,7 @@ namespace RoguelikeCardBattler.Menu
     /// </summary>
     public class MainMenuController : MonoBehaviour
     {
+        private const string SceneNewRun = "NewRunScene";
         private const string SceneRun = "RunScene";
         private const string SceneBattle = "BattleScene";
         private const string ContinuePlaceholder = "Coming in E5-P03";
@@ -69,20 +70,22 @@ namespace RoguelikeCardBattler.Menu
         }
 
         /// <summary>
-        /// Play inicia una nueva run y carga RunScene.
+        /// Play inicia una nueva run y carga NewRunScene (Sub-PR 3E): la pantalla
+        /// de selección de tipos + draft de carta dual previa a RunScene. Sigue
+        /// reseteando RunState aquí; NewRunScene sólo lo muta al confirmar.
         /// </summary>
         public void OnPlayClicked()
         {
             AudioManager.Instance?.PlaySFX(AudioManager.Instance.ClickSFX);
             if (!_scenesValid)
             {
-                Debug.LogError("RunScene or BattleScene not in Build Settings. Add them in File > Build Settings.");
+                Debug.LogError("NewRunScene/RunScene/BattleScene not in Build Settings. Add them in File > Build Settings.");
                 return;
             }
 
             RunSession session = RunSession.GetOrCreate();
             session.ResetForNewRun();
-            SceneTransitionManager.LoadScene(SceneRun);
+            SceneTransitionManager.LoadScene(SceneNewRun);
         }
 
         /// <summary>
@@ -125,11 +128,12 @@ namespace RoguelikeCardBattler.Menu
 
         private bool ValidateScenesInBuildSettings()
         {
+            bool newRunExists = Application.CanStreamedLevelBeLoaded(SceneNewRun);
             bool runExists = Application.CanStreamedLevelBeLoaded(SceneRun);
             bool battleExists = Application.CanStreamedLevelBeLoaded(SceneBattle);
-            if (!runExists || !battleExists)
+            if (!newRunExists || !runExists || !battleExists)
             {
-                Debug.LogError("RunScene or BattleScene not in Build Settings. Add them in File > Build Settings.");
+                Debug.LogError("NewRunScene/RunScene/BattleScene not in Build Settings. Add them in File > Build Settings.");
                 return false;
             }
 
@@ -146,7 +150,7 @@ namespace RoguelikeCardBattler.Menu
             if (!_scenesValid)
             {
                 _playButton.interactable = false;
-                SetMessage("Missing RunScene/BattleScene in Build Settings.");
+                SetMessage("Missing NewRunScene/RunScene/BattleScene in Build Settings.");
             }
         }
 

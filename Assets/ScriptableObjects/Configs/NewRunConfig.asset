@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98fd38d851e48614baf0613e4429a2b1, type: 3}
+  m_Name: NewRunConfig
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.NewRun.NewRunConfig
+  draftFaces:
+  - {fileID: 11400000, guid: 17bddf54501fb1747988efec9aa003a5, type: 2}
+  - {fileID: 11400000, guid: 6083976aa53b9784d82acd9a8f4befa9, type: 2}
+  - {fileID: 11400000, guid: e9b3ec516aa601d40b3a5408a8739ca1, type: 2}
+  - {fileID: 11400000, guid: 13f238770ce6b944f9cec713d2256bf6, type: 2}
+  - {fileID: 11400000, guid: 198a3590c5135e848a18734bed8b842b, type: 2}
+  - {fileID: 11400000, guid: 5f00d7fb29745ba4ba109af7990e538c, type: 2}
+  - {fileID: 11400000, guid: 7a66e9ecda4371c479b36aea91a8e13e, type: 2}
+  - {fileID: 11400000, guid: 1a69c48219e408e418e5339c342e57f6, type: 2}
+  - {fileID: 11400000, guid: 504cff0187655a8449460834cce2d246, type: 2}
+  - {fileID: 11400000, guid: 329b027c22abd50458c0fc7879ea67eb, type: 2}
+  - {fileID: 11400000, guid: 03da4538a88fe6a44bbdf51ae6c61723, type: 2}
+  - {fileID: 11400000, guid: ad30960689367cd448924fb32be61fcb, type: 2}
+  - {fileID: 11400000, guid: fe2c8c2fb39eae64e9b05fa01d1f735e, type: 2}
+  - {fileID: 11400000, guid: f62e032e951d04749a7542428784e72d, type: 2}
+  - {fileID: 11400000, guid: 293bd456ce90d4c43a124325ef23a61c, type: 2}
+  - {fileID: 11400000, guid: 76c8a4bff38cf4041a8f59971bde44cd, type: 2}
+  - {fileID: 11400000, guid: f1a1c8cc684930c4ba0fbed0a80bf901, type: 2}
+  - {fileID: 11400000, guid: c8a62ff0df3b1a14199d2f3e919303a7, type: 2}
+  selectableTypes: 010000000200000003000000040000000500000006000000
+  optionsPerWorld: 3
+  confirmClip: {fileID: 0}

@@ -78,3 +78,30 @@ de `modo:diseno` o una tarea concreta del roadmap activo.
   `_gdd.md`, `DESIGN_DECISIONS.md`.
 - Cuando termines una sub-tarea sustantiva, sugiere activar `modo:revision`
   antes del commit.
+
+## Validación con Unity-MCP (si está disponible)
+
+El proyecto tiene un Unity-MCP (`ai-game-developer`) conectado en la mayoría de
+las sesiones interactivas. Es el **mecanismo** para cumplir los criterios de
+aceptación que este modo ya exige (zero console errors, tests EditMode verdes),
+en vez de pedirle a Sebastián que abra Unity a mano.
+
+- Detalles operativos (servidor, versión a usar/evitar, comandos, skills
+  disponibles) viven en la memoria de tooling y en `CLAUDE_WORKFLOW_GUIDE.md §4`
+  — NO se duplican acá porque son volátiles. Consultá esa fuente al usarlo.
+- Skills típicas de validación: correr tests EditMode, leer la consola, ejecutar
+  código de diagnóstico, inspeccionar escena/GameObjects.
+- **Limitación conocida:** el game view no repinta sin foco vía CLI → verificá
+  UI por diagnóstico de código (estado de componentes, jerarquía), no por
+  screenshot del game view.
+- **Si el MCP NO está disponible** (corrida headless/cron, Unity cerrado): no
+  inventes resultados de validación. Dejá explícito qué quedó sin validar y pedí
+  a Sebastián la verificación manual en Unity.
+
+### Cierre de una sub-tarea sustantiva
+
+Antes de marcar `[x]` o sugerir `modo:revision`/commit, si el MCP está
+disponible, verificá: (1) compilación limpia (zero console errors), (2) tests
+EditMode nuevos + suite completa en verde, (3) el flujo jugable end-to-end de la
+feature en su escena. Reportá el resultado real — si algo falla, decilo con el
+output, no lo maquilles.
