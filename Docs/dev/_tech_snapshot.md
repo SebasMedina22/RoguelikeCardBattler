@@ -7,7 +7,34 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-04 — M3 Sub-PR 3E (NewRunScene) **implementado
+> **Última actualización:** 2026-06-05 — M3 Sub-PR 3F (Mapa horizontal) **implementado
+> y validado en Unity** en branch `feat/m3-sub-f-horizontal-map`. **Cierra M3.**
+> Refactor de UX puro del mapa del run: scroll vertical → **scroll horizontal
+> izquierda→derecha** (DD-005, start a la izquierda / boss a la derecha). El eje vive
+> ENTERAMENTE en `RunMapView`: `GetNodePosition` ahora mapea `depth→X`
+> (`x = LeftPadding + depth*ColumnSpacing`) e `índice→Y`
+> (`y = -(index-(count-1)/2)*NodeRowSpacing`, apilado vertical centrado); el content
+> se dimensiona por ANCHO (`contentWidth`, `sizeDelta=(W,0)`); `CreateScrollView`
+> setea `ScrollRect.horizontal=true/vertical=false`, content pivot `(0,0.5)` anclado
+> a la izquierda, y baja el techo del scroll a `anchorMax.y=0.72`. Constantes
+> renombradas: `HorizontalSpacing→ColumnSpacing(200)`, `RowSpacing→NodeRowSpacing(120)`,
+> `TopPadding→LeftPadding(80)`, `BottomPadding→RightPadding(80)`. `RunMapNodeView` y
+> `RunMapEdgeView` sólo cambian su anchor `(0.5,1)→(0,0.5)` (1 línea c/u; animaciones
+> y matemática de aristas son agnósticas al eje). **`RunMapGenerator` NO se tocó**
+> (es agnóstico al eje — sólo asigna tipos/aristas; decisión cerrada del spec).
+> `RunFlowController` ahora instancia un `RelicInventoryView` en una banda dedicada
+> del `_mapPanel` (anchors 0.72–0.79, arriba del scroll y bajo el status) → fila de
+> Retazos en el HUD del mapa, consistente con el HUD de combate; `Refresh` en
+> `ShowMap()` y `Cleanup()` junto al de `_mapView` en las transiciones de escena.
+> Nuevo `Assets/Tests/EditMode/RunMapGeneratorTests.cs` (5 casos: determinismo de
+> topología, determinismo de enemigos, divergencia por seed, DAG válido, start/end
+> forzados) — blinda "misma seed = mismo mapa" (no existía test del sistema de mapa).
+> **Validado:** compilación limpia, EditMode **131/131** (126 previos + 5 nuevos),
+> Play en RunScene sin errores/excepciones; diagnóstico de código confirma ScrollRect
+> horizontal, content `pivot(0,0.5) sizeDelta(1160,0)`, start en x=80 / boss en x=1080,
+> ramas del mismo depth apiladas y centradas (±60), RelicBar en su banda.
+>
+> **Última actualización previa:** 2026-06-04 — M3 Sub-PR 3E (NewRunScene) **implementado
 > y validado en Unity** en branch `feat/m3-sub-e-newrun`. Nuevos:
 > `Assets/Scripts/Run/NewRun/{NewRunController, NewRunConfig, StarterDraft}.cs`,
 > `Assets/Editor/NewRunConfigSetup.cs` (menú `Roguelike > Setup New Run Config`),
@@ -250,7 +277,9 @@ Run/
     RunMapGenerator.cs
     Act1MapConfig.cs, EnemyPoolConfig.cs
     UI/
-      RunMapView.cs, RunMapNodeView.cs, RunMapEdgeView.cs
+      RunMapView.cs                ← 3F: scroll HORIZONTAL (depth→X, índice→Y); el eje
+                                     vive entero acá (GetNodePosition + CreateScrollView)
+      RunMapNodeView.cs, RunMapEdgeView.cs  ← 3F: anchor (0,0.5)
 
 Gameplay/
   Cards/
@@ -306,7 +335,8 @@ Gameplay/
       RelicElitePuristEffect.cs, RelicEliteChargeBoostEffect.cs
       RelicBossLastStitchEffect.cs
     UI/
-      RelicInventoryView.cs      ← fila de iconos en HUD combate (3F: RunMapView)
+      RelicInventoryView.cs      ← fila de iconos en HUD combate Y mapa (3F: instanciada
+                                   también por RunFlowController en banda del _mapPanel)
 
 Save/
   ISaveService.cs
@@ -325,7 +355,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 11 archivos
+### Tests (`Assets/Tests/EditMode/`) — 15 archivos (suite EditMode 131/131)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -341,6 +371,12 @@ RelicHookDispatcherTests.cs      ← M3 Sub-PR 3A (8 casos de plomería)
 RelicEffectsTests.cs             ← M3 Sub-PR 3B (efectos concretos: mutación,
                                    counters, RunState directo, hook filtering,
                                    guards con TurnManager null)
+CampfireTests.cs                 ← M3 Sub-PR 3C (8 casos: heal/upgrade/hook)
+ShopTests.cs                     ← M3 Sub-PR 3D (13 casos: oro/stock/filtro/hook)
+NewRunTests.cs                   ← M3 Sub-PR 3E (8 casos: draft/dual/tipos)
+RunMapGeneratorTests.cs          ← M3 Sub-PR 3F (5 casos: determinismo topología/
+                                   enemigos, divergencia por seed, DAG válido,
+                                   start/end forzados — blinda el refactor horizontal)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

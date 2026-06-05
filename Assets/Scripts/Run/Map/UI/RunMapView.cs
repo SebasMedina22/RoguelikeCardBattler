@@ -15,10 +15,14 @@ namespace RoguelikeCardBattler.Run
     /// </summary>
     public class RunMapView
     {
-        private const float RowSpacing = 130f;
-        private const float HorizontalSpacing = 200f;
-        private const float TopPadding = 50f;
-        private const float BottomPadding = 50f;
+        // Eje horizontal (DD-005): depth avanza en X hacia la derecha, los nodos del
+        // mismo depth se apilan en Y. ColumnSpacing gobierna el avance (antes
+        // HorizontalSpacing); NodeRowSpacing el apilado (antes RowSpacing=130, se baja
+        // a 120 porque ahora compite con el alto de pantalla, no con scroll infinito).
+        private const float ColumnSpacing = 200f;
+        private const float NodeRowSpacing = 120f;
+        private const float LeftPadding = 80f;
+        private const float RightPadding = 80f;
         private const float NodeWidth = 130f;
         private const float NodeHeight = 50f;
         private const float EdgeThickness = 3f;
@@ -62,8 +66,8 @@ namespace RoguelikeCardBattler.Run
                 depthBuckets[kvp.Value].Add(kvp.Key);
             }
 
-            float contentHeight = TopPadding + (maxDepth + 1) * RowSpacing + BottomPadding;
-            content.sizeDelta = new Vector2(0f, contentHeight);
+            float contentWidth = LeftPadding + maxDepth * ColumnSpacing + RightPadding;
+            content.sizeDelta = new Vector2(contentWidth, 0f);
 
             foreach (MapNode node in map.Nodes)
             {
@@ -196,7 +200,7 @@ namespace RoguelikeCardBattler.Run
 
         /// <summary>
         /// BFS desde startNode para calcular la profundidad de cada nodo.
-        /// Se usa para posicionar nodos en filas (Y) por profundidad.
+        /// Se usa para posicionar nodos en columnas (X) por profundidad.
         /// </summary>
         private static Dictionary<int, int> ComputeDepths(ActMap map)
         {
@@ -230,9 +234,10 @@ namespace RoguelikeCardBattler.Run
         }
 
         /// <summary>
-        /// Calcula la posición de un nodo en coordenadas del content (anchor 0.5, 1).
-        /// X=0 es el centro horizontal; Y negativo va hacia abajo.
-        /// Nodos del mismo depth se distribuyen simétricamente alrededor del centro.
+        /// Calcula la posición de un nodo en coordenadas del content (pivot 0, 0.5).
+        /// X avanza hacia la derecha por profundidad (start a la izquierda, boss a la
+        /// derecha); Y=0 es el centro vertical del content. Nodos del mismo depth se
+        /// apilan simétricamente arriba/abajo del centro (una columna de 1 nodo → y=0).
         /// </summary>
         private static Vector2 GetNodePosition(int nodeId,
             Dictionary<int, int> depthMap, Dictionary<int, List<int>> depthBuckets)
@@ -242,8 +247,8 @@ namespace RoguelikeCardBattler.Run
             int index = bucket.IndexOf(nodeId);
             int count = bucket.Count;
 
-            float x = (index - (count - 1) / 2f) * HorizontalSpacing;
-            float y = -(TopPadding + depth * RowSpacing);
+            float x = LeftPadding + depth * ColumnSpacing;
+            float y = -(index - (count - 1) / 2f) * NodeRowSpacing;
 
             return new Vector2(x, y);
         }
@@ -257,7 +262,9 @@ namespace RoguelikeCardBattler.Run
 
             RectTransform scrollRect = scrollGO.GetComponent<RectTransform>();
             scrollRect.anchorMin = new Vector2(0.02f, 0.02f);
-            scrollRect.anchorMax = new Vector2(0.98f, 0.78f);
+            // Techo bajado a 0.72 (antes 0.78) para liberar la franja superior del
+            // mapa para el HUD de Retazos (RunFlowController lo monta en 0.72–0.79).
+            scrollRect.anchorMax = new Vector2(0.98f, 0.72f);
             scrollRect.offsetMin = Vector2.zero;
             scrollRect.offsetMax = Vector2.zero;
 
@@ -267,8 +274,8 @@ namespace RoguelikeCardBattler.Run
             bg.color = new Color(0.03f, 0.04f, 0.07f, 0.35f);
 
             ScrollRect scroll = scrollGO.GetComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.vertical = true;
+            scroll.horizontal = true;
+            scroll.vertical = false;
             scroll.movementType = ScrollRect.MovementType.Clamped;
 
             GameObject viewportGO = new GameObject("Viewport",
@@ -287,11 +294,14 @@ namespace RoguelikeCardBattler.Run
             GameObject contentGO = new GameObject("Content", typeof(RectTransform));
             contentGO.transform.SetParent(viewportGO.transform, false);
             RectTransform contentRect = contentGO.GetComponent<RectTransform>();
-            contentRect.anchorMin = new Vector2(0f, 1f);
-            contentRect.anchorMax = new Vector2(1f, 1f);
-            contentRect.pivot = new Vector2(0.5f, 1f);
+            // Stretch vertical anclado a la izquierda, pivot en centro-izquierda:
+            // el content crece hacia la derecha por ANCHO (lo pisa el dimensionado
+            // por contentWidth en el constructor); y=0 es el centro vertical.
+            contentRect.anchorMin = new Vector2(0f, 0f);
+            contentRect.anchorMax = new Vector2(0f, 1f);
+            contentRect.pivot = new Vector2(0f, 0.5f);
             contentRect.anchoredPosition = Vector2.zero;
-            contentRect.sizeDelta = new Vector2(0f, 800f);
+            contentRect.sizeDelta = new Vector2(800f, 0f);
 
             scroll.viewport = viewportRect;
             scroll.content = contentRect;

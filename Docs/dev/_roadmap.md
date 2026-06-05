@@ -7,10 +7,10 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M2 cerrado completo (motor v2 estable). Diseño de M3 cerrado.
-> **Milestone activo:** M3 — Personalización del run (Retazos, Tienda, Hoguera, NewRunScene, mapa horizontal)
-> **Próximo bloque:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
-> **Última actualización:** 2026-06-04 (Sub-PR 3E NewRunScene **implementado y validado en Unity**: EditMode 126/126, NewRunScene en Build Settings con NewRunController + NewRunConfig asignado, draft "Componer" funcionando con pool placeholder de 18 caras. Branch `feat/m3-sub-e-newrun`. Falta sólo 3F para cerrar M3.)
+> **Fase actual:** M3 cerrado completo (personalización del run + mapa horizontal). M4 activo.
+> **Milestone activo:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
+> **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
+> **Última actualización:** 2026-06-05 (Sub-PR 3F mapa horizontal **implementado y validado en Unity**: refactor de RunMapView a scroll lateral izq→der, RelicInventoryView en HUD del mapa, `RunMapGeneratorTests` nuevo (5 casos). EditMode 131/131. Branch `feat/m3-sub-f-horizontal-map`. **M3 cerrado** → M4 activo. Siguiente paso del proyecto: plan de auditoría de arte.)
 
 ---
 
@@ -44,17 +44,102 @@
 
 ## Activo
 
+### M4 — Resto del Acto 1 según GDD v2
+
+**Estado:** milestone activo desde 2026-06-05 (al cerrar M3 con el mapa horizontal).
+
+**Objetivo:** cerrar el contenido del Acto 1: mejora de cartas, eventos básicos
+y multidimensionales, enemigos transdimensionales y enemigos ancla.
+
+**Sub-tareas (desagregar al activar):**
+- Mejora de cartas (DD-013): toggle `IsUpgraded` en `CardDeckEntry`, campos
+  upgraded en `CardDefinition`, mejora ambos lados de cartas duales, UI
+- Eventos (DD-005): `EventDefinition` SO, controller, choice UI, sistema de
+  decisiones, eventos multidimensionales (elegir mundo)
+- Quests con MCguffin (DD-021 se cierra aquí): tracking en RunState, marca de
+  nodo destino en mapa, eventos de aceptar/robar
+- Enemigos transdimensionales (DD-014): campo `TypeWorldB` en `EnemyDefinition`,
+  resolución de tipo activo según `RunState.CurrentWorld`
+- Enemigos ancla (DD-014): flag `IsAnchor` en `EnemyDefinition`, bypass del
+  cambio de mundo en lógica
+
+**Toca archivos protegidos:** sí (TurnManager para tipo activo de transdim y
+ancla).
+
+**Dependencias:** M3 cerrado ✅ 2026-06-05 (eventos pueden otorgar Retazos /
+mejoras y necesitan el sistema funcionando).
+
+**Complejidad:** alta. El sistema de eventos con quests es trabajo significativo.
+
+> **Nota de proceso:** antes de arrancar M4 está agendado el plan de auditoría
+> de arte (barrido de slots de arte → `Docs/design/ART_NEEDS.md` → estilo madre
+> → prompts para IA de placeholders). Ver memoria `project-art-audit-plan`.
+
+---
+
+## Pendientes
+
+### M5 — Bosses con fases + Boss Acto 1 según GDD v2
+
+**Objetivo:** rediseñar el Boss del Acto 1 (Costura Maldita / UNIT-RB7) según
+DD-004 con fases, debuffs únicos y mecánica "Desfase Dimensional". Establecer
+el patrón para futuros bosses.
+
+**Sub-tareas (desagregar al activar):**
+- Sistema de fases en bosses (Fase 2 obligatoria al 50% HP)
+- Mecánica "Desfase Dimensional": contador de cartas jugadas en turno, cambio
+  automático cada 3 cartas (2 en Fase 2)
+- Debuff Sangrado (DD-019, exclusivo del boss medieval): pérdida de HP al jugar
+  ataque
+- Debuff Virus (DD-019, exclusivo del boss cyberpunk): bloqueo al 80%
+  efectividad
+- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad)
+- Retazo único de boss vinculado narrativamente
+
+**Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
+post-ProcessAll y mutación de mundo desde IA).
+
+**Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado (transdim/
+ancla establecen el patrón de tipos múltiples).
+
+**Complejidad:** alta.
+
+---
+
+### M6 — Acto 2, Acto 3, Meta-progresión
+
+**Objetivo:** llevar el juego a su shape final: 3 actos, dificultad escalada
+según DD-011, XP entre runs, desbloqueos según DD-016.
+
+**Probable subdivisión:**
+- M6a — Acto 2 (HP enemigo, 2 tipos simultáneos, fases simples por umbral,
+  primer transdimensional, elites con 2 mecánicas)
+- M6b — Acto 3 (multifase, ancla, bosses que bloquean/fuerzan cambio,
+  restricciones de cambio)
+- M6c — Meta-progresión (XP, persistencia, desbloqueos, viñetas narrativas
+  iniciales — DD-015 entra aquí si está listo)
+
+**Toca archivos protegidos:** parcial (Acto 3 con bosses que bloquean cambio
+toca TurnManager).
+
+**Dependencias:** M5 cerrado (Boss Acto 1 funcional como plantilla).
+
+**Complejidad:** muy alta.
+
+---
+
+## Completados
+
 ### M3 — Personalización del run
-
-**Objetivo:** entregar el ecosistema completo que convierte una secuencia de combates
-en un run con identidad: Retazos como sistema base de pasivos, Tienda y Hoguera
-funcionales como nodos del mapa, NewRunScene como flujo inicial (elección de tipos +
-draft de carta especial dual), y mapa con scroll horizontal según GDD.
-
-**Por qué bundle:** los 4 sistemas comparten una capa de infraestructura nueva
-(sistema de hooks/dispatcher de Retazos). Hacer cada sistema en milestones separados
-implicaría diseñar la infra varias veces o duplicar código. M3 instala la base + 4
-features que la usan + 1 refactor de UX (mapa horizontal).
+**Fecha cierre:** 2026-06-05 (mapa horizontal 3F como último sub-PR cierra el milestone)
+**Resumen:** ecosistema completo que convierte una secuencia de combates en un
+run con identidad. 6 sub-PRs mergeados: 3A foundations (hooks + dispatcher de
+Retazos, toca TurnManager con aprobación), 3B Retazos (23 SOs + UI inventario),
+3C Hoguera, 3D Tienda (PR #96), 3E NewRunScene (PR #97), 3F mapa horizontal
+(scroll lateral + RelicInventoryView en HUD del mapa + `RunMapGeneratorTests`).
+Run jugable de inicio a fin: NewRunScene → mapa horizontal → combates con Retazos
+visibles y activos → Tienda/Hoguera funcionales → Boss con drop de Retazo único.
+Detalle de sub-PRs abajo (histórico de implementación).
 
 **Decisiones cerradas durante diseño (2026-05-07):**
 - DD-017 → opción C: 2-3 Retazos de cambio en contenido base como demo de la categoría.
@@ -201,7 +286,7 @@ disparan", no de "qué efecto se nos ocurre".
       ShelfSprite/CounterSprite) importados como Sprite Single, asignados al
       `ShopConfig.asset` y encuadrados en 3 capas (pared full + estanterías arriba
       + mostrador abajo, preserveAspect). Probado en una run: panel se ve bien,
-      comprar/eliminar/Salir funcionan. Falta solo `modo:revision` + PR.
+      comprar/eliminar/Salir funcionan. PR #96 mergeado.
 
 #### Sub-PR 3E — NewRunScene
 - [x] Escena dedicada `Assets/Scenes/NewRunScene.unity` con `NewRunController.cs`
@@ -232,125 +317,42 @@ disparan", no de "qué efecto se nos ocurre".
       vía el menú (18 caras, [3,3,3,3,3,3] por tipo), `newRunConfig` asignado al
       `NewRunController` en NewRunScene (persistido), NewRunScene en Build Settings.
       E2E por código: tipos elegidos → mazo = starter+1 drafteada, filtro Tienda
-      respeta los tipos (Morado sí / Azul no)
+      respeta los tipos (Morado sí / Azul no). PR #97 mergeado (squash, 6d171a5).
 
 #### Sub-PR 3F — Mapa horizontal (refactor scroll)
-- [ ] Refactor `RunMapView` para scroll lateral (izquierda → derecha) por DD-005
-- [ ] Adaptar generación de `RunMapGenerator` a layout horizontal
-- [ ] Adaptar UI de nodos y aristas (`RunMapNodeView`, `RunMapEdgeView`) al
-      nuevo eje
-- [ ] `RelicInventoryView` integrado en HUD del mapa (consistencia con HUD de
-      combate)
-- [ ] Tests: misma seed = mismo mapa (no romper determinismo en el refactor)
+- [x] Refactor `RunMapView` para scroll lateral (izquierda → derecha) por DD-005
+      (depth→X / índice→Y, ScrollRect horizontal, content pivot (0,0.5) anclado
+      izquierda, dimensionado por ancho, techo del scroll a 0.72)
+- [x] `RunMapGenerator` **NO se tocó** (decisión cerrada #1 del spec: es agnóstico
+      al eje — sólo asigna tipos/aristas, nunca calcula posiciones). El eje vive
+      enteramente en `RunMapView`. Blindado con tests en vez de adaptado.
+- [x] Adaptar UI de nodos y aristas (`RunMapNodeView`, `RunMapEdgeView`) al
+      nuevo eje (anchor (0.5,1) → (0,0.5); animaciones/matemática de aristas
+      agnósticas al eje, sin cambios)
+- [x] `RelicInventoryView` integrado en HUD del mapa (banda 0.72–0.79 en `_mapPanel`,
+      Refresh en `ShowMap`, Cleanup en transición de escena; consistencia con HUD
+      de combate)
+- [x] Tests: misma seed = mismo mapa (`RunMapGeneratorTests.cs`, 5 casos:
+      determinismo topología, determinismo enemigos, divergencia por seed, DAG
+      válido, start/end forzados)
+- [x] **Validación Unity (2026-06-05):** compilación limpia (zero errors), suite
+      EditMode **131/131** verde (126 previos + 5 nuevos `RunMapGeneratorTests`),
+      Play en RunScene sin errores/excepciones de consola. Verificado por
+      diagnóstico de código: ScrollRect h=true/v=false/Clamped, content
+      pivot (0,0.5) sizeDelta (1160,0), start en x=80 / boss en x=1080,
+      ramas del mismo depth apiladas y centradas (±60), RelicBar en su banda.
 
 **Sistemas afectados:** TurnManager (hooks), RunState (Relics), RunFlowController
-(NewRunScene flow + Tienda/Hoguera nodes), RunMapView/Generator (horizontal),
-CombatUIController (RelicInventoryView). Nuevos: RelicHookDispatcher,
-RelicDefinition, IRelicEffect, NewRunController, CampfireNodeController,
-ShopNodeController, RelicInventoryView.
+(NewRunScene flow + Tienda/Hoguera nodes + RelicInventoryView en HUD del mapa),
+RunMapView (refactor horizontal), CombatUIController (RelicInventoryView). Nuevos:
+RelicHookDispatcher, RelicDefinition, IRelicEffect, NewRunController,
+CampfireNodeController, ShopNodeController, RelicInventoryView, RunMapGeneratorTests.
 
-**Toca archivos protegidos:** **SÍ** — TurnManager (hooks en eventos clave).
-**REQUIERE APROBACIÓN EXPLÍCITA** antes de empezar implementación de Sub-PR 3A.
-
-**Dependencias:** M2 cerrado ✅ (motor de combate v2 estable; hooks pueden
-colgarse en eventos confiables como Contador de Estilo, daño bidireccional,
-HealAction, PhaseBased AI).
-
-**Validación obligatoria por sub-PR:**
-- Compilación de Unity sin errores antes de marcar como mergeable.
-- Tests EditMode en verde.
-- Validación visual en la escena correspondiente (combate / hoguera / tienda /
-  new run / mapa).
-
-**Complejidad:** alta. Sub-PR 3A es la más crítica arquitectónicamente; el resto
-depende de que su contrato esté bien definido (lección reforzada por Insight 3).
-
-**Criterios de cierre M3:** todos los sub-PRs mergeados + run completo jugable
-de inicio a fin (NewRunScene → mapa horizontal → combates con Retazos visibles
-y activos → Tienda y Hoguera funcionales → Boss con drop de Retazo único +
-zero console errors + tests EditMode al 100%.
-
----
-
-## Pendientes
-
-### M4 — Resto del Acto 1 según GDD v2
-
-**Objetivo:** cerrar el contenido del Acto 1: mejora de cartas, eventos básicos
-y multidimensionales, enemigos transdimensionales y enemigos ancla.
-
-**Sub-tareas (desagregar al activar):**
-- Mejora de cartas (DD-013): toggle `IsUpgraded` en `CardDeckEntry`, campos
-  upgraded en `CardDefinition`, mejora ambos lados de cartas duales, UI
-- Eventos (DD-005): `EventDefinition` SO, controller, choice UI, sistema de
-  decisiones, eventos multidimensionales (elegir mundo)
-- Quests con MCguffin (DD-021 se cierra aquí): tracking en RunState, marca de
-  nodo destino en mapa, eventos de aceptar/robar
-- Enemigos transdimensionales (DD-014): campo `TypeWorldB` en `EnemyDefinition`,
-  resolución de tipo activo según `RunState.CurrentWorld`
-- Enemigos ancla (DD-014): flag `IsAnchor` en `EnemyDefinition`, bypass del
-  cambio de mundo en lógica
-
-**Toca archivos protegidos:** sí (TurnManager para tipo activo de transdim y
-ancla).
-
-**Dependencias:** M3 cerrado (eventos pueden otorgar Retazos / mejoras y
-necesitan el sistema funcionando).
-
-**Complejidad:** alta. El sistema de eventos con quests es trabajo significativo.
-
----
-
-### M5 — Bosses con fases + Boss Acto 1 según GDD v2
-
-**Objetivo:** rediseñar el Boss del Acto 1 (Costura Maldita / UNIT-RB7) según
-DD-004 con fases, debuffs únicos y mecánica "Desfase Dimensional". Establecer
-el patrón para futuros bosses.
-
-**Sub-tareas (desagregar al activar):**
-- Sistema de fases en bosses (Fase 2 obligatoria al 50% HP)
-- Mecánica "Desfase Dimensional": contador de cartas jugadas en turno, cambio
-  automático cada 3 cartas (2 en Fase 2)
-- Debuff Sangrado (DD-019, exclusivo del boss medieval): pérdida de HP al jugar
-  ataque
-- Debuff Virus (DD-019, exclusivo del boss cyberpunk): bloqueo al 80%
-  efectividad
-- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad)
-- Retazo único de boss vinculado narrativamente
-
-**Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
-post-ProcessAll y mutación de mundo desde IA).
-
-**Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado (transdim/
-ancla establecen el patrón de tipos múltiples).
-
-**Complejidad:** alta.
-
----
-
-### M6 — Acto 2, Acto 3, Meta-progresión
-
-**Objetivo:** llevar el juego a su shape final: 3 actos, dificultad escalada
-según DD-011, XP entre runs, desbloqueos según DD-016.
-
-**Probable subdivisión:**
-- M6a — Acto 2 (HP enemigo, 2 tipos simultáneos, fases simples por umbral,
-  primer transdimensional, elites con 2 mecánicas)
-- M6b — Acto 3 (multifase, ancla, bosses que bloquean/fuerzan cambio,
-  restricciones de cambio)
-- M6c — Meta-progresión (XP, persistencia, desbloqueos, viñetas narrativas
-  iniciales — DD-015 entra aquí si está listo)
-
-**Toca archivos protegidos:** parcial (Acto 3 con bosses que bloquean cambio
-toca TurnManager).
-
-**Dependencias:** M5 cerrado (Boss Acto 1 funcional como plantilla).
-
-**Complejidad:** muy alta.
-
----
-
-## Completados
+**Insights / aprendizajes de M3:** Insight 3 (Retazos por categoría de hook),
+Insight 4 (payloads diferidos), Insight 7 (sinergia mazo↔stock diferida). Proceso:
+`.claude/settings.json` se auto-modifica durante sesiones → se de-scopea del PR de
+feature (confirmado de nuevo en 3E y 3F); `modo:diseno` genera prompt de handoff al
+cerrar specs.
 
 ### M2 — TurnManager v2: mecánica core nueva + deuda técnica
 **Fecha cierre:** 2026-05-07

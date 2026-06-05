@@ -7,6 +7,7 @@ using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Gameplay.Relics.UI;
 using RoguelikeCardBattler.Run.Campfire;
 using RoguelikeCardBattler.Run.Shop;
 
@@ -38,6 +39,7 @@ namespace RoguelikeCardBattler.Run
         private Text _statusText;
         private Text _titleText;
         private RunMapView _mapView;
+        private RelicInventoryView _relicView;
         private Text _resolveTitleText;
         private Text _resolveBodyText;
         private Button _resolveCompleteButton;
@@ -134,6 +136,17 @@ namespace RoguelikeCardBattler.Run
 
             _mapView = new RunMapView(_mapPanel, _map, _state, uiFont, GetWhiteSprite());
             _mapView.OnNodeClicked += EnterNode;
+
+            // Fila de Retazos en el HUD del mapa (espejo del HUD de combate, Sub-PR 3F):
+            // banda dedicada 0.72–0.79, arriba del scroll (techo 0.72) y bajo el status
+            // (0.80) → no colisiona con el área scrolleable ni con los raycasts de nodos.
+            RectTransform relicBar = CreatePanel("RelicBar", _mapPanel, new Color(0f, 0f, 0f, 0f), false);
+            relicBar.anchorMin = new Vector2(0.02f, 0.72f);
+            relicBar.anchorMax = new Vector2(0.98f, 0.79f);
+            relicBar.offsetMin = Vector2.zero;
+            relicBar.offsetMax = Vector2.zero;
+            _relicView = new RelicInventoryView(relicBar, uiFont);
+
             BuildResolvePanel();
             BuildDefeatPanel();
             BuildRewardPanel();
@@ -240,6 +253,9 @@ namespace RoguelikeCardBattler.Run
 
             _statusText.text = $"Gold: {_state.Gold} | Completados: {completed}/{_map.Nodes.Count}";
             _mapView?.Refresh(_state);
+            // Suficiente refrescar acá: los Retazos sólo cambian fuera del mapa
+            // (combate/elite/boss/tienda) y todo retorno al mapa pasa por ShowMap.
+            _relicView?.Refresh(_state.Relics);
         }
 
         private void EnterNode(int index)
@@ -354,6 +370,7 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
             _mapView?.Cleanup();
+            _relicView?.Cleanup();
             SceneTransitionManager.LoadScene(BattleSceneName);
         }
 
@@ -636,6 +653,7 @@ namespace RoguelikeCardBattler.Run
                 _state.PendingReturnFromBattle = false;
                 _state.LastNodeOutcome = RunState.NodeOutcome.None;
                 _mapView?.Cleanup();
+                _relicView?.Cleanup();
                 SceneTransitionManager.LoadScene("BattleScene");
             });
 
