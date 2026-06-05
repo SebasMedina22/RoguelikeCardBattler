@@ -36,8 +36,11 @@ namespace RoguelikeCardBattler.Run
             go.transform.SetParent(parent, false);
 
             Rect = go.GetComponent<RectTransform>();
-            Rect.anchorMin = new Vector2(0.5f, 1f);
-            Rect.anchorMax = new Vector2(0.5f, 1f);
+            // Anchor centro-izquierda: alinea con el pivot (0, 0.5) del content
+            // horizontal (Sub-PR 3F). La matemática de la arista (atan2/magnitud) es
+            // agnóstica al eje y no cambia.
+            Rect.anchorMin = new Vector2(0f, 0.5f);
+            Rect.anchorMax = new Vector2(0f, 0.5f);
             Rect.pivot = new Vector2(0.5f, 0.5f);
             Rect.anchoredPosition = (from + to) / 2f;
             Rect.sizeDelta = new Vector2(distance, thickness);
