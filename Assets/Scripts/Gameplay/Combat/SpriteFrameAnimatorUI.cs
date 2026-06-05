@@ -19,6 +19,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         [SerializeField] private float fps = 16f;
 
         private Coroutine _currentRoutine;
+        // Sprite "en reposo": el que está puesto al configurar (p.ej. el avatar del
+        // enemigo). Se restaura tras un ataque cuando NO hay idle loop, para que el
+        // flash de impacto no quede pegado al último frame y borre el sprite base.
+        private Sprite _restingSprite;
 
         public void Configure(Image target, List<Sprite> idle, List<Sprite> attack, float framesPerSecond)
         {
@@ -26,6 +30,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             idleFrames = idle ?? new List<Sprite>();
             attackFrames = attack ?? new List<Sprite>();
             fps = framesPerSecond > 0 ? framesPerSecond : 16f;
+            _restingSprite = targetImage != null ? targetImage.sprite : null;
         }
 
         public void PlayIdleLoop()
@@ -94,7 +99,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             }
 
             onComplete?.Invoke();
-            PlayIdleLoop();
+            if (idleFrames != null && idleFrames.Count > 0)
+            {
+                PlayIdleLoop();
+            }
+            else if (targetImage != null)
+            {
+                // Sin idle frames (caso del enemigo: attackFrames se usa como flash de
+                // impacto sobre su propio avatar). Restaurar el sprite en reposo en vez
+                // de dejar el último frame del flash → el enemigo reaparece tras el golpe.
+                targetImage.sprite = _restingSprite;
+            }
         }
     }
 }
