@@ -167,6 +167,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _playerHpLabel.text = $"{_turnManager.PlayerHP}/{_turnManager.PlayerMaxHP}";
             _enemyHpLabel.text = $"{_turnManager.EnemyHP}/{_turnManager.EnemyMaxHP}";
             _enemyTypeLabel.text = BuildEnemyTypeLabel();
+            ElementType enemyType = _turnManager.EnemyElementType;
+            _enemyTypeLabel.color = enemyType == ElementType.None
+                ? Color.white
+                : ElementTypeColors.ReadableOnDark(enemyType);
             _drawPileText.text = $"Draw: {_turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {_turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();
@@ -185,6 +189,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             {
                 ElementType activeType = _turnManager.PlayerActiveType;
                 _playerTypeText.text = activeType == ElementType.None ? "Tipo: —" : $"Tipo: {activeType}";
+                // Tinte por tipo (C8): el label del tipo activo del jugador toma su color.
+                _playerTypeText.color = activeType == ElementType.None
+                    ? Color.white
+                    : ElementTypeColors.ReadableOnDark(activeType);
             }
 
             bool playerTurn = _turnManager.IsPlayerTurn();
