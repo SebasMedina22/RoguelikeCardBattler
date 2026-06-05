@@ -74,6 +74,11 @@ mejoras y necesitan el sistema funcionando).
 > **Nota de proceso:** antes de arrancar M4 está agendado el plan de auditoría
 > de arte (barrido de slots de arte → `Docs/design/ART_NEEDS.md` → estilo madre
 > → prompts para IA de placeholders). Ver memoria `project-art-audit-plan`.
+> **Progreso arte pre-M4:** C8 tinte por tipo (#100), drop-in avatares de enemigo +
+> flash de impacto (#102, fix #103), y **C7 cara de carta (código)** hechos. C7
+> agrega el campo `Art` a `CardDefinition` + render en `CardHandView`/`NewRunController`
+> (spec `Docs/dev/specs/art_c7_card_art_spec.md`); **desbloquea N2** (caras de draft).
+> Falta: el arte (placeholders-IA) de cada carta sobre el campo ya en main.
 
 ---
 

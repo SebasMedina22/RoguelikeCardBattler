@@ -44,7 +44,21 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             public Button Button;
             public Text Label;
             public CanvasGroup Group;
+            public Image Art;        // ilustración de la carta (C7); Image hijo creado siempre, una vez.
+            public bool ArtShown;    // última visibilidad de arte aplicada (guard anti-thrash de layout).
         }
+
+        // ── Constantes de layout del arte (C7) ──
+        // Región superior para la ilustración; el texto baja a la franja inferior
+        // cuando hay arte. Sin arte, el texto vuelve a full-card (look actual).
+        private static readonly Vector2 ArtAnchorMin = new Vector2(0.06f, 0.42f);
+        private static readonly Vector2 ArtAnchorMax = new Vector2(0.94f, 0.96f);
+        private static readonly Vector2 LabelWithArtAnchorMin = new Vector2(0f, 0f);
+        private static readonly Vector2 LabelWithArtAnchorMax = new Vector2(1f, 0.40f);
+        private static readonly Vector2 LabelFullAnchorMin = new Vector2(0f, 0f);
+        private static readonly Vector2 LabelFullAnchorMax = new Vector2(1f, 1f);
+        private const int LabelFontFull = 20;
+        private const int LabelFontWithArt = 16;
 
         // ── Constantes de layout ──
         // Tamaños base y mínimos para escalar la mano cuando hay muchas cartas.
@@ -113,6 +127,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 if (image != null)
                 {
                     image.color = binding.Button.interactable ? CardButtonNormalColor : CardButtonDisabledColor;
+                }
+
+                // Arte del lado activo (C7): conmuta en vivo con el mundo por el mismo
+                // camino que el label (GetActiveCardDefinition resuelve A/B). Sin arte,
+                // ApplyCardArtLayout devuelve el texto a full-card (look actual).
+                if (binding.Art != null)
+                {
+                    CardDefinition activeCard = _turnManager.GetActiveCardDefinition(binding.CardEntry);
+                    Sprite art = activeCard != null ? activeCard.Art : null;
+                    binding.Art.sprite = art;
+                    ApplyCardArtLayout(binding, art != null);
                 }
             }
 
@@ -198,8 +223,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             for (int i = 0; i < hand.Count; i++)
             {
                 CardDeckEntry entry = hand[i];
-                Button button = CreateCardButton(entry, _handContainer);
-                Text label = button.GetComponentInChildren<Text>();
+                Button button = CreateCardButton(entry, _handContainer, out Image artImage, out Text label);
 
                 // Juice: staggered fade-in (LayoutGroup controla posición y escala).
                 CanvasGroup cardGroup = button.gameObject.AddComponent<CanvasGroup>();
@@ -212,7 +236,9 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     CardEntry = entry,
                     Button = button,
                     Label = label,
-                    Group = cardGroup
+                    Group = cardGroup,
+                    Art = artImage,
+                    ArtShown = false   // el primer sync aplica el layout correcto.
                 });
                 _handCache.Add(entry);
             }
@@ -222,7 +248,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         // Card button creation
         // ────────────────────────────────────────────────────────
 
-        private Button CreateCardButton(CardDeckEntry entry, Transform parent)
+        private Button CreateCardButton(CardDeckEntry entry, Transform parent, out Image artImage, out Text labelText)
         {
             CardDefinition activeCard = _turnManager.GetActiveCardDefinition(entry);
             string label = activeCard != null ? activeCard.name : "Card";
@@ -242,13 +268,79 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
             Button button = buttonGO.GetComponent<Button>();
 
+            // Arte de la carta (C7): Image hijo en la región superior, creado SIEMPRE
+            // (una vez). El sprite y la visibilidad los setea el sync. Mismo patrón que
+            // CombatUIController.CreateAvatar (preserveAspect, no captura raycasts).
+            artImage = CreateArtImage("Art", rect);
+
             // Texto de la carta: nombre, tipo, costo, descripción.
-            Text labelText = CreateText("Label", rect, BuildCardLabel(entry), 20, TextAnchor.MiddleCenter);
+            labelText = CreateText("Label", rect, BuildCardLabel(entry), LabelFontFull, TextAnchor.MiddleCenter);
             labelText.fontStyle = FontStyle.Bold;
 
             button.onClick.AddListener(() => OnCardButtonClicked(entry));
 
             return button;
+        }
+
+        /// <summary>
+        /// Crea el Image de la ilustración de la carta, anclado a la región superior
+        /// y oculto por defecto (el sync lo enciende sólo si la carta tiene arte).
+        /// </summary>
+        private Image CreateArtImage(string name, RectTransform parent)
+        {
+            GameObject artGO = new GameObject(name, typeof(RectTransform), typeof(Image));
+            artGO.transform.SetParent(parent, false);
+
+            RectTransform rect = artGO.GetComponent<RectTransform>();
+            rect.anchorMin = ArtAnchorMin;
+            rect.anchorMax = ArtAnchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Image art = artGO.GetComponent<Image>();
+            art.preserveAspect = true;
+            art.raycastTarget = false;
+            art.color = Color.white;
+            art.enabled = false;   // arranca apagado; el sync decide según haya sprite.
+
+            return art;
+        }
+
+        /// <summary>
+        /// Aplica el layout de carta según haya arte o no. Idempotente: sólo re-ancla
+        /// el texto cuando cambia la visibilidad del arte (guard anti-thrash, evita
+        /// reescribir anchors cada frame). Con arte: imagen arriba + texto en franja
+        /// inferior. Sin arte: texto full-card centrado (look actual, cero regresión).
+        /// </summary>
+        private void ApplyCardArtLayout(CardButtonBinding binding, bool hasArt)
+        {
+            if (binding == null || binding.Art == null) return;
+            if (hasArt == binding.ArtShown && binding.Art.enabled == hasArt) return;
+
+            binding.Art.enabled = hasArt;
+
+            if (binding.Label != null)
+            {
+                RectTransform labelRect = binding.Label.GetComponent<RectTransform>();
+                if (hasArt)
+                {
+                    labelRect.anchorMin = LabelWithArtAnchorMin;
+                    labelRect.anchorMax = LabelWithArtAnchorMax;
+                    binding.Label.alignment = TextAnchor.UpperCenter;
+                    binding.Label.fontSize = LabelFontWithArt;
+                }
+                else
+                {
+                    labelRect.anchorMin = LabelFullAnchorMin;
+                    labelRect.anchorMax = LabelFullAnchorMax;
+                    binding.Label.alignment = TextAnchor.MiddleCenter;
+                    binding.Label.fontSize = LabelFontFull;
+                }
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+            }
+
+            binding.ArtShown = hasArt;
         }
 
         /// <summary>

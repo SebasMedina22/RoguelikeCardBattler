@@ -20,6 +20,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         [SerializeField] private List<string> tags = new List<string>();
         [SerializeField] private List<EffectRef> effects = new List<EffectRef>();
         [SerializeField] private ElementType elementType = ElementType.None;
+        [SerializeField] private Sprite art = null;   // ilustración de la carta (C7). null = fallback a texto.
         [SerializeField] private CardUpgradeDef _upgrade = new CardUpgradeDef();
 
         public CardUpgradeDef Upgrade => _upgrade;
@@ -34,6 +35,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         public IReadOnlyList<string> Tags => tags;
         public IReadOnlyList<EffectRef> Effects => effects;
         public ElementType ElementType => elementType;
+        public Sprite Art => art;
 
         public void SetDebugData(
             string newId,
@@ -45,7 +47,8 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             CardTarget newTarget,
             List<string> newTags,
             List<EffectRef> newEffects,
-            ElementType newElementType = ElementType.None)
+            ElementType newElementType = ElementType.None,
+            Sprite newArt = null)
         {
             id = newId;
             cardName = newName;
@@ -57,6 +60,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             tags = newTags;
             effects = newEffects;
             elementType = newElementType;
+            art = newArt;
         }
 
         /// <summary>
@@ -93,7 +97,8 @@ namespace RoguelikeCardBattler.Gameplay.Cards
                 target,
                 new List<string>(tags),
                 newEffects,
-                elementType);
+                elementType,
+                art);   // el clon de upgrade conserva la ilustración base (D3)
 
             return clone;
         }
