@@ -33,6 +33,8 @@ MonoBehaviour:
     weight: 40
     sequenceIndex: -1
     intentType: 1
+    minHpPercent: 0
+    maxHpPercent: 100
   - id: boss_debuff_attack
     moveName: Weakening Blow
     description: Deals 12 damage and applies Weak.
@@ -45,6 +47,8 @@ MonoBehaviour:
     weight: 30
     sequenceIndex: -1
     intentType: 1
+    minHpPercent: 0
+    maxHpPercent: 100
   - id: boss_defend
     moveName: Iron Guard
     description: Gains 15 Block.
@@ -57,6 +61,8 @@ MonoBehaviour:
     weight: 20
     sequenceIndex: -1
     intentType: 2
+    minHpPercent: 0
+    maxHpPercent: 100
   - id: boss_recover
     moveName: Regenerate
     description: Gains 10 Block and recovers.
@@ -69,7 +75,9 @@ MonoBehaviour:
     weight: 10
     sequenceIndex: -1
     intentType: 2
+    minHpPercent: 0
+    maxHpPercent: 100
   avatarScale: 1.2
   avatarOffset: {x: 0, y: -30}
   elementType: 3
-  avatar: {fileID: -855298285791758126, guid: 3c287819fc629084e9d8116f794f1f75, type: 3}
+  avatar: {fileID: 21300000, guid: 324b3d67bf2a64e43879a4fa55feccc5, type: 3}

@@ -436,6 +436,8 @@ MonoBehaviour:
   startingHandSize: 5
   cardsPerTurn: 4
   maxHandSize: 7
+  playerWorldATypeDefault: 1
+  playerWorldBTypeDefault: 2
   maxWorldSwitchesPerCombat: 1
   debugUnlimitedWorldSwitches: 1
   currentWorld: 0
@@ -457,20 +459,11 @@ MonoBehaviour:
   enemySprite: {fileID: 0}
   showPlayerBackground: 0
   showEnemyBackground: 0
-  useCanvasBackground: 0
   playerSpriteScale: 1
   enemySpriteScale: 0.8
   playerSpriteYOffset: -40
   enemySpriteYOffset: -20
   blockOverlayColor: {r: 0.2, g: 0.6, b: 1, a: 0.35}
-  worldASkyColor: {r: 0.07, g: 0.12, b: 0.3, a: 1}
-  worldAGroundColor: {r: 0.02, g: 0.07, b: 0.09, a: 1}
-  worldBSkyColor: {r: 0.2, g: 0.05, b: 0.05, a: 1}
-  worldBGroundColor: {r: 0.09, g: 0.02, b: 0.04, a: 1}
-  worldASkySprite: {fileID: 0}
-  worldAGroundSprite: {fileID: 0}
-  worldBSkySprite: {fileID: 0}
-  worldBGroundSprite: {fileID: 0}
   heroIdleFrames:
   - {fileID: -8868803461578586678, guid: be9bfb6f1161b924d9b9258bd18566d8, type: 3}
   heroAttackFrames:
@@ -492,7 +485,11 @@ MonoBehaviour:
   - {fileID: 1819059919184003959, guid: 98ccda914973d7f468ca9f0077bc4a4b, type: 3}
   heroAttackFps: 16
   hitFeedbackDuration: 0.85
-  enemyHitFrames: []
+  enemyHitFrames:
+  - {fileID: 21300000, guid: e9b1c8f950cc0384191d2b2fb71ef759, type: 3}
+  - {fileID: 21300000, guid: fa9d84d99bfdc384cbde0c8e2b934d16, type: 3}
+  - {fileID: 21300000, guid: f662d4c1985f86a488e8a323c7f9f3e0, type: 3}
+  - {fileID: 21300000, guid: 917e5b77fa598684b855201f77304d72, type: 3}
   enemyHitFps: 16
   handLimitToastDuration: 0.7
   handLimitToastCooldown: 0.6
