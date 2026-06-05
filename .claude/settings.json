@@ -75,11 +75,11 @@
       "mcp__ai-game-developer__profiler-get-script-stats",
       "Bash(git check-ignore *)",
       "Bash(node .claude/hooks/protect-files.js)",
-      "Bash(printf '%s' '{\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"c:\\\\\\\\Users\\\\\\\\Asus\\\\\\\\RoguelikeCardBattler\\\\\\\\Assets\\\\\\\\Scripts\\\\\\\\Gameplay\\\\\\\\Combat\\\\\\\\TurnManager.cs\"}}')",
       "Read(//tmp/**)",
-      "Bash(node -e 'const j=JSON.stringify\\({tool_name:\"Edit\",tool_input:{file_path:\"c:\\\\\\\\Users\\\\\\\\Asus\\\\\\\\RoguelikeCardBattler\\\\\\\\Assets\\\\\\\\Scripts\\\\\\\\Gameplay\\\\\\\\Combat\\\\\\\\TurnManager.cs\"}}\\); require\\(\"fs\"\\).writeFileSync\\(\"/tmp/h2.json\", j\\); console.log\\(\"JSON valido:\", j\\)')"
+      "Bash(npx unity-mcp-cli *)"
     ],
     "deny": [
+      "Bash(rm:*)",
       "Bash(rm -rf:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
