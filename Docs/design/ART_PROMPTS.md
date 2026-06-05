@@ -22,7 +22,12 @@
 2. Pegalo tal cual en la IA generadora. Cada bloque ya trae: estilo madre + variante
    de mundo correcta + sujeto + restricciones técnicas (tamaño, transparencia).
 3. Generá; elegí la mejor variante; exportá PNG con alpha.
-4. Importá a Unity y asigná según la **nota de asignación (Fase 4)** de cada slot.
+4. Guardá el archivo con el **nombre y la ruta exactos** que indica el campo
+   **`📁 Guardar el PNG como:`** de cada slot. **Las carpetas destino ya están
+   creadas en el proyecto** (`Assets/Art/Sprites/Enemies/<Enemigo>/A/Idle/` y
+   `.../Common/Hit/`) → solo tenés que copiar el PNG ahí.
+5. En Unity: refrescá (el asset se importa), confirmá import como **Sprite (2D and UI
+   / Single)**, y asigná según la **nota de asignación (Fase 4)** de cada slot.
 
 **Contexto técnico común (verificado contra código):**
 - `[INTERPRETACIÓN]` El avatar de enemigo se renderiza con `preserveAspect = true`
@@ -72,8 +77,11 @@ the screen). TRANSPARENT background (PNG with alpha, no scene, no ground). Squar
 composition, target 512x512 px. Clean silhouette readable at small size.
 ```
 
+**📁 Guardar el PNG como:** `Assets/Art/Sprites/Enemies/Goblin/A/Idle/personaje_goblin.png`
+— la carpeta **ya está creada** en el proyecto.
+
 **Nota de asignación (Fase 4):** importar como Sprite (2D and UI / Single, alpha
-transparente) en `Assets/Art/Sprites/Enemies/Goblin/A/Idle/`. Asignar al campo
+transparente). Asignar al campo
 `avatar` de `Assets/ScriptableObjects/Enemies/Goblin.asset`
 (`EnemyDefinition.Avatar`). Hoy `avatar: {fileID: 0}` (vacío). `avatarScale` actual =
 1, `avatarOffset` = (0,0) — ajustar a ojo tras asignar si hace falta.
@@ -110,8 +118,10 @@ the screen). TRANSPARENT background (PNG with alpha, no scene, no ground). Squar
 composition, target 512x512 px. Clean silhouette readable at small size.
 ```
 
-**Nota de asignación (Fase 4):** importar como Sprite en
-`Assets/Art/Sprites/Enemies/SkeletonWarrior/A/Idle/`. Asignar al campo `avatar` de
+**📁 Guardar el PNG como:** `Assets/Art/Sprites/Enemies/SkeletonWarrior/A/Idle/personaje_skeletonwarrior.png`
+— la carpeta **ya está creada** en el proyecto.
+
+**Nota de asignación (Fase 4):** importar como Sprite. Asignar al campo `avatar` de
 `Assets/ScriptableObjects/Enemies/SkeletonWarrior.asset`. Hoy vacío.
 
 ---
@@ -146,8 +156,10 @@ the screen). TRANSPARENT background (PNG with alpha, no scene, no ground). Squar
 composition, target 512x512 px. Clean silhouette readable at small size.
 ```
 
-**Nota de asignación (Fase 4):** importar como Sprite en
-`Assets/Art/Sprites/Enemies/DarkMage/A/Idle/`. Asignar al campo `avatar` de
+**📁 Guardar el PNG como:** `Assets/Art/Sprites/Enemies/DarkMage/A/Idle/personaje_darkmage.png`
+— la carpeta **ya está creada** en el proyecto.
+
+**Nota de asignación (Fase 4):** importar como Sprite. Asignar al campo `avatar` de
 `Assets/ScriptableObjects/Enemies/DarkMage.asset`. Hoy vacío.
 
 ---
@@ -199,8 +211,10 @@ composition, target 768x768 px (larger than regular enemies — it is a boss). C
 silhouette readable at small size.
 ```
 
-**Nota de asignación (Fase 4):** importar como Sprite en
-`Assets/Art/Sprites/Enemies/BossAct1/A/Idle/`. Asignar al campo `avatar` de
+**📁 Guardar el PNG como:** `Assets/Art/Sprites/Enemies/BossAct1/A/Idle/personaje_bossact1.png`
+— la carpeta **ya está creada** en el proyecto.
+
+**Nota de asignación (Fase 4):** importar como Sprite. Asignar al campo `avatar` de
 `Assets/ScriptableObjects/Enemies/BossAct1.asset`. Hoy vacío. `avatarScale` actual =
 1.2, `avatarOffset` = (0,-30).
 
@@ -256,8 +270,11 @@ margin. Square 1:1 composition, target 512x512 px per frame (matches the enemy a
 frame so it overlays correctly). Deliver as 4 separate transparent PNGs.
 ```
 
-**Nota de asignación (Fase 4):** importar los 4 PNGs como Sprites en
-`Assets/Art/Sprites/Enemies/Common/Hit/` (carpeta nueva compartida). Asignarlos **en
+**📁 Guardar los 4 PNGs como:** en `Assets/Art/Sprites/Enemies/Common/Hit/`
+(carpeta **ya creada**), nombrados **en orden**: `hit_1.png`, `hit_2.png`,
+`hit_3.png`, `hit_4.png` (frame 1 = chispa → frame 4 = remanente).
+
+**Nota de asignación (Fase 4):** importar los 4 PNGs como Sprites. Asignarlos **en
 orden** a la lista `enemyHitFrames` del componente `CombatUIController` (lista
 `[SerializeField]`, misma forma en que hoy se asignan los frames del héroe — no es
 setup nuevo, es el patrón de frames existente). `enemyHitFps` actual = 16.
