@@ -341,6 +341,15 @@ namespace RoguelikeCardBattler.Run.NewRun
                 Button btn = CreateButtonAnchored(_draftPanel, $"{name}_{i}", label, xMin, yMin, xMax, yMax, true);
                 if (isChosen) btn.image.color = SelectedTint;
 
+                // Arte de la cara (C7 / cierra N2): si la cara tiene ilustración, se
+                // renderiza en la región superior del botón y el texto baja a la franja
+                // inferior. Sin arte (caso actual hasta que llegue el PNG), queda el
+                // texto como hoy — el gancho está cableado, el efecto visual es nulo.
+                if (face != null && face.Art != null)
+                {
+                    AddFaceArt(btn, face.Art);
+                }
+
                 CardDefinition captured = face;
                 bool worldA = isWorldA;
                 btn.onClick.AddListener(() => OnFaceChosen(worldA, captured));
@@ -562,6 +571,44 @@ namespace RoguelikeCardBattler.Run.NewRun
             Button button = buttonGO.GetComponent<Button>();
             button.interactable = interactable;
             return button;
+        }
+
+        /// <summary>
+        /// Renderiza el arte de una cara de draft (C7) sobre su botón: Image hijo en
+        /// la región superior (preserveAspect, sin captar raycasts) y baja el texto a
+        /// la franja inferior. Espeja el criterio de <c>CardHandView</c> en combate
+        /// (se duplican ~6 líneas a propósito: viven en escenas/asmdef distintos, ver
+        /// alternativa A2 del spec).
+        /// </summary>
+        private void AddFaceArt(Button btn, Sprite art)
+        {
+            RectTransform btnRect = btn.GetComponent<RectTransform>();
+
+            GameObject artGO = new GameObject("Art", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            artGO.transform.SetParent(btnRect, false);
+            RectTransform artRect = artGO.GetComponent<RectTransform>();
+            artRect.anchorMin = new Vector2(0.06f, 0.42f);
+            artRect.anchorMax = new Vector2(0.94f, 0.96f);
+            artRect.offsetMin = Vector2.zero;
+            artRect.offsetMax = Vector2.zero;
+
+            Image artImage = artGO.GetComponent<Image>();
+            artImage.sprite = art;
+            artImage.preserveAspect = true;
+            artImage.raycastTarget = false;
+            artImage.color = Color.white;
+
+            // El texto baja a la franja inferior para no pisar la ilustración.
+            Text label = btn.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                RectTransform labelRect = label.GetComponent<RectTransform>();
+                labelRect.anchorMin = new Vector2(0f, 0f);
+                labelRect.anchorMax = new Vector2(1f, 0.40f);
+                labelRect.offsetMin = new Vector2(8, 4);
+                labelRect.offsetMax = new Vector2(-8, -4);
+                label.alignment = TextAnchor.UpperCenter;
+            }
         }
 
         private void ClearChildren(RectTransform panel)

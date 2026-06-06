@@ -7,7 +7,34 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-05 — **Auditoría de arte, slot C8 (tinte por tipo
+> **Última actualización:** 2026-06-05 — **Auditoría de arte, slot C7 (cara de carta,
+> habilitación de CÓDIGO)** en branch `feat/c7-card-art` (spec
+> `Docs/dev/specs/art_c7_card_art_spec.md`). `CardDefinition` gana el campo
+> `[SerializeField] Sprite art` + getter `Art` (paralelo a `EnemyDefinition.Avatar`),
+> propagado en `SetDebugData(... , newArt = null)` y en `CreateUpgradedClone()` (el clon
+> de upgrade conserva el arte base — D3). `DualCardDefinition`/`CardDeckEntry` heredan
+> el campo gratis (cada lado/cara ES un `CardDefinition`). Render: `CardHandView` crea
+> un `Image` hijo "Art" en la región superior del botón (anclas `0.06,0.42`–`0.94,0.96`,
+> `preserveAspect`, sin raycast) y un helper idempotente `ApplyCardArtLayout` baja el
+> texto a la franja inferior cuando hay arte y lo devuelve a full-card cuando no
+> (fallback = look actual, cero regresión); el sprite del lado activo se sincroniza
+> por-frame en `SyncHandButtons` vía `GetActiveCardDefinition` → **conmuta en vivo** al
+> cambiar de mundo sin reconstruir la mano. `NewRunController.BuildDraftColumn` cablea
+> el mismo render en las caras del draft (cierra **N2**; sin arte = texto como hoy). C8
+> no se toca: el arte convive con el tinte por tipo. Nuevo
+> `Assets/Tests/EditMode/CardArtTests.cs` (5 casos: default null, set/omit en
+> `SetDebugData`, persistencia en el clon de upgrade, herencia dual por mundo, resolución
+> vía `CardDeckEntry`). **Validado:** compilación limpia (zero console errors), EditMode
+> **142/142** (137 previos + 5 nuevos). Cubre C7 de `ART_NEEDS.md` y desbloquea N2.
+> **Fase 4 (integración de arte) hecha en la misma rama:** 24 PNGs placeholder en
+> `Assets/Art/Sprites/Cards/` (`carta_<id>.png`, Sprite/Single) asignados al campo
+> `Art` de los 6 SOs de combate + 18 caras de draft (`NewRunFaces/`), vía script
+> editor. Ajuste de layout C7: carta más alta (`HandCardHeightBase` 130→175, min
+> 96→125) y franja de arte ampliada (anclas `0.06,0.36`–`0.94,0.98`) para que la
+> ilustración vertical (2:3) se vea más grande. Validado en Play (BattleScene:
+> conmutación A/B del arte; NewRunScene: los 6 tipos muestran sus 3 caras).
+>
+> **Última actualización previa:** 2026-06-05 — **Auditoría de arte, slot C8 (tinte por tipo
 > elemental, solo código, sin IA)** en branch `feat/element-type-color-tint`. Nuevo
 > `Assets/Scripts/Gameplay/Combat/ElementTypeColors.cs`: fuente única de verdad
 > `ElementType→Color` (los 6 tipos son placeholders por color). API: `For(type)`
@@ -167,7 +194,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 8 archivos de test en `Assets/Tests/EditMode/`
+- 17 archivos de test en `Assets/Tests/EditMode/` (suite 142/142)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -372,7 +399,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 16 archivos (suite EditMode 137/137)
+### Tests (`Assets/Tests/EditMode/`) — 17 archivos (suite EditMode 142/142)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -397,6 +424,10 @@ RunMapGeneratorTests.cs          ← M3 Sub-PR 3F (5 casos: determinismo topolog
 ElementTypeColorsTests.cs        ← Auditoría de arte C8 (6 casos: tinte por tipo —
                                    colores distintos, contraste de texto, levante de
                                    Negro sobre oscuro, Dim preserva alpha)
+CardArtTests.cs                  ← Auditoría de arte C7 (5 casos: campo Art default
+                                   null, set/omit en SetDebugData, persistencia en el
+                                   clon de upgrade, herencia dual por mundo, resolución
+                                   vía CardDeckEntry)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
