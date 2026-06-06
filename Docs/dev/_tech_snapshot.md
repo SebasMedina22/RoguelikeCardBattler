@@ -26,6 +26,13 @@
 > `SetDebugData`, persistencia en el clon de upgrade, herencia dual por mundo, resolución
 > vía `CardDeckEntry`). **Validado:** compilación limpia (zero console errors), EditMode
 > **142/142** (137 previos + 5 nuevos). Cubre C7 de `ART_NEEDS.md` y desbloquea N2.
+> **Fase 4 (integración de arte) hecha en la misma rama:** 24 PNGs placeholder en
+> `Assets/Art/Sprites/Cards/` (`carta_<id>.png`, Sprite/Single) asignados al campo
+> `Art` de los 6 SOs de combate + 18 caras de draft (`NewRunFaces/`), vía script
+> editor. Ajuste de layout C7: carta más alta (`HandCardHeightBase` 130→175, min
+> 96→125) y franja de arte ampliada (anclas `0.06,0.36`–`0.94,0.98`) para que la
+> ilustración vertical (2:3) se vea más grande. Validado en Play (BattleScene:
+> conmutación A/B del arte; NewRunScene: los 6 tipos muestran sus 3 caras).
 >
 > **Última actualización previa:** 2026-06-05 — **Auditoría de arte, slot C8 (tinte por tipo
 > elemental, solo código, sin IA)** en branch `feat/element-type-color-tint`. Nuevo

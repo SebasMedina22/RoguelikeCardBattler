@@ -75,10 +75,13 @@ mejoras y necesitan el sistema funcionando).
 > de arte (barrido de slots de arte → `Docs/design/ART_NEEDS.md` → estilo madre
 > → prompts para IA de placeholders). Ver memoria `project-art-audit-plan`.
 > **Progreso arte pre-M4:** C8 tinte por tipo (#100), drop-in avatares de enemigo +
-> flash de impacto (#102, fix #103), y **C7 cara de carta (código)** hechos. C7
-> agrega el campo `Art` a `CardDefinition` + render en `CardHandView`/`NewRunController`
-> (spec `Docs/dev/specs/art_c7_card_art_spec.md`); **desbloquea N2** (caras de draft).
-> Falta: el arte (placeholders-IA) de cada carta sobre el campo ya en main.
+> flash de impacto (#102, fix #103), y **C7 cara de carta CERRADO** (PR #105): campo
+> `Art` en `CardDefinition` + render en `CardHandView`/`NewRunController`
+> (spec `Docs/dev/specs/art_c7_card_art_spec.md`), **24 placeholders-IA generados +
+> asignados** (6 combate + 18 draft N2), layout de carta ampliado, validado en Play.
+> **Falta del audit (tail P2/P3, opcional/diferible):** C5 (héroe Mundo B swap),
+> M1 (íconos de nodo), M2 (fondo de mapa), S1 (vendedor), N1 (fondo NewRun),
+> H1 (íconos HUD), y la variante B del boss (UNIT-RB7). La pieza crítica (C7) está hecha.
 
 ---
 
