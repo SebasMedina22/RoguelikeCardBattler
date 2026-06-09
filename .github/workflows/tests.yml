@@ -1,0 +1,65 @@
+name: EditMode Tests
+
+# ⚠️ PARQUEADO (2026-06-09) — workflow desactivado a propósito.
+# Bloqueante: Unity 6 usa licencias "Entitlement" y Unity eliminó la activación
+# manual de Personal; el flujo .alf/.ulf de GameCI quedó deprecado, así que no
+# hay aún forma limpia de proveer el secret UNITY_LICENSE. Ver _roadmap.md
+# (Future work → "CI con GitHub Actions").
+#
+# Para REACTIVAR cuando la licencia esté resuelta: reemplazar el trigger
+# `workflow_dispatch` de abajo por:
+#   on:
+#     push:
+#       branches: [main]
+#     pull_request:
+#       branches: [main]
+# y configurar los secrets UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD.
+#
+# La versión de Unity la detecta unity-test-runner desde
+# ProjectSettings/ProjectVersion.txt (6000.2.14f1). La imagen
+# unityci/editor para esa versión ya existe (verificado).
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  editmode-tests:
+    name: EditMode
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Cachea la carpeta Library para acelerar corridas siguientes.
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - name: Run EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: editmode
+          projectPath: .
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: editmode-artifacts
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EditMode results
+          path: editmode-artifacts

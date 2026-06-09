@@ -119,6 +119,32 @@ activa un modo, el primer paso del ritual es leer el archivo correspondiente.**
 - Comentarios en código: español o inglés según consistencia local del archivo.
 - Sé directo. Sebastián prefiere respuestas concretas sobre vaguedades.
 
+### Sobre subagentes y delegación
+- Tenés subagentes vía el Agent tool (`Explore` read-only, `Plan` para diseño,
+  `general-purpose` para todo). Cada uno corre en SU propia ventana de contexto
+  y devuelve solo su conclusión → sirven para AISLAR contexto (no inflar el hilo
+  principal, caro en Opus) y para PARALELIZAR.
+- **Desplegá un subagente cuando se cumpla al menos uno:**
+  - Fan-out de lectura: hay que rastrear ≥3-4 archivos para una conclusión y el
+    detalle intermedio no necesita vivir en el hilo principal.
+  - Paralelismo: ≥2 sub-tareas independientes que pueden correr a la vez.
+  - Verificación independiente: querés una segunda mirada adversarial.
+- **NO despliegues (hacelo directo) cuando:** es un lookup de un dato en archivo
+  conocido; una edición puntual de 1-3 ubicaciones ya localizadas; la tarea es
+  trivial o conversacional. Si el costo del subagente supera el ahorro de
+  contexto, es overkill.
+- **Archivos protegidos:** NUNCA delegues a un subagente la EDICIÓN de
+  `TurnManager.cs`, `ActionQueue.cs` ni `PlayerCombatActor.cs`. Leer/explorar sí;
+  editar lo hago yo en el hilo principal con tu aprobación.
+- Mapeo por modo y ejemplos: `Docs/dev/modes/_subagentes.md`.
+
+### Sobre skills propias (gaps de tooling)
+- Si detectás una operación de editor Unity repetitiva (mismo patrón manual
+  ≥2-3 veces: generar SOs en lote, poblar configs, etc.), PROPONÉ crear una skill
+  propia con `unity-skill-create`, describiendo qué automatiza y qué ahorra.
+  NUNCA la creés sin aprobación — solo proponés, Sebastián decide.
+
+
 ---
 
 ## Convenciones del Proyecto

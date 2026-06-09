@@ -501,3 +501,62 @@ cierren los milestones actuales:
 - **DD-015 Narrativa**: viñetas, diálogo de hermanos, lore. Postponed hasta que
   se aborde la capa de narrativa explícitamente. Probable que entre como parte
   de M6c.
+- **Infra online (Docker / Base de datos / Nube / Despliegue)**
+  `[FUERA DE SCOPE salvo features online]`: ninguna es necesaria para el juego
+  tal como está en el GDD (roguelike single-player offline). Mapeo de cuándo se
+  volverían relevantes:
+  - *Save / meta-progresión (M6c):* se resuelve con **archivo local** (JSON a
+    `Application.persistentDataPath` o `PlayerPrefs`), NO con DB. Una DB real
+    solo entra con features online (cuentas, cloud saves, leaderboards, analytics).
+  - *Docker:* cero relevancia para el cliente (el juego se compila a ejecutable y
+    se distribuye por tienda). Solo aplica para empaquetar un backend, si alguna
+    vez existe.
+  - *Despliegue / Nube:* "publicar" un juego = distribución por tienda
+    (Steam/itch.io/app stores), no deploy web. Lo único de la nube con valor real
+    a mediano plazo **aunque el juego siga 100% offline** es **CI con GitHub
+    Actions** corriendo los tests EditMode en cada PR. Analytics y backend son
+    proyectos aparte y lejanos.
+  - Reflexión registrada 2026-06-09 a pedido de Sebastián (curiosidad / future work).
+- **CI con GitHub Actions (tests EditMode en cada PR)** `[PARQUEADO 2026-06-09 —
+  bloqueante del lado de Unity]`: la red de seguridad anti-regresión más valiosa
+  del proyecto (corre los 131 tests EditMode en cada PR, marca el merge en rojo
+  si algo se rompe). Repo público → minutos de Actions **gratis e ilimitados**;
+  Unity Personal → licencia **gratis**. **Por qué se parqueó:** Unity 6 migró al
+  sistema de licencias "Entitlement" (`UnityEntitlementLicense.xml` en
+  `C:\Users\<user>\AppData\Local\Unity\licenses\`) y **Unity eliminó la
+  activación manual de licencias Personal** en 2025. El flujo clásico `.alf`/`.ulf`
+  de GameCI quedó deprecado (la action `game-ci/unity-request-activation-file@v2`
+  ya falla) y no hay aún un camino oficial limpio para activar Personal de Unity 6
+  en CI. **Estado del trabajo:** el workflow `tests.yml` (usa
+  `game-ci/unity-test-runner@v4`, testMode editmode, cachea Library) está
+  **commiteado pero DESACTIVADO** (trigger solo `workflow_dispatch` → no corre en
+  PRs, nunca se pone en rojo). Para reactivar: cambiar el trigger a push/PR (ver
+  comentario en el archivo) + configurar el secret. La imagen Docker
+  `unityci/editor` para `6000.2.14f1` **existe y está soportada** (verificado).
+  **Para desbloquear:** revisar si GameCI ya soporta el formato Entitlement, o
+  probar pasar el contenido de `UnityEntitlementLicense.xml` como secret
+  `UNITY_LICENSE` + `UNITY_EMAIL`/`UNITY_PASSWORD` (experimento de ~15 min, sin
+  garantía). Detalle de la investigación en el historial de chat 2026-06-09.
+- **Seguridad para features online (leaderboards / cloud save)** `[FUERA DE SCOPE
+  hasta que entren features online]`: notas para cuando se aborden leaderboards
+  (plan confirmado) y guardado cross-platform (plan confirmado). Registrado acá y
+  no en `_insights.md` porque ese archivo es para observaciones de gameplay/
+  playtesting, no infraestructura. Principio rector: **nunca confiar en el
+  cliente** (el build de Unity es decompilable; memoria y red son falsificables) →
+  toda validación que importe va del lado servidor.
+  - *Guardado local (hoy):* riesgo casi nulo (editar el propio save offline solo
+    afecta al tramposo). No invertir.
+  - *Leaderboards:* el cliente no es fuente de verdad. **Aprovechar el
+    determinismo por seed del juego** (ya probado en `RunMapGeneratorTests`): el
+    cliente envía seed + log de acciones, el servidor **re-simula la run** y
+    verifica el puntaje → un tramposo no puede forjar inputs que den un puntaje
+    imposible. Sumar auth (para banear), rate limiting y detección de anomalías.
+  - *Cloud save:* la amenaza es fuga de info por **broken access control** (que
+    un usuario lea el save de otro). Defensa #1: auth + autorización estricta
+    (cada user solo accede a SU save). Nunca meter secretos/credenciales en el
+    build de Unity. Cliente NUNCA habla directo con la DB: **Unity → API
+    autenticada (HTTPS) → DB**. Cifrado en tránsito y reposo. Compliance tipo GDPR
+    al guardar datos de usuario.
+  - *Multiplayer:* otra liga (estado autoritativo, anti-cheat, DDoS). Diferir.
+  - Conecta con la nota de **Infra online** de arriba: leaderboards/cloud save =
+    el escenario "backend" donde DB + servidor + auth dejan de ser teoría.
