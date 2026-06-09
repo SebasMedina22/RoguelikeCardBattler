@@ -537,3 +537,26 @@ cierren los milestones actuales:
   probar pasar el contenido de `UnityEntitlementLicense.xml` como secret
   `UNITY_LICENSE` + `UNITY_EMAIL`/`UNITY_PASSWORD` (experimento de ~15 min, sin
   garantía). Detalle de la investigación en el historial de chat 2026-06-09.
+- **Seguridad para features online (leaderboards / cloud save)** `[FUERA DE SCOPE
+  hasta que entren features online]`: notas para cuando se aborden leaderboards
+  (plan confirmado) y guardado cross-platform (plan confirmado). Registrado acá y
+  no en `_insights.md` porque ese archivo es para observaciones de gameplay/
+  playtesting, no infraestructura. Principio rector: **nunca confiar en el
+  cliente** (el build de Unity es decompilable; memoria y red son falsificables) →
+  toda validación que importe va del lado servidor.
+  - *Guardado local (hoy):* riesgo casi nulo (editar el propio save offline solo
+    afecta al tramposo). No invertir.
+  - *Leaderboards:* el cliente no es fuente de verdad. **Aprovechar el
+    determinismo por seed del juego** (ya probado en `RunMapGeneratorTests`): el
+    cliente envía seed + log de acciones, el servidor **re-simula la run** y
+    verifica el puntaje → un tramposo no puede forjar inputs que den un puntaje
+    imposible. Sumar auth (para banear), rate limiting y detección de anomalías.
+  - *Cloud save:* la amenaza es fuga de info por **broken access control** (que
+    un usuario lea el save de otro). Defensa #1: auth + autorización estricta
+    (cada user solo accede a SU save). Nunca meter secretos/credenciales en el
+    build de Unity. Cliente NUNCA habla directo con la DB: **Unity → API
+    autenticada (HTTPS) → DB**. Cifrado en tránsito y reposo. Compliance tipo GDPR
+    al guardar datos de usuario.
+  - *Multiplayer:* otra liga (estado autoritativo, anti-cheat, DDoS). Diferir.
+  - Conecta con la nota de **Infra online** de arriba: leaderboards/cloud save =
+    el escenario "backend" donde DB + servidor + auth dejan de ser teoría.
