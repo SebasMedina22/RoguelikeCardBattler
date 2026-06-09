@@ -326,7 +326,7 @@ namespace RoguelikeCardBattler.Run.Campfire
                 string tokenA = CardToken(a);
                 string tokenB = CardToken(b);
                 bool sameName = (a != null ? a.CardName : "?") == (b != null ? b.CardName : "?");
-                bool sameType = SideElemType(a) == SideElemType(b);
+                bool sameType = SideType(a) == SideType(b);
                 return (sameName && sameType) ? tokenA : $"{tokenA} / {tokenB}";
             }
             return entry.SingleCard != null ? CardToken(entry.SingleCard) : "Carta";
@@ -340,7 +340,10 @@ namespace RoguelikeCardBattler.Run.Campfire
             return string.IsNullOrEmpty(p) ? c.CardName : $"{p} {c.CardName}";
         }
 
-        private static ElementType SideElemType(CardDefinition c) =>
+        // Null-safe CardDefinition → ElementType. Mismo nombre que el helper espejo
+        // de ShopNodeController.SideType para que ambos BuildCardSelectLabel se lean
+        // simétricos en paralelo.
+        private static ElementType SideType(CardDefinition c) =>
             c != null ? c.ElementType : ElementType.None;
 
         private int ComputeHealAmount()
