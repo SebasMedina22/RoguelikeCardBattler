@@ -311,10 +311,10 @@ namespace RoguelikeCardBattler.Run.Campfire
         // ──────────────────────────────────────────────
 
         /// <summary>
-        /// Etiqueta para el botón de selección de carta. Para duales muestra los
-        /// nombres de ambos lados (A y B) — la mejora aplica a ambos mundos, así
-        /// que el jugador ve qué carta está mejorando en cada uno. Para singles
-        /// muestra simplemente el nombre.
+        /// Etiqueta para el botón de selección de carta. Muestra el prefijo de tipo
+        /// coloreado antes del nombre (reutiliza ElementTypeColors.TypePrefix). Para
+        /// duales muestra AMBOS lados con su tipo y color propios; colapsa a un solo
+        /// token solo si nombre Y tipo coinciden en los dos lados.
         /// </summary>
         private static string BuildCardSelectLabel(CardDeckEntry entry)
         {
@@ -323,12 +323,25 @@ namespace RoguelikeCardBattler.Run.Campfire
             {
                 CardDefinition a = entry.DualCard.SideA;
                 CardDefinition b = entry.DualCard.SideB;
-                string nameA = a != null ? a.CardName : "?";
-                string nameB = b != null ? b.CardName : "?";
-                return nameA == nameB ? nameA : $"{nameA} / {nameB}";
+                string tokenA = CardToken(a);
+                string tokenB = CardToken(b);
+                bool sameName = (a != null ? a.CardName : "?") == (b != null ? b.CardName : "?");
+                bool sameType = SideElemType(a) == SideElemType(b);
+                return (sameName && sameType) ? tokenA : $"{tokenA} / {tokenB}";
             }
-            return entry.SingleCard != null ? entry.SingleCard.CardName : "Carta";
+            return entry.SingleCard != null ? CardToken(entry.SingleCard) : "Carta";
         }
+
+        // Token rich-text "[Tipo] Nombre" para una CardDefinition (o "?" si es null).
+        private static string CardToken(CardDefinition c)
+        {
+            if (c == null) return "?";
+            string p = ElementTypeColors.TypePrefix(c.ElementType);
+            return string.IsNullOrEmpty(p) ? c.CardName : $"{p} {c.CardName}";
+        }
+
+        private static ElementType SideElemType(CardDefinition c) =>
+            c != null ? c.ElementType : ElementType.None;
 
         private int ComputeHealAmount()
         {

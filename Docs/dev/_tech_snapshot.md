@@ -7,7 +7,19 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-05 — **Auditoría de arte, slot C7 (cara de carta,
+> **Última actualización:** 2026-06-09 — **Pulido pre-M4 #104 (tinte tipo en
+> selectores)**. `ElementTypeColors` gana `TypePrefix(ElementType)` — token
+> rich-text `<color=#hex>[Tipo]</color>` sin espacio final, fuente única de
+> verdad del patrón que antes vivía inline en `CardHandView`. Aplicado en 3
+> sitios: `CampfireNodeController.BuildCardSelectLabel`, `ShopNodeController.
+> BuildCardSelectLabel` y `ShopNodeController.CreateItemButton` (render del
+> stock). Refactor behavior-preserving en `CardHandView.BuildCardLabel` (consume
+> `TypePrefix` en vez del inline). `ElementTypeColorsTests.cs` ampliado: **146/146**
+> (142 previos + 4 nuevos: TypePrefix None/token/hex/all-types). `ShopTests` y
+> `CampfireTests` siguen intactos (no se tocó `BuildStock`).
+> **Validado:** compilación limpia, EditMode **146/146** (142 previos + 4 nuevos).
+>
+> **Última actualización previa:** 2026-06-05 — **Auditoría de arte, slot C7 (cara de carta,
 > habilitación de CÓDIGO)** en branch `feat/c7-card-art` (spec
 > `Docs/dev/specs/art_c7_card_art_spec.md`). `CardDefinition` gana el campo
 > `[SerializeField] Sprite art` + getter `Art` (paralelo a `EnemyDefinition.Avatar`),
@@ -399,7 +411,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 17 archivos (suite EditMode 142/142)
+### Tests (`Assets/Tests/EditMode/`) — 17 archivos (suite EditMode 146/146)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -421,9 +433,9 @@ NewRunTests.cs                   ← M3 Sub-PR 3E (8 casos: draft/dual/tipos)
 RunMapGeneratorTests.cs          ← M3 Sub-PR 3F (5 casos: determinismo topología/
                                    enemigos, divergencia por seed, DAG válido,
                                    start/end forzados — blinda el refactor horizontal)
-ElementTypeColorsTests.cs        ← Auditoría de arte C8 (6 casos: tinte por tipo —
-                                   colores distintos, contraste de texto, levante de
-                                   Negro sobre oscuro, Dim preserva alpha)
+ElementTypeColorsTests.cs        ← C8 (6 casos) + #104 (4 casos TypePrefix: None vacío,
+                                   token con corchetes, hex==ReadableOnDark, all-types
+                                   no vacíos) = 10 casos totales
 CardArtTests.cs                  ← Auditoría de arte C7 (5 casos: campo Art default
                                    null, set/omit en SetDebugData, persistencia en el
                                    clon de upgrade, herencia dual por mundo, resolución
