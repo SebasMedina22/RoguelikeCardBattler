@@ -471,16 +471,15 @@ categoría de hook) registrados en `_insights.md`.
 Ideas que pueden volverse milestones cuando el GDD las priorice o cuando se
 cierren los milestones actuales:
 
-- **Legibilidad de tipo/color de carta en selectores (Hoguera + Tienda)**
-  `[CANDIDATO PRE-M4 — pulido]`: los selectores de "mejorar carta" (Hoguera) y
-  "eliminar carta" (Tienda) listan las cartas como texto plano ("Strike / Strike
-  (B)", "Defend / Defend (B)") sin indicar el **tipo elemental / color** de la
-  carta — justo en un juego donde el tipo es central. Mejora: tintar el label /
-  agregar un chip de color reusando el helper `ElementTypeColors` (de C8) +
-  posiblemente el prefijo `[Tipo]` como en combate/NewRun. Barato (helper ya
-  existe, sólo cambia presentación en `CampfireNodeController` y `ShopNodeController`).
-  Detectado en playtest 2026-06-05. Candidato a hacer **antes de arrancar M4**,
-  como parte del pulido de identidad de carta (junto con C7 cara de carta).
+- ~~**Legibilidad de tipo/color de carta en selectores (Hoguera + Tienda)**~~
+  **IMPLEMENTADO 2026-06-09** (PR #104, branch `feat/type-tint-selectors`):
+  `ElementTypeColors.TypePrefix` nuevo método centralizado; aplicado en
+  `CampfireNodeController.BuildCardSelectLabel`, `ShopNodeController.BuildCardSelectLabel`
+  y `ShopNodeController.CreateItemButton` (render del stock). Refactor
+  behavior-preserving de `CardHandView.BuildCardLabel` para consumir el nuevo
+  helper. Tests: `ElementTypeColorsTests.cs` ampliado con 4 casos nuevos
+  (TypePrefix None, token con corchetes, hex coincide con ReadableOnDark, todos
+  los tipos producen prefijo no vacío). Suite EditMode: 146/146 (4 nuevos).
 - **Refactor cross-cutting de los `Initialize()` de las views**: introducir un
   struct `ViewRefs` compartido en lugar de 25+ parámetros. Tiene sentido HACER
   después de Fase 4 cerrada (cuando las 3 views estén estables). ~30 min.

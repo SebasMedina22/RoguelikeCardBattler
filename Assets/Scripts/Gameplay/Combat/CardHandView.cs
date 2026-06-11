@@ -391,15 +391,10 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 prefix = _turnManager.CurrentWorld == TurnManager.WorldSide.A ? "[A] " : "[B] ";
             }
 
-            // Tinte por tipo (C8): el prefijo [Tipo] toma el color del tipo vía rich
-            // text. ReadableOnDark mantiene legible el Negro sobre el fondo oscuro de
-            // la carta. Color desde la fuente única de verdad (ElementTypeColors).
-            string typePrefix = string.Empty;
-            if (activeCard.ElementType != ElementType.None)
-            {
-                string typeHex = ColorUtility.ToHtmlStringRGB(ElementTypeColors.ReadableOnDark(activeCard.ElementType));
-                typePrefix = $"<color=#{typeHex}>[{activeCard.ElementType}]</color> ";
-            }
+            // Tinte por tipo (C8→#104): delega al helper centralizado TypePrefix para
+            // que Hoguera, Tienda y combate compartan el mismo token rich-text.
+            string typePrefix = ElementTypeColors.TypePrefix(activeCard.ElementType);
+            if (!string.IsNullOrEmpty(typePrefix)) typePrefix += " ";
             string title = string.IsNullOrEmpty(prefix)
                 ? $"{typePrefix}{activeCard.CardName}"
                 : $"{prefix}{typePrefix}{activeCard.CardName}";

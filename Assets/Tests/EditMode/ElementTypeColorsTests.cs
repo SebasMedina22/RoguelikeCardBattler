@@ -83,5 +83,48 @@ namespace RoguelikeCardBattler.Tests.EditMode
             Assert.AreEqual(raw.a, dimmed.a, 1e-4f, "Dim debe preservar el alpha");
             Assert.Less(Luminance(dimmed), Luminance(raw), "Dim debe oscurecer");
         }
+
+        // ── TypePrefix (#104) ─────────────────────────────────────────────────
+
+        [Test]
+        public void TypePrefix_None_ReturnsEmpty()
+        {
+            Assert.AreEqual(string.Empty, ElementTypeColors.TypePrefix(ElementType.None),
+                "None no debe generar prefijo");
+        }
+
+        [Test]
+        public void TypePrefix_ColoredType_ContainsNameInBrackets()
+        {
+            string prefix = ElementTypeColors.TypePrefix(ElementType.Rojo);
+            StringAssert.Contains("[Rojo]", prefix, "El prefijo debe contener el nombre del tipo entre corchetes");
+            StringAssert.StartsWith("<color=#", prefix, "El prefijo debe abrirse con rich-text de color");
+            StringAssert.EndsWith("</color>", prefix, "El prefijo debe cerrarse con </color>");
+        }
+
+        [Test]
+        public void TypePrefix_HexMatchesReadableOnDark_ForRojoAndNegro()
+        {
+            // Verifica que el hex embebido es el de ReadableOnDark (no el de For).
+            foreach (ElementType type in new[] { ElementType.Rojo, ElementType.Negro })
+            {
+                string expected = ColorUtility.ToHtmlStringRGB(ElementTypeColors.ReadableOnDark(type));
+                string prefix = ElementTypeColors.TypePrefix(type);
+                StringAssert.Contains(expected, prefix,
+                    $"El hex de {type} debe coincidir con ReadableOnDark");
+            }
+        }
+
+        [Test]
+        public void TypePrefix_AllNonNoneTypes_ProduceNonEmptyPrefixWithName()
+        {
+            foreach (ElementType type in ColoredTypes)
+            {
+                string prefix = ElementTypeColors.TypePrefix(type);
+                Assert.IsNotEmpty(prefix, $"{type} debe producir prefijo no vacío");
+                StringAssert.Contains($"[{type}]", prefix,
+                    $"{type} debe incluir su nombre entre corchetes");
+            }
+        }
     }
 }

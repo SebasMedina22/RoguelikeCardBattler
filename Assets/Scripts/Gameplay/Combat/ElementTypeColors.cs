@@ -72,6 +72,19 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             Luminance(background) > DarkTextThreshold ? DarkInk : LightInk;
 
         /// <summary>
+        /// Prefijo rich-text "[Tipo]" coloreado con el color legible sobre fondo oscuro
+        /// (ReadableOnDark). Fuente única de verdad del patrón que antes vivía inline en
+        /// CardHandView.BuildCardLabel. Devuelve string.Empty para ElementType.None (sin
+        /// prefijo). NO incluye espacio final ni separador — el caller decide el formato.
+        /// </summary>
+        public static string TypePrefix(ElementType type)
+        {
+            if (type == ElementType.None) return string.Empty;
+            string hex = ColorUtility.ToHtmlStringRGB(ReadableOnDark(type));
+            return $"<color=#{hex}>[{type}]</color>";
+        }
+
+        /// <summary>
         /// Atenúa un color preservando su alpha (para estados deshabilitados que
         /// igual deben dejar leer de qué tipo se trata).
         /// </summary>

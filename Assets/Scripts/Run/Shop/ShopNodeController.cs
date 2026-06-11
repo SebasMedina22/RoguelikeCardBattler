@@ -385,9 +385,32 @@ namespace RoguelikeCardBattler.Run.Shop
         private void CreateItemButton(RectTransform parent, ShopItem item, float yMin, float yMax)
         {
             bool affordable = !item.Purchased && _state.Gold >= item.Price;
+
+            // Prefijo de tipo coloreado SOLO en el render — item.Title NO se muta
+            // para no romper ShopTests (que comparan Title por igualdad de string).
+            string typeTint = string.Empty;
+            if (item.Kind == ShopItemKind.Card && item.CardPayload != null)
+            {
+                CardDeckEntry e = item.CardPayload;
+                if (e.DualCard != null)
+                {
+                    ElementType ta = SideType(e.DualCard.SideA);
+                    ElementType tb = SideType(e.DualCard.SideB);
+                    typeTint = ta == tb
+                        ? ElementTypeColors.TypePrefix(ta)
+                        : $"{ElementTypeColors.TypePrefix(ta)}{ElementTypeColors.TypePrefix(tb)}";
+                }
+                else if (e.SingleCard != null)
+                {
+                    typeTint = ElementTypeColors.TypePrefix(e.SingleCard.ElementType);
+                }
+                if (!string.IsNullOrEmpty(typeTint)) typeTint += " ";
+            }
+
+            string titled = $"{typeTint}{item.Title}";
             string label = item.Purchased
-                ? $"{item.Title}  (comprado)"
-                : $"{item.Title} — {item.Price} oro\n<{item.Description}>";
+                ? $"{titled}  (comprado)"
+                : $"{titled} — {item.Price} oro\n<{item.Description}>";
             Button btn = CreateButtonRaw(parent, $"Item_{item.Title}", label, 0.05f, yMin, 0.95f, yMax, affordable);
             if (affordable)
             {
@@ -484,8 +507,11 @@ namespace RoguelikeCardBattler.Run.Shop
         // ──────────────────────────────────────────────
 
         /// <summary>
-        /// Etiqueta para el botón de selección de carta. Para duales muestra ambos
-        /// lados (A / B); para singles el nombre. Espejo de CampfireNodeController.
+        /// Etiqueta para el botón de selección de carta. Muestra el prefijo de tipo
+        /// coloreado antes del nombre (reutiliza ElementTypeColors.TypePrefix). Para
+        /// duales muestra AMBOS lados con su tipo y color propios; colapsa a un solo
+        /// token solo si nombre Y tipo coinciden en los dos lados. Espejo de
+        /// CampfireNodeController.BuildCardSelectLabel.
         /// </summary>
         private static string BuildCardSelectLabel(CardDeckEntry entry)
         {
@@ -494,11 +520,21 @@ namespace RoguelikeCardBattler.Run.Shop
             {
                 CardDefinition a = entry.DualCard.SideA;
                 CardDefinition b = entry.DualCard.SideB;
-                string nameA = a != null ? a.CardName : "?";
-                string nameB = b != null ? b.CardName : "?";
-                return nameA == nameB ? nameA : $"{nameA} / {nameB}";
+                string tokenA = CardToken(a);
+                string tokenB = CardToken(b);
+                bool sameName = (a != null ? a.CardName : "?") == (b != null ? b.CardName : "?");
+                bool sameType = SideType(a) == SideType(b);
+                return (sameName && sameType) ? tokenA : $"{tokenA} / {tokenB}";
             }
-            return entry.SingleCard != null ? entry.SingleCard.CardName : "Carta";
+            return entry.SingleCard != null ? CardToken(entry.SingleCard) : "Carta";
+        }
+
+        // Token rich-text "[Tipo] Nombre" para una CardDefinition (o "?" si es null).
+        private static string CardToken(CardDefinition c)
+        {
+            if (c == null) return "?";
+            string p = ElementTypeColors.TypePrefix(c.ElementType);
+            return string.IsNullOrEmpty(p) ? c.CardName : $"{p} {c.CardName}";
         }
 
         private void RefreshGoldText()
