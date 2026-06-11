@@ -7,8 +7,8 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-09 — **Pulido pre-M4 #104 (tinte tipo en
-> selectores)**. `ElementTypeColors` gana `TypePrefix(ElementType)` — token
+> **Última actualización:** 2026-06-09 — **Pulido pre-M4 tinte tipo en
+> selectores (PR #107; #104 fue el PR de docs del backlog)**. `ElementTypeColors` gana `TypePrefix(ElementType)` — token
 > rich-text `<color=#hex>[Tipo]</color>` sin espacio final, fuente única de
 > verdad del patrón que antes vivía inline en `CardHandView`. Aplicado en 3
 > sitios: `CampfireNodeController.BuildCardSelectLabel`, `ShopNodeController.

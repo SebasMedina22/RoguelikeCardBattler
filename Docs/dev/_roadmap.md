@@ -7,10 +7,10 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M3 cerrado completo (personalización del run + mapa horizontal). M4 activo.
-> **Milestone activo:** M4 — Resto del Acto 1 (mejora cartas con UI, eventos, transdimensionales, ancla)
+> **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
+> **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-05 (Sub-PR 3F mapa horizontal **implementado y validado en Unity**: refactor de RunMapView a scroll lateral izq→der, RelicInventoryView en HUD del mapa, `RunMapGeneratorTests` nuevo (5 casos). EditMode 131/131. Branch `feat/m3-sub-f-horizontal-map`. **M3 cerrado** → M4 activo. Siguiente paso del proyecto: plan de auditoría de arte.)
+> **Última actualización:** 2026-06-10 (sesión `modo:gdd`: **M4 reordenado y validado contra el código**. Las sub-tareas de abril estaban viejas — el mecanismo de mejora de cartas ya lo implementó 3C; la afinidad de DD-002 estaba pendiente sin dueño. Decisiones cerradas: mejoras autoradas por carta + test guard, DD-022 afinidad → opción A (implementar GDD). Visor de mazo sale a pulido pre-M4 independiente. Estructura nueva: pre-M4 visor → 4a → 4b → 4c.)
 
 ---
 
@@ -31,6 +31,12 @@
 1. Mover de "Activo" a "Completados" con fecha y resumen.
 2. Activar el siguiente milestone pendiente.
 3. Si hay aprendizajes, registrar en `_insights.md`.
+4. **Higiene de memoria:** revisar las memorias del proyecto, borrar las que ya
+   no aplican y comprimir el "Estado actual" de `MEMORY.md` a lo vigente.
+5. **Barrido de ⏳ en GOLDEN_RULES:** cada regla cerrada-por-diseño pendiente de
+   implementar debe tener dueño (sub-tarea) en algún milestone. Si alguna quedó
+   huérfana, reportarla a Sebastián (así no se repite el caso de la afinidad
+   DD-022, que estuvo 6 semanas en ⏳ sin que ningún milestone la agendara).
 
 **Reglas:**
 - NO agregar tareas fuera de milestones aquí.
@@ -44,32 +50,88 @@
 
 ## Activo
 
+### Pulido pre-M4 — Visor de mazo ("librito" estilo Slay the Spire)
+
+**Estado:** pendiente — **siguiente paso del proyecto** (formato pulido
+independiente, como el #104).
+
+**Objetivo:** UI consultable que lista el mazo completo fuera de combate
+(alcance mínimo: mapa; si entra también en nodos/combate se decide en el spec).
+Hoy NO existe ninguna vista del mazo fuera de combate.
+
+**Molde:** espejo de `RelicInventoryView` (clase pura no-MonoBehaviour,
+Refresh + tooltips, instanciada por `RunFlowController`). No toca protegidos.
+
+**Por qué va ANTES de M4:** es la herramienta de playtesting de 4a y 4b —
+sin visor, los eventos que dan/quitan/mejoran cartas son invisibles para
+verificar qué pasó en el mazo.
+
+**Complejidad:** baja. Requiere sesión `modo:diseno` corta para el spec.
+
+---
+
 ### M4 — Resto del Acto 1 según GDD v2
 
-**Estado:** milestone activo desde 2026-06-05 (al cerrar M3 con el mapa horizontal).
+**Estado:** milestone activo desde 2026-06-05. **Reordenado 2026-06-10** en
+sesión `modo:gdd`: las sub-tareas originales (escritas en M1, abril 2026)
+estaban desactualizadas — el mecanismo de mejora de cartas ya lo implementó
+el Sub-PR 3C, y la afinidad de cartas de DD-002 (⏳ en GOLDEN_RULES §5)
+estaba pendiente sin dueño en ningún milestone.
 
-**Objetivo:** cerrar el contenido del Acto 1: mejora de cartas, eventos básicos
-y multidimensionales, enemigos transdimensionales y enemigos ancla.
+**Objetivo:** cerrar el contenido del Acto 1 pegado al GDD: integridad del
+sistema de cartas (mejoras completas + afinidad), eventos con quests, y la
+maquinaria transdimensional que M5 necesita para el boss.
 
-**Sub-tareas (desagregar al activar):**
-- Mejora de cartas (DD-013): toggle `IsUpgraded` en `CardDeckEntry`, campos
-  upgraded en `CardDefinition`, mejora ambos lados de cartas duales, UI
-- Eventos (DD-005): `EventDefinition` SO, controller, choice UI, sistema de
-  decisiones, eventos multidimensionales (elegir mundo)
-- Quests con MCguffin (DD-021 se cierra aquí): tracking en RunState, marca de
-  nodo destino en mapa, eventos de aceptar/robar
-- Enemigos transdimensionales (DD-014): campo `TypeWorldB` en `EnemyDefinition`,
-  resolución de tipo activo según `RunState.CurrentWorld`
-- Enemigos ancla (DD-014): flag `IsAnchor` en `EnemyDefinition`, bypass del
-  cambio de mundo en lógica
+**Bloques ordenados (sub-PRs chicos como en M3; cada bloque arranca con
+sesión `modo:diseno` para su spec):**
 
-**Toca archivos protegidos:** sí (TurnManager para tipo activo de transdim y
-ancla).
+#### Bloque 4a — Integridad del sistema de cartas
+- [ ] **Cobertura de mejoras (DD-013, re-scopeada):** el MECANISMO ya existe
+      desde 3C (`CardUpgradeDef`, `CanUpgrade`/`ApplyUpgrade`, UI Hoguera,
+      dual mejora ambos lados). Lo que falta son DATOS: poblar `CardUpgradeDef`
+      en las 18 caras de `NewRunFaces/` (la dual drafteada se vuelve mejorable
+      gratis: `ComposeDualCard` usa las caras como lados y `CanUpgrade` exige
+      upgrade en ambos). **Decisión cerrada 2026-06-10 (DD-023):** mejora
+      autorada a mano por carta (NO fallback genérico) + **test guard EditMode**
+      que recorre todos los `CardDefinition` SOs y falla si alguno queda sin
+      `HasUpgrade` → la Hoguera no vuelve a "verse rota" en silencio.
+- [ ] **Afinidad de cartas (DD-022, cerrada 2026-06-10 → opción A):** flag de
+      afinidad en `CardDefinition`; las cartas con afinidad NO tienen tipo fijo —
+      adoptan en runtime el tipo elegido para el mundo activo (Mundo A = tipo 1,
+      Mundo B = tipo 2). Recomposición del mazo inicial según GDD §5: 5 Strike
+      (3 afines + 2 neutras) + 4 Defend (2 afines + 2 neutras) + 1 dual
+      drafteada. La resolución debería vivir en `CardDeckEntry`/`CardDefinition`
+      (capa de datos); **confirmar en el spec si TurnManager necesita cambios**.
 
-**Dependencias:** M3 cerrado ✅ 2026-06-05 (eventos pueden otorgar Retazos /
-mejoras y necesitan el sistema funcionando).
+#### Bloque 4b — Eventos + Quests (narrativo, lo grande)
+- [ ] Eventos (DD-005): `EventDefinition` SO + `EventNodeController` (hoy el
+      nodo Event es stub: panel genérico "Contenido placeholder" en
+      `RunFlowController.ShowResolvePanel`), choice UI, sistema de decisiones
+- [ ] Eventos multidimensionales: elegir mundo al entrar al evento
+- [ ] Quests con MCguffin (DD-021 se cierra aquí): tracking en RunState, marca
+      de nodo destino en mapa, eventos de aceptar/robar
+- Dependencia interna: 4a cerrado (eventos que otorgan mejoras necesitan que
+  toda carta sea mejorable) + visor pre-M4 (verificación en playtest)
 
-**Complejidad:** alta. El sistema de eventos con quests es trabajo significativo.
+#### Bloque 4c — Transdimensionales + Ancla (mecánico, patrón para M5)
+- [ ] Enemigos transdimensionales (DD-014): campo `TypeWorldB` en
+      `EnemyDefinition`, resolución de tipo activo según mundo actual
+- [ ] Enemigos ancla (DD-014): flag `IsAnchor` en `EnemyDefinition`, bypass
+      del cambio de mundo
+- [ ] Ficha del enemigo muestra ambos tipos (GOLDEN_RULES §6)
+- **Nota de scope:** el GDD ubica transdim/ancla como contenido de Actos 2-3
+  (DD-011). Entran a M4 porque el BOSS del Acto 1 (DD-004: 2 tipos, uno por
+  mundo) ES la mecánica transdim estándar → M5 depende de este bloque. El
+  contenido de enemigos comunes transdim/ancla llega en M6a/M6b.
+
+**Toca archivos protegidos:** sí, SOLO el bloque 4c (TurnManager —
+[REQUIERE APROBACIÓN] al llegar). 4a probablemente no (confirmar en spec);
+4b no (rewards vía RunState).
+
+**Dependencias:** M3 cerrado ✅ 2026-06-05. Orden interno duro:
+pre-M4 visor → 4a → 4b → 4c.
+
+**Complejidad:** 4a baja-media · 4b alta (lo grande del milestone) · 4c media.
 
 > **Nota de proceso:** antes de arrancar M4 está agendado el plan de auditoría
 > de arte (barrido de slots de arte → `Docs/design/ART_NEEDS.md` → estilo madre
@@ -107,8 +169,9 @@ el patrón para futuros bosses.
 **Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
 post-ProcessAll y mutación de mundo desde IA).
 
-**Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado (transdim/
-ancla establecen el patrón de tipos múltiples).
+**Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado — en
+particular el bloque 4c (transdim/ancla establecen el patrón de tipos
+múltiples que el boss necesita).
 
 **Complejidad:** alta.
 
@@ -460,8 +523,10 @@ categoría de hook) registrados en `_insights.md`.
 
 ## Decisiones abiertas que afectan el roadmap
 
-- Ninguna activa al 2026-05-07. **DD-017 cerrada** durante diseño de M3 → opción C
-  (2-3 Retazos de cambio en contenido base como demo de la categoría). Detalle en
+- Ninguna activa al 2026-06-10. **DD-017 cerrada** durante diseño de M3 → opción C
+  (2-3 Retazos de cambio en contenido base como demo de la categoría).
+  **DD-022 (afinidad de cartas) y DD-023 (mejora autorada por carta) cerradas**
+  el 2026-06-10 en la revisión de M4 → ambas entran al bloque 4a. Detalle en
   `DESIGN_DECISIONS.md`.
 
 ---
@@ -472,7 +537,9 @@ Ideas que pueden volverse milestones cuando el GDD las priorice o cuando se
 cierren los milestones actuales:
 
 - ~~**Legibilidad de tipo/color de carta en selectores (Hoguera + Tienda)**~~
-  **IMPLEMENTADO 2026-06-09** (PR #104, branch `feat/type-tint-selectors`):
+  **IMPLEMENTADO 2026-06-09, MERGED 2026-06-10** (PR **#107**, branch
+  `feat/type-tint-selectors`; #104 fue el PR de docs que registró la idea en
+  este backlog):
   `ElementTypeColors.TypePrefix` nuevo método centralizado; aplicado en
   `CampfireNodeController.BuildCardSelectLabel`, `ShopNodeController.BuildCardSelectLabel`
   y `ShopNodeController.CreateItemButton` (render del stock). Refactor

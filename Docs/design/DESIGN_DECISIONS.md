@@ -54,7 +54,14 @@ GDD v2 (procesado el 2026-04-28) cerro **DD-001 a DD-016**. Las reglas resultant
 | DD-017 | Retazos de cambio en contenido base o post-launch | **Opción C — Híbrido**: 2-3 Retazos de cambio se incluyen en el contenido base como demo de la categoría. Razón: la categoría existe (refuerza la mecánica diferenciadora del cambio de mundo desde el primer run) sin la carga de diseñar y balancear 10-15 Retazos. Si en playtest la categoría es divertida, M4/M5 amplían el pool; si no, no se invirtió tiempo de más. Aplicado en Sub-PR 3B de M3 |
 
 ---
+## Cerradas en revisión de M4 (2026-06-10)
 
+| DD  | Tema | Resolucion |
+|-----|------|------------|
+| DD-022 | Afinidad de cartas: gap entre tipo-de-mundo y tipo-de-cartas (implementación pendiente de DD-002, ⏳ en GOLDEN_RULES §5) | **Implementar el GDD tal cual.** Las cartas del starter con afinidad NO tienen tipo fijo: adoptan en runtime el tipo que el jugador eligió para el mundo activo (Mundo A = tipo 1, Mundo B = tipo 2). Recomposición del mazo inicial según GDD §5: 5 Strike (3 afines + 2 neutras) + 4 Defend (2 afines + 2 neutras) + 1 dual drafteada. Alternativa descartada: dejar tipos fijos y editar GDD/GOLDEN_RULES (debilitaba la elección de tipos y el pitch central). Entra en M4 bloque 4a |
+| DD-023 | Cómo se define el camino de mejora de una carta (re-scope de DD-013: hoy solo 6 placeholders) | **Autorado por carta**: cada CardDefinition define su mejora a mano en su ficha, siguiendo los patrones de DD-013 (coste↓, daño/bloqueo↑, efecto secundario menor, quitar condición limitante). NO hay fallback genérico automático. Guard: test EditMode que recorre todos los CardDefinition SOs del proyecto y falla si alguno queda sin upgrade definido. Entra en M4 bloque 4a |
+
+---
 ## Postponed
 
 ### DD-015 — Narrativa y vinetas
