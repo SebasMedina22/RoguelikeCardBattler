@@ -53,9 +53,36 @@ de `modo:diseno` o una tarea concreta del roadmap activo.
   developer también.
 - Reuso: usar `UIAnimationHelper`, `AudioManager`, patrones existentes (eventos
   de TurnManager, `IGameAction`, SOs) antes de crear nuevos.
-- Tests: agregar tests EditMode cuando la lógica sea no-trivial. Si la feature
-  es 100% UI/Inspector-driven, validación manual en BattleScene es suficiente.
 - Al terminar una sub-tarea del roadmap, marcar checkbox `[x]`.
+
+## Política de testing (cuándo un cambio EXIGE tests)
+
+Regla base: este es un combate por turnos **determinista**. La lógica de reglas
+es exactamente el código que más se beneficia de tests EditMode y el que más
+duele cuando regresiona en silencio. Por eso el criterio no es "si me da el
+tiempo" sino una regla dura:
+
+- **Lógica pura / determinista nueva o modificada → test EditMode OBLIGATORIO.**
+  Aplica a: nuevas `IGameAction`, cálculo de efectividad/daño/bloqueo,
+  multiplicadores, generación por seed (mapa, stock, draft), helpers estáticos
+  (`BuildStock`, `ComputeHealAmount`, `TypePrefix`, etc.), selección de movimiento
+  de IA, mutaciones de `RunState`. Si tiene entrada→salida verificable sin UI, va
+  con test.
+- **Determinismo por seed → test de "misma seed = mismo resultado"** siempre que
+  se toque generación procedural (patrón ya establecido en `RunMapGeneratorTests`).
+- **UI / render / animación / parallax → NO se unit-testea.** Se valida en Play
+  (su escena) o por diagnóstico de código con Unity-MCP. No inventar tests de UI.
+- **Helpers `static` puros expuestos para test** (el patrón `BuildStock`/
+  `TryPurchase`): cuando una pieza de lógica viva dentro de un MonoBehaviour de UI
+  pero sea testeable, extraerla a estático puro en vez de dejarla sin cobertura.
+- **Regresión:** un cambio en lógica ya testeada corre la **suite EditMode
+  completa**, no solo los tests nuevos. Un test que se pone en rojo por el cambio
+  se entiende y se arregla — nunca se borra para "pasar".
+- **Modificar tests existentes requiere aprobación** (ver arriba); **agregar**
+  tests nuevos no.
+
+Si un cambio cae en "lógica pura nueva" y se cierra SIN test, hay que decirlo
+explícito y justificar por qué (no dejarlo implícito).
 
 ## Reglas obligatorias del proyecto
 

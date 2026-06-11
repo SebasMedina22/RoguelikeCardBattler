@@ -96,9 +96,11 @@ tarea. Hábitos que importan en este proyecto:
    repo, auditorías). Los subagentes leen en paralelo y me devuelven solo la
    conclusión, no el volcado de archivos — eso ahorra contexto. No es un comando;
    lo aplico solo cuando conviene.
-6. **Cerrá la sesión cuando el bloque terminó.** Antes de cerrar, pedime que
-   actualice memoria + docs (`_roadmap.md`, `_tech_snapshot.md`) para que la
-   próxima sesión arranque con contexto fresco y barato.
+6. **Cerrá la sesión cuando el bloque terminó.** Invocá **`/cierre-sesion`**:
+   ejecuta el checklist completo de persistencia (checkboxes + anti-desfase de
+   milestones futuros + tech_snapshot + memoria + higiene si cerró milestone).
+   Aplica a cualquier modo — el cierre pertenece a la sesión, no al modo. Así
+   la próxima sesión arranca con contexto fresco y barato.
 
 ---
 
