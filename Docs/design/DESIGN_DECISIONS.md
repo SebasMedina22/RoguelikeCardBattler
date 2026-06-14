@@ -8,7 +8,7 @@
 
 ## Estado actual
 
-GDD v2 (procesado el 2026-04-28) cerro **DD-001 a DD-016**. Las reglas resultantes viven en `GOLDEN_RULES.md`. En la revision post-GDD se abrieron **DD-017 a DD-021** y se cerraron todas excepto DD-017. **DD-017 fue cerrada el 2026-05-07** durante el diseño de M3.
+En la revision de M4 (2026-06-10) se abrieron y cerraron **DD-022 y DD-023**.
 
 **Hoy no quedan decisiones de diseño abiertas.** Solo queda `DD-015` (narrativa) en estado `postponed`.
 
@@ -69,5 +69,5 @@ Tema: vinetas narrativas, dialogo de los hermanos, lore. **Postponed** hasta que
 
 ---
 
-> Ultima actualizacion: 2026-05-07 (DD-017 cerrada en diseño de M3)
+> Ultima actualizacion: 2026-06-10 (DD-022 y DD-023 cerradas en revision de M4)
 > Cuando una decision se cierra, su regla resultante se mueve a GOLDEN_RULES.md y se marca su entrada aqui con la referencia a la seccion correspondiente.
