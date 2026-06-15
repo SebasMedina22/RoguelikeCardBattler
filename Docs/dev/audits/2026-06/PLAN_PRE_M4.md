@@ -157,14 +157,32 @@ aprueba la edición en el hilo principal.
 - **D14 + T3 (proceso):** marcar los 4 specs (3E/3F/tint/C7) con header `> **ESTADO: IMPLEMENTADO — PR #N (fecha)**`; agregar campo Estado a la plantilla de Spec Técnico; agregar paso "marcar spec IMPLEMENTADO" a `/cierre-sesion`.
 - **HP (tras D-C):** si la verdad es 70 → subir `BattleScene.unity:434` + `TurnManager.cs:26`; si es 60 → corregir GOLDEN_RULES §9 (lo toca Sebastián) + nota de decisión.
 
-### SUB-PR 6 — Tooling: cerrar el bypass + limpieza `chore/tooling-hardening`
+### SUB-PR 6 — Tooling: cerrar el bypass + limpieza `chore/tooling-hardening` ✅ CERRADO 2026-06-14
 
 **Cierra:** T1, T3 (parte de proceso ya en sub-PR 5), T4, T10.
 **Esfuerzo:** S.
 
-- **T1 (mayor):** agregar al hook `protect-files.js` un matcher `Bash` que bloquee si el comando contiene `script-update-or-create|script-delete` junto a un nombre protegido + 1 entrada en `settings.json`.
-- **T4:** consolidar los 3 permisos MCP redundantes en uno; sacar `Read(//tmp/**)`; agregar `Remove-Item`/`del`/`rd /s` al deny (equivalentes PowerShell de `rm`).
-- **T10:** `model: sonnet` en frontmatter de `cierre-sesion.md` (resuelve también el frontmatter faltante de T6); correr `/fewer-permission-prompts` para curar el allowlist con datos reales.
+- [x] **T1 (mayor):** `protect-files.js` reescrito con DOS superficies — (1) la de
+      siempre (`Edit/Write/MultiEdit/NotebookEdit` por `file_path`) y (2) un matcher
+      `Bash` que bloquea (exit 2) si el comando contiene `script-update-or-create` o
+      `script-delete` junto a un path/basename protegido. Matcher de `settings.json`
+      ampliado a `…|Bash`. Validado: bloquea el vector MCP sobre los 3 protegidos
+      (path completo y basename, incl. backslashes) y NO rompe `tests-run`/`ping`/
+      `assets-refresh` ni `script-update-or-create` sobre archivos NO protegidos.
+- [x] **T1 residual (decisión de Sebastián 2026-06-14):** el propio hook
+      `.claude/hooks/protect-files.js` se sumó a `PROTECTED` → cierra la auto-edición
+      silenciosa del hook. Riesgo residual aceptado y documentado en el header del
+      hook: un bypass exige editar `settings.json` para desenganchar (acción
+      deliberada y visible en el diff). `settings.json` NO se protege (lo necesita
+      el flujo `update-config`).
+- [x] **T4:** 3 permisos MCP redundantes consolidados en `Bash(npx unity-mcp-cli *)`;
+      `Read(//tmp/**)` eliminado; `Remove-Item`/`del`/`rd /s` agregados al deny
+      (equivalentes PowerShell de `rm`).
+- [x] **T10:** `model: sonnet` + `description` en frontmatter de `cierre-sesion.md`
+      (resuelve también el frontmatter faltante de T6). `/fewer-permission-prompts`
+      corrido sobre las 50 sesiones recientes → **sin entradas nuevas**: todo lo
+      observado ya estaba allowlisted, es auto-allowed, o se excluye por regla
+      (código arbitrario / mutación). El allowlist ya estaba afinado.
 
 ---
 

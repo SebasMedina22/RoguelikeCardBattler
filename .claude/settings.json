@@ -39,8 +39,7 @@
       "Bash(which:*)",
       "Bash(npm -v)",
       "Bash(npm view:*)",
-      "Bash(npx --yes unity-mcp-cli@latest:*)",
-      "Bash(unity-mcp-cli run-tool:*)",
+      "Bash(npx unity-mcp-cli *)",
       "Bash(openupm:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
@@ -74,13 +73,14 @@
       "mcp__ai-game-developer__profiler-get-rendering-stats",
       "mcp__ai-game-developer__profiler-get-script-stats",
       "Bash(git check-ignore *)",
-      "Bash(node .claude/hooks/protect-files.js)",
-      "Read(//tmp/**)",
-      "Bash(npx unity-mcp-cli *)"
+      "Bash(node .claude/hooks/protect-files.js)"
     ],
     "deny": [
       "Bash(rm:*)",
       "Bash(rm -rf:*)",
+      "Bash(Remove-Item:*)",
+      "Bash(del:*)",
+      "Bash(rd /s:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git reset --hard:*)",
@@ -90,7 +90,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
         "hooks": [
           {
             "type": "command",
