@@ -43,6 +43,13 @@ const PROTECTED = [
 // Edit/Write. Si aparecen en un Bash junto a un archivo protegido, se bloquea.
 const MCP_WRITE_TOOLS = ['script-update-or-create', 'script-delete'];
 
+// Anclado a la forma REAL de invocacion del CLI (`run-tool <write-tool>`). Asi
+// no se bloquean comandos que solo MENCIONAN el token en prosa (mensajes de
+// commit, echo, armar payloads de test) — over-block que mordia hasta el commit
+// de este propio cambio. El CLI siempre pasa por `run-tool <tool>`, asi que esto
+// sigue siendo agnostico al prefijo (npx / npx --yes ...@latest / binario pelado).
+const MCP_WRITE_RE = new RegExp(`run-tool\\s+(${MCP_WRITE_TOOLS.join('|')})\\b`);
+
 function norm(p) {
   return String(p || '').replace(/\\/g, '/').toLowerCase();
 }
@@ -82,9 +89,9 @@ process.stdin.on('end', () => {
     if (hit) blocked(hit);
   }
 
-  // Superficie 2: Bash -> comandos MCP que escriben/borran .cs en disco.
+  // Superficie 2: Bash -> comandos del plugin Unity-MCP que escriben/borran .cs.
   const command = norm(ti.command || '');
-  if (command && MCP_WRITE_TOOLS.some((t) => command.includes(t))) {
+  if (MCP_WRITE_RE.test(command)) {
     const hit = PROTECTED.find(
       (p) => command.includes(norm(p)) || command.includes(basename(p))
     );
