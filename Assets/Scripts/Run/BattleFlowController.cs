@@ -90,6 +90,32 @@ namespace RoguelikeCardBattler.Run
         {
             _reported = true;
             RunSession session = RunSession.GetOrCreate();
+            ApplyCombatResult(session, victory);
+
+            if (!IsSceneInBuild(RunSceneName))
+            {
+#if UNITY_EDITOR
+                Debug.LogError("[BattleFlow] RunScene no está en Build Settings.");
+#endif
+                return;
+            }
+#if UNITY_EDITOR
+            Debug.Log($"[BattleFlow] Loading RunScene (HP saved: {session.State.PlayerCurrentHP}/{session.State.PlayerMaxHP})");
+#endif
+            SceneTransitionManager.LoadScene(RunSceneName);
+        }
+
+        /// <summary>
+        /// Mutaciones de RunState que produce el resultado de un combate (flags de
+        /// outcome, acto completado, drops de Retazos) SIN sincronizar HP y SIN cargar
+        /// escena. El HP ya lo escribió TurnManager.DispatchCombatEnd (sync actor→RunState
+        /// pre-dispatch, Opción B del spec fix_combat_end_hp_sync): este método NO debe
+        /// volver a pisarlo. Es público como seam de testeo (T1 verifica la no-pisada de
+        /// HP); el proyecto no usa InternalsVisibleTo. El tail de transición de escena
+        /// queda en ReportOutcome.
+        /// </summary>
+        public void ApplyCombatResult(RunSession session, bool victory)
+        {
             session.State.LastNodeOutcome = victory ? RunState.NodeOutcome.Victory : RunState.NodeOutcome.Defeat;
             session.State.PendingReturnFromBattle = true;
             session.State.RunFailed = !victory;
@@ -111,24 +137,6 @@ namespace RoguelikeCardBattler.Run
             {
                 TryDropRelics(session);
             }
-
-            if (_turnManager != null)
-            {
-                session.State.PlayerCurrentHP = _turnManager.PlayerHP;
-                session.State.PlayerMaxHP = _turnManager.PlayerMaxHP;
-            }
-
-            if (!IsSceneInBuild(RunSceneName))
-            {
-#if UNITY_EDITOR
-                Debug.LogError("[BattleFlow] RunScene no está en Build Settings.");
-#endif
-                return;
-            }
-#if UNITY_EDITOR
-            Debug.Log($"[BattleFlow] Loading RunScene (HP saved: {session.State.PlayerCurrentHP}/{session.State.PlayerMaxHP})");
-#endif
-            SceneTransitionManager.LoadScene(RunSceneName);
         }
 
         private void TryConfigureCombat()

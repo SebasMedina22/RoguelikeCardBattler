@@ -5,8 +5,11 @@ using RoguelikeCardBattler.Gameplay.Relics.Hooks;
 namespace RoguelikeCardBattler.Gameplay.Relics.Effects
 {
     // Slot 13 — R-END-2 "Curita con Estampa": +Amount HP por victoria.
-    // Mutación directa de RunState (NO GrantHeal): post-victoria el actor puede
-    // no estar referenciable; ver [CERRADO 3] del spec 3A.
+    // Mutación directa de RunState (NO GrantHeal): la mutación es CORRECTA porque
+    // TurnManager.DispatchCombatEnd sincroniza RunState.PlayerCurrentHP = actor.CurrentHP
+    // ANTES de disparar OnCombatEnd (Opción B del spec fix_combat_end_hp_sync). Así el
+    // +Amount se aplica sobre el HP fresco post-combate y persiste (BattleFlowController
+    // ya no pisa el HP). GrantHeal sería no-op aquí: IsCombatFinished ya es true.
     [Serializable]
     public class RelicEndHealEffect : IRelicEffect
     {
