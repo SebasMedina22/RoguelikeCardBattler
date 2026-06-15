@@ -1,3 +1,8 @@
+---
+description: Ritual de cierre y persistencia de sesión (cualquier modo)
+model: sonnet
+---
+
 # /cierre-sesion — Ritual de cierre y persistencia
 
 Ejecutá el ritual de cierre de sesión. Aplica al final de CUALQUIER sesión de
