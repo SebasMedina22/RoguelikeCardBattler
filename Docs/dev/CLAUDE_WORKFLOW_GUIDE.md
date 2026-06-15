@@ -134,9 +134,14 @@ Tu estilo de colaboración ya está definido: **vos diseñás, Claude implementa
 - **Permisos** — `.claude/settings.json` (compartido, commiteado) +
   `.claude/settings.local.json` (personal, gitignored). Precedencia:
   `deny > ask > allow`.
-- **Hook de protección** — `.claude/hooks/protect-files.js` bloquea Edit/Write
-  sobre los 6 archivos protegidos (3 de combate + GOLDEN_RULES + GDD +
-  DESIGN_DECISIONS). Para una edición autorizada, comentá el hook en `settings.json`
+- **Hook de protección** — `.claude/hooks/protect-files.js` (PreToolUse) bloquea
+  la escritura sobre los archivos protegidos por DOS superficies: (1)
+  `Edit/Write/MultiEdit/NotebookEdit` por `file_path`, y (2) `Bash` con los
+  comandos del plugin Unity-MCP (`script-update-or-create`/`script-delete`) que
+  antes editaban `.cs` en disco sin pasar por el hook. Protege 7 archivos: 3 de
+  combate + GOLDEN_RULES + GDD + DESIGN_DECISIONS + **el propio hook** (evita la
+  auto-edición silenciosa). `settings.json` NO se protege (lo necesita
+  `update-config`). Para una edición autorizada, comentá el hook en `settings.json`
   o editá a mano.
 - **Modos como comandos** — `.claude/commands/modo-*.md`. Invocás con
   `/modo-diseno`, etc.
