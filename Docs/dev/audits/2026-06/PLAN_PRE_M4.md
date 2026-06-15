@@ -133,10 +133,18 @@ aprueba la edición en el hilo principal.
 
 **Cierra:** D7, D8, D9, D10.
 **Esfuerzo:** S.
-**Coordina con:** SUB-PR 1 (el fix de H1/H2 define cuál es la "vía segura" real).
+**Coordina con:** SUB-PR 1 ✅ CERRADO — el fix YA fijó la regla de autoría real (ver abajo).
 **Depende de:** decisión D-A (D9 documenta las consecuencias de la semántica).
 
-- `RELICS.md`: corregir §217-218/228/240 — la mutación directa de `PlayerCurrentHP` en OnCombatEnd es el patrón ROTO; GrantHeal sobre el actor es la vía correcta. Agregar regla de autoría (orden de hooks T1 OnPlayerTurnStart/OnCombatStart).
+- `RELICS.md`: corregir §217-218/228/240 con la regla de autoría **que el SUB-PR 1
+  fijó (Opción B, 2026-06-14)**: bajo este diseño la **mutación directa de
+  `PlayerCurrentHP` en OnCombatEnd ES CORRECTA** — `TurnManager.DispatchCombatEnd`
+  sincroniza `RunState.PlayerCurrentHP/MaxHP = _player.*` ANTES de disparar los hooks,
+  así RunState es autoritativo y `BattleFlowController` ya no pisa. `GrantHeal` sobre
+  el actor en OnCombatEnd **NO es viable** (sería no-op: `IsCombatFinished` ya es `true`).
+  Esto INVIERTE la guía vieja de D7/D8 ("mutación directa = patrón roto, GrantHeal =
+  vía correcta"), que el fix refutó. Agregar la regla de orden de hooks
+  (OnPlayerTurnStart/OnCombatStart).
 - `m3_hooks_spec.md`: corregir [CERRADO 3] y la inconsistencia con su tabla :436; registrar el cierre de [IMPL 1] (8º dispatch de cartas neutras); subsección "Consecuencias de la semántica" tras D-A; arreglar referencias de línea corridas (citar métodos).
 
 ### SUB-PR 5 — Docs paquete (iii): números y estado `docs/numbers-and-state`
