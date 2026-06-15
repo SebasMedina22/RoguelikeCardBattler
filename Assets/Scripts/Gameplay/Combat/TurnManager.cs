@@ -739,6 +739,16 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         {
             if (TryGetRelicContext(out RunState ceRs, out RelicHookDispatcher ceDisp))
             {
+                // Fix H1/H2: el HP del run = HP del actor al cerrar combate, ANTES de
+                // que los Retazos OnCombatEnd lean/muten RunState. Sin esto, ceRs
+                // conserva el HP PRE-combate y BattleFlowController lo sincronizaba
+                // tarde (pisando curaciones de fin de combate).
+                if (_player != null)
+                {
+                    ceRs.PlayerCurrentHP = _player.CurrentHP;
+                    ceRs.PlayerMaxHP = _player.MaxHP;
+                }
+
                 CombatEndHookData ceData = new CombatEndHookData(
                     ceRs, this, ceDisp, victory, enemyDefinition,
                     isBoss: _isCurrentCombatBoss, isElite: _isCurrentCombatElite);

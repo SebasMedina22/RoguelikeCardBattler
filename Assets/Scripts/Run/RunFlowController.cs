@@ -26,6 +26,7 @@ namespace RoguelikeCardBattler.Run
 
         private const string RunSceneName = "RunScene";
         private const string BattleSceneName = "BattleScene";
+        private const string MainMenuSceneName = "MainMenuScene";
 
         private RunState _state;
         private ActMap _map;
@@ -649,27 +650,42 @@ namespace RoguelikeCardBattler.Run
             retryRect.anchorMax = new Vector2(0.7f, 0.43f);
             _defeatRetryButton.onClick.AddListener(() =>
             {
-                _state.RunFailed = false;
-                _state.PendingReturnFromBattle = false;
-                _state.LastNodeOutcome = RunState.NodeOutcome.None;
+                // Retry tras derrota: restaura HP a full y limpia flags de outcome
+                // (H3). Sin esto el combate recargaba con PlayerCurrentHP = 0, que
+                // InitializeCombat clampa a 1 HP → loop de derrota.
+                _state.PrepareForRetry();
                 _mapView?.Cleanup();
                 _relicView?.Cleanup();
-                SceneTransitionManager.LoadScene("BattleScene");
+                SceneTransitionManager.LoadScene(BattleSceneName);
             });
 
             _defeatExitButton = CreateButton("DefeatExit", _defeatPanel, "Volver al mapa");
             RectTransform exitRect = _defeatExitButton.GetComponent<RectTransform>();
             exitRect.anchorMin = new Vector2(0.3f, 0.25f);
             exitRect.anchorMax = new Vector2(0.7f, 0.33f);
-            _defeatExitButton.onClick.AddListener(() =>
+            _defeatExitButton.onClick.AddListener(ReturnToMainMenu);
+        }
+
+        /// <summary>
+        /// Abandono de run (botón "Volver al mapa" de derrota / "Volver al Menú" de
+        /// acto completado): vuelve al menú principal en vez de resetear in-place. El
+        /// reset de run nuevo lo posee MainMenu→Play (RunSession.ResetForNewRun) →
+        /// NewRunScene, donde el jugador re-elige tipos y draftea. El reset in-place
+        /// previo dejaba la run degradada (mapa viejo, tipos a default, sin starter
+        /// drafteado). Ver spec fix_combat_end_hp_sync (H4).
+        /// </summary>
+        private void ReturnToMainMenu()
+        {
+            if (!IsSceneInBuild(MainMenuSceneName))
             {
-                _state.Reset(_map);
-                if (runCombatConfig != null)
-                {
-                    _state.InitializeDeck(runCombatConfig.StarterDeck);
-                }
-                ShowMap();
-            });
+#if UNITY_EDITOR
+                Debug.LogError("[RunFlow] MainMenuScene no está en Build Settings.");
+#endif
+                return;
+            }
+            _mapView?.Cleanup();
+            _relicView?.Cleanup();
+            SceneTransitionManager.LoadScene(MainMenuSceneName);
         }
 
         private void BuildActoCompletedPanel()
@@ -690,16 +706,10 @@ namespace RoguelikeCardBattler.Run
             menuRect.anchorMax = new Vector2(0.7f, 0.35f);
             menuButton.onClick.AddListener(() =>
             {
-                _state.Reset(_map);
-                if (runCombatConfig != null)
-                {
-                    _state.InitializeDeck(runCombatConfig.StarterDeck);
-                }
 #if UNITY_EDITOR
                 Debug.Log("[RunFlow] Volviendo al menú principal desde Acto Completado");
 #endif
-                // TODO: cuando exista MainMenuScene, cargarla aquí.
-                ShowMap();
+                ReturnToMainMenu();
             });
         }
 

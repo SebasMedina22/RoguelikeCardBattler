@@ -9,6 +9,10 @@ namespace RoguelikeCardBattler.Gameplay.Relics.Hooks
     /// setear _phase = Victory o _phase = Defeat. Los Retazos mutan RunState
     /// directamente desde aquí (ej: ctx.RunState.Gold += 5) — NO se encolan
     /// acciones, la ActionQueue ya no se procesa post-fin de combate ([CERRADO 3]).
+    /// La mutación directa de HP es correcta: DispatchCombatEnd sincroniza
+    /// RunState.PlayerCurrentHP/PlayerMaxHP desde el actor JUSTO antes de este
+    /// dispatch (Opción B del spec fix_combat_end_hp_sync), así los hooks leen/mutan
+    /// HP fresco post-combate y BattleFlowController ya no lo pisa después.
     /// </summary>
     public class CombatEndHookData : RelicHookContext
     {

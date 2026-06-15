@@ -109,6 +109,22 @@ namespace RoguelikeCardBattler.Run
             EnsureInitialized(map);
         }
 
+        /// <summary>
+        /// Restaura el estado a "combate jugable de nuevo" tras una derrota (botón
+        /// Reintentar). Limpia los flags de outcome y devuelve el HP a full —
+        /// agnóstico al número base (usa PlayerMaxHP, hoy 60). NO toca
+        /// HasPlayerHPInitialized (queda true; PlayerCurrentHP = PlayerMaxHP pasa el
+        /// clamp de InitializeCombat sin caer a 1 HP) ni CurrentNodeId (retry = mismo
+        /// nodo). Ver spec fix_combat_end_hp_sync (H3).
+        /// </summary>
+        public void PrepareForRetry()
+        {
+            RunFailed = false;
+            PendingReturnFromBattle = false;
+            LastNodeOutcome = NodeOutcome.None;
+            if (PlayerMaxHP > 0) PlayerCurrentHP = PlayerMaxHP;
+        }
+
         public bool IsNodeAvailable(int nodeId) => AvailableNodes.Contains(nodeId);
         public bool IsNodeCompleted(int nodeId) => CompletedNodes.Contains(nodeId);
 

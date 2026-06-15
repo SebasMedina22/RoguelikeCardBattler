@@ -7,7 +7,24 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-09 — **Pulido pre-M4 tinte tipo en
+> **Última actualización:** 2026-06-14 — **SUB-PR 1 auditoría: fix de sincronización
+> fin-de-combate + retry/reset** (branch `feat/fix-combat-end-sync`, spec
+> `Docs/dev/specs/fix_combat_end_hp_sync_spec.md`, Opción B). Raíz del cluster H1-H4:
+> RunState tenía HP stale cuando corrían los hooks OnCombatEnd. **Fix:**
+> `TurnManager.DispatchCombatEnd` sincroniza `RunState.PlayerCurrentHP/MaxHP =
+> _player.*` ANTES del dispatch (+9 líneas aditivas en el protegido, aprobadas y
+> acotadas) → RunState autoritativo; los Retazos mutan/leen HP fresco (H1/H2).
+> `BattleFlowController` deja de re-pisar HP: se extrajo el seam público
+> `ApplyCombatResult(session, victory)` (flags/ActoCompleted/drops, sin HP ni
+> `LoadScene`) y `ReportOutcome` = `ApplyCombatResult` + tail de transición.
+> `RunState.PrepareForRetry()` (HP a full, limpia flags) recablea el botón Reintentar
+> (H3). Botones Derrota/Acto → `ReturnToMainMenu()` (carga `MainMenuScene` con guard),
+> eliminado el reset in-place + TODO `:701` (H4). Tests `CombatEndSyncTests.cs` (T1
+> no-pisada de heal vía seam; T2 retry restaura HP jugable).
+> **Validado:** compilación limpia, EditMode **148/148** (146 previos + T1/T2),
+> H1-H4 verificados en Play.
+>
+> **Última actualización previa:** 2026-06-09 — **Pulido pre-M4 tinte tipo en
 > selectores (PR #107; #104 fue el PR de docs del backlog)**. `ElementTypeColors` gana `TypePrefix(ElementType)` — token
 > rich-text `<color=#hex>[Tipo]</color>` sin espacio final, fuente única de
 > verdad del patrón que antes vivía inline en `CardHandView`. Aplicado en 3
@@ -111,9 +128,12 @@
 > `NewRunConfig` SO: pool `draftFaces` (caras single tipadas, ≥3 por tipo cubriendo
 > los 6), `selectableTypes`, `optionsPerWorld`, `confirmClip`. El menú editor crea
 > el asset + 18 caras placeholder en `Assets/ScriptableObjects/Cards/NewRunFaces/`.
-> **Importante:** `RunFlowController` sólo llama `State.Reset` dentro de handlers
-> de botones (Derrota/Acto completado), NO en carga de escena → los tipos y la
-> carta drafteada sobreviven el salto NewRunScene → RunScene.
+> **Importante:** `RunFlowController` ya **NO** llama `State.Reset` (cambió en el
+> fix fin-de-combate, 2026-06-14): los botones Derrota ("Volver al mapa") y Acto
+> completado ("Volver al Menú") delegan en `ReturnToMainMenu()` → cargan
+> `MainMenuScene` con guard `IsSceneInBuild`. El reset de run nuevo lo posee
+> exclusivamente `RunSession.ResetForNewRun` (MainMenu→Play→NewRunScene), así no
+> quedan caminos de reset divergentes ni una run degradada in-place.
 > **Validado:** compilación limpia, EditMode 126/126, NewRunScene en Build Settings,
 > `newRunConfig` asignado en la escena, E2E por código (mazo+1, filtro Tienda correcto).
 >
@@ -288,8 +308,12 @@ Exclusivamente vía `RunSession.State` (= `RunState`). Flags principales:
 
 [Fin de combate]
     └─ TurnManager.CheckCombatEndConditions() detecta victoria/derrota
+    └─ TurnManager.DispatchCombatEnd() SINCRONIZA RunState.PlayerCurrentHP/MaxHP
+       = _player.* ANTES de disparar los hooks OnCombatEnd (Opción B, fix 2026-06-14)
+       → RunState autoritativo; los Retazos OnCombatEnd mutan/leen HP fresco
     └─ BattleFlowController.Update() detecta cambio de fase
-    └─ ReportOutcome() actualiza RunSession + carga RunScene
+    └─ ReportOutcome() = ApplyCombatResult(session, victory) [flags/ActoCompleted/
+       drops, SIN re-pisar HP] + carga RunScene
 ```
 
 ---

@@ -72,20 +72,33 @@ pre-M5 depende de que la red de tests esté completa.
 
 ## 2. Sub-PRs pre-M4 (detalle)
 
-### SUB-PR 1 — Fix de sincronización fin-de-combate + retry `feat/fix-combat-end-sync`
+### SUB-PR 1 — Fix de sincronización fin-de-combate + retry `feat/fix-combat-end-sync` ✅ CERRADO 2026-06-14
 
 **Cierra:** H1, H2, H3, H4 (+ tests T1, T2 que los documentan).
 **Esfuerzo:** M (el cluster comparte raíz; un solo PR coherente).
-**No toca protegidos** (BattleFlowController y RunFlowController no lo son).
+**Toca 1 protegido (aprobado y acotado):** TurnManager — H1 lo exigía (ver spec
+`fix_combat_end_hp_sync_spec.md`; el "No toca protegidos" original era falso para
+H1). BattleFlowController y RunFlowController no son protegidos.
 
-- Sincronizar `RunState.PlayerCurrentHP` **antes** de `DispatchCombatEnd`, o que el ctx de relics lea/escriba el HP del actor → arregla H1 y H2 de raíz.
-- Botón Reintentar: restaurar HP jugable antes de re-inicializar combate → H3.
-- Unificar los dos paths de reset: los botones defeat/acto pasan por `RunSession.ResetForNewRun` (o cargan MainMenuScene) → H4; de paso resuelve el TODO stale de `:701`.
-- **Tests incluidos (escribir PRIMERO, deben fallar, luego pasar):**
+- [x] **Opción B (cerrada):** TurnManager sincroniza `RunState.PlayerCurrentHP/MaxHP
+      = _player.*` **antes** de `DispatchCombatEnd` (+9 líneas aditivas, solo eso del
+      protegido). Los Retazos mutan/leen RunState fresco → arregla H1 y H2 de raíz.
+- [x] BattleFlowController: eliminado el re-sync tardío de HP (`ReportOutcome`);
+      extraído seam público `ApplyCombatResult(session, victory)` (mutaciones de
+      RunState sin HP ni `LoadScene`) → habilita T1 sin mockear `SceneTransitionManager`.
+- [x] Botón Reintentar → `RunState.PrepareForRetry()` (HP a full, limpia flags) → H3.
+- [x] Botones defeat/acto → `ReturnToMainMenu()` (carga `MainMenuScene` con guard
+      `IsSceneInBuild`); eliminado el reset in-place + `InitializeDeck` + el TODO de
+      `:701` → H4.
+- [x] **Tests (T1 fail-first → verde, T2):**
   - `ReportOutcome_AfterCombatEndHook_PreservesRelicHeal` (T1)
   - `RunState_AfterDefeatWithZeroHp_RetryPathRestoresPlayableHp` (T2)
-- Obstáculo conocido (T1): mockear/extraer `SceneTransitionManager.LoadScene` de `ReportOutcome`.
-- **Coordina con:** paquete docs (ii) — el fix invalida la "vía segura" de RELICS.md (D7/D8).
+- [x] Validación: compilación limpia, suite EditMode **148/148** (146 + T1/T2),
+      H1–H4 verificados en Play (2026-06-14).
+- **Coordina con:** SUB-PR 4 (RELICS.md / D7/D8) — el fix define la regla de autoría
+  OnCombatEnd real: bajo Opción B la **mutación directa de `PlayerCurrentHP` en
+  OnCombatEnd es CORRECTA** (TurnManager sincroniza antes del dispatch), NO el patrón
+  roto que asumía la "vía segura" vía `GrantHeal` (no-op por `IsCombatFinished`).
 
 ### SUB-PR 2 — Red de tests pre-cirugía + cap de Estilo `feat/test-net-pre-surgery`
 

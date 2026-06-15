@@ -10,7 +10,14 @@
 > **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-10 (sesión `modo:gdd`: **M4 reordenado y validado contra el código**. Las sub-tareas de abril estaban viejas — el mecanismo de mejora de cartas ya lo implementó 3C; la afinidad de DD-002 estaba pendiente sin dueño. Decisiones cerradas: mejoras autoradas por carta + test guard, DD-022 afinidad → opción A (implementar GDD). Visor de mazo sale a pulido pre-M4 independiente. Estructura nueva: pre-M4 visor → 4a → 4b → 4c.)
+> **Última actualización:** 2026-06-14 (`modo:implementacion`: **SUB-PR 1 de la
+> auditoría pre-M4 CERRADO** — fix de sincronización fin-de-combate + retry/reset,
+> branch `feat/fix-combat-end-sync`, cierra H1-H4 del Cluster A. Detalle y checkboxes
+> en `audits/2026-06/PLAN_PRE_M4.md §SUB-PR 1`; arquitectura en `_tech_snapshot.md`.
+> Opción B: TurnManager sincroniza HP antes del dispatch OnCombatEnd. EditMode 148/148,
+> H1-H4 validados en Play. Coordina con SUB-PR 4 (RELICS.md). El pulido pre-M4 del
+> visor de mazo sigue siendo el siguiente paso de gameplay.)
+> **Previa:** 2026-06-10 (sesión `modo:gdd`: **M4 reordenado y validado contra el código**. Las sub-tareas de abril estaban viejas — el mecanismo de mejora de cartas ya lo implementó 3C; la afinidad de DD-002 estaba pendiente sin dueño. Decisiones cerradas: mejoras autoradas por carta + test guard, DD-022 afinidad → opción A (implementar GDD). Visor de mazo sale a pulido pre-M4 independiente. Estructura nueva: pre-M4 visor → 4a → 4b → 4c.)
 
 ---
 
