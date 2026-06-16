@@ -10,7 +10,13 @@
 > **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-15 (`modo:implementacion` + follow-up revisión:
+> **Última actualización:** 2026-06-15 (`modo:implementacion`: **SUB-PR 3 CERRADO** —
+> docs paquete (i) Momentum → Estilo. Cierra D1/D2/D3/B11/T2/T6. `COMBAT_ARCHITECTURE.md`
+> reescrito con Contador de Estilo + subsistemas M2/M3 + pipeline fin-de-combate.
+> `GLOSSARY.md` purgado y ampliado con términos M2/M3. `DEV_ONBOARDING.md` con HUD
+> real, 5 commands y tabla Run layer. `CLAUDE_WORKFLOW_GUIDE.md §4` conteo tools + /cierre-sesion.
+> Detalle en `audits/2026-06/PLAN_PRE_M4.md §SUB-PR 3`.)
+> **Previa:** 2026-06-15 (`modo:implementacion` + follow-up revisión:
 > **SUB-PR 6 CERRADO** — tooling hardening T1/T4/T10 (PR #113) + WORKFLOW_GUIDE §4
 > (PR #114) + over-block precision (PR #115). Hook `protect-files.js` con 2 superficies
 > + regex anclada a `run-tool`; `settings.json` consolidado + deny aliases PowerShell

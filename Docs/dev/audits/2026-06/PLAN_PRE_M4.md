@@ -119,15 +119,15 @@ aprueba la edición en el hilo principal.
 - **Suplentes si hay apetito:** T8 (`InitializeDeck` ×2), T10 (round-trip de tipos).
 - **Propósito:** estos tests **congelan el comportamiento que la cirugía pre-M5 no debe romper.** Por eso van antes.
 
-### SUB-PR 3 — Docs paquete (i): Momentum → Estilo `docs/momentum-to-style`
+### SUB-PR 3 — Docs paquete (i): Momentum → Estilo `docs/momentum-to-style` ✅ CERRADO 2026-06-15
 
 **Cierra:** D1, D2, D3, B11 + **T2 y T6 de F4** (mismo PR, todos son docs de onboarding/arquitectura).
 **Esfuerzo:** M (reescritura de COMBAT_ARCHITECTURE; S para los demás).
 
-- `COMBAT_ARCHITECTURE.md`: reescribir con Estilo + flujo Prepare/Resolve + subsistemas M2/M3 (hooks, HealAction, PhaseBased, pipeline fin-de-combate).
-- `GLOSSARY.md`: purgar entradas muertas, agregar términos M2/M3.
-- `DEV_ONBOARDING.md`: HUD real, popup real, 5 commands, "Dónde mirar primero" con el Run layer (T2).
-- Unificar conteo de skills a "~75+, ver `unity-tool-list`" (T6); agregar `/cierre-sesion` a WORKFLOW_GUIDE §4.
+- [x] `COMBAT_ARCHITECTURE.md`: reescrito con Contador de Estilo + flujo TryPrepareCardPlay/ResolvePreparedCardPlay + subsistemas M2/M3 (hooks, HealAction, PhaseBased, pipeline fin-de-combate incl. sync Opción B). Diagramas Mermaid actualizados. Where to look ampliado con Run layer y Retazos.
+- [x] `GLOSSARY.md`: purgadas entradas Momentum/FreePlays (sistema muerto), agregados términos M2/M3 (Contador de Estilo, Retazos, RelicHookDispatcher, RelicHookContext, RelicInstance, HealAction, AIPattern, BattleFlowController, RunFlowController, RunSession, RunState, ElementTypeColors, etc.).
+- [x] `DEV_ONBOARDING.md`: HUD real (Estilo, no Momentum), popup real (WEAK/RESIST/+ESTILO), 5 slash commands (incl. /cierre-sesion), "Dónde mirar primero" con tabla Run layer post-M3 (T2). MCP a "~75+ tools".
+- [x] `CLAUDE_WORKFLOW_GUIDE.md §4`: conteo unificado a "~75+, ver unity-tool-list" (T6) + /cierre-sesion agregado a la lista de commands.
 
 ### SUB-PR 4 — Docs paquete (ii): verdad de Retazos `docs/relics-truth`
 

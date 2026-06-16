@@ -127,10 +127,10 @@ Tu estilo de colaboración ya está definido: **vos diseñás, Claude implementa
 
 ## 4. Tooling de este repo (resumen)
 
-- **Unity MCP** (`ai-game-developer`, IvanMurzak, local): ~70 tools para leer
-  consola, escenas, GameObjects, correr tests NUnit, screenshots. Las de
-  solo-lectura están pre-aprobadas en `.claude/settings.json`; las que mutan
-  piden confirmación.
+- **Unity MCP** (`ai-game-developer`, IvanMurzak, local): ~75+ tools para leer
+  consola, escenas, GameObjects, correr tests NUnit, screenshots (usá
+  `unity-tool-list` para el listado actualizado). Las de solo-lectura están
+  pre-aprobadas en `.claude/settings.json`; las que mutan piden confirmación.
 - **Permisos** — `.claude/settings.json` (compartido, commiteado) +
   `.claude/settings.local.json` (personal, gitignored). Precedencia:
   `deny > ask > allow`.
@@ -144,7 +144,8 @@ Tu estilo de colaboración ya está definido: **vos diseñás, Claude implementa
   `update-config`). Para una edición autorizada, comentá el hook en `settings.json`
   o editá a mano.
 - **Modos como comandos** — `.claude/commands/modo-*.md`. Invocás con
-  `/modo-diseno`, etc.
+  `/modo-diseno`, etc. Incluye también `/cierre-sesion` (checklist de persistencia
+  al terminar un bloque de trabajo).
 
 ---
 
