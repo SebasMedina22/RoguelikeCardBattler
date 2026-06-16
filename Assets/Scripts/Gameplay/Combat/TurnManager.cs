@@ -1004,6 +1004,15 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 _bonusWorldSwitches = 1;
                 _styleCharges = 0;
             }
+            else if (_styleCharges > 5)
+            {
+                // Cap a 5 (D-B). Si ya hay un switch bonus pendiente (_bonusWorldSwitches
+                // != 0), la rama de arriba no dispara y las cargas crecerían sin techo
+                // vía Retazos (RelicGrantStyleCharge). El Contador de Estilo nunca debe
+                // exceder 5 (golden rule §4); SetStyleChargesForTest ya clampaba, este
+                // es el path de producción.
+                _styleCharges = 5;
+            }
         }
 
         internal void RelicGrantBlock(ICombatActor actor, int amount)
