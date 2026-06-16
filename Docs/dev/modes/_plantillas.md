@@ -74,6 +74,10 @@ qué prioridades sugiere]
 ```markdown
 # Spec — [Nombre de la feature]
 
+> **ESTADO: PROPUESTA.** (Al implementarse, cambiar a
+> `IMPLEMENTADO — PR #N (YYYY-MM-DD)`. Lo actualiza `/cierre-sesion` cuando el
+> spec se cierra en código — ver paso "Specs implementados" del ritual.)
+
 ## Origen
 - GDD section / DESIGN_DECISIONS / pedido directo de Sebastián / surgió en playtest
 

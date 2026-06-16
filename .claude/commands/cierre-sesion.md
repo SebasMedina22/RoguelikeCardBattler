@@ -24,6 +24,10 @@ Checklist (en orden; reportá qué se actualizó y qué no aplicaba):
    pidiendo construir algo que ya existía.)
 3. **Tech snapshot:** si hubo cambios estructurales (módulo/subsistema nuevo,
    refactor que mueve responsabilidades), actualizar `Docs/dev/_tech_snapshot.md`.
+3b. **Specs implementados:** si la sesión implementó un spec de
+   `Docs/dev/specs/`, marcar su header con
+   `> **ESTADO: IMPLEMENTADO — PR #N (YYYY-MM-DD)**` (evita que un spec viva como
+   "PROPUESTA" después de estar en código — origen: D14 de la auditoría 2026-06).
 4. **Memoria:** actualizar las memorias de proyecto afectadas (estado, próximo
    paso) y su línea en `MEMORY.md`. Editar archivos existentes — no crear
    duplicados.

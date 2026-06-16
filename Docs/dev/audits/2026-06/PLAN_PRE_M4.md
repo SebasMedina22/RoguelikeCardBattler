@@ -155,15 +155,28 @@ aprueba la edición en el hilo principal.
   método (`IncrementStyleCharges`, `ClearBlock`, `RelicEnqueueExtraDamage`,
   `RelicGrantEnergy`).
 
-### SUB-PR 5 — Docs paquete (iii): números y estado `docs/numbers-and-state`
+### SUB-PR 5 — Docs paquete (iii): números y estado `docs/numbers-and-state` ✅ CERRADO 2026-06-16
 
 **Cierra:** D11, D12, D13, D14 + el arreglo de proceso T3 + HP (tras D-C).
 **Esfuerzo:** S (mecánico).
 
-- `_tech_snapshot.md`: 108 scripts, TurnManager 1088 LOC, purgar "Restricciones conocidas" (3 gaps resueltos), suite 146, gh CLI presente, CI parqueado, LOC corridos.
-- `Combat/CLAUDE.md`: LOC actuales, agregar CombatHudView/CombatBackgroundView, **corregir D13** (efectividad bidireccional — DD-018; es lo más peligroso del paquete), sacar Heal/PhaseBased de "futuros que requieren aprobación".
-- **D14 + T3 (proceso):** marcar los 4 specs (3E/3F/tint/C7) con header `> **ESTADO: IMPLEMENTADO — PR #N (fecha)**`; agregar campo Estado a la plantilla de Spec Técnico; agregar paso "marcar spec IMPLEMENTADO" a `/cierre-sesion`.
-- **HP (tras D-C):** si la verdad es 70 → subir `BattleScene.unity:434` + `TurnManager.cs:26`; si es 60 → corregir GOLDEN_RULES §9 (lo toca Sebastián) + nota de decisión.
+- [x] `_tech_snapshot.md`: **108** scripts (no 53), TurnManager **~1098** LOC (no
+  735/~960), purgada "Restricciones conocidas" (3 gaps PhaseBased/Heal/CalculateIntentValue
+  resueltos en M2-D), suite **148/148** (18 archivos, +CombatEndSyncTests), gh CLI
+  presente (2.92.0), CI parqueado (GameCI/Entitlement, tests.yml desactivado), LOC de
+  vistas corridos (CombatUIController 752, CardHandView 501, CombatHudView 344,
+  PlayerCombatActor 246).
+- [x] `Combat/CLAUDE.md`: LOC actuales, agregados CombatHudView/CombatBackgroundView al
+  bloque de estado, **corregido D13** (efectividad **bidireccional** — DD-018, verificado
+  en `ApplyEnemyToPlayerEffectiveness` líneas 595-597/655-681; era la negación más
+  peligrosa del paquete), sacados Heal/PhaseBased de "futuros que requieren aprobación"
+  (resueltos M2-D).
+- [x] **D14 + T3 (proceso):** los 4 specs (3E #97 / 3F #98 / tint #107 / C7 #105) llevan
+  header `> **ESTADO: IMPLEMENTADO — PR #N (fecha)**`; campo Estado agregado a la plantilla
+  de Spec Técnico (`_plantillas.md`); paso "Specs implementados" agregado a `/cierre-sesion`.
+- [x] **HP (tras D-C):** la verdad es **60** (`TurnManager.cs:26 playerMaxHP = 60`, verificado).
+  `_tech_snapshot` y `Combat/CLAUDE.md` NO contenían el número 70 (grep limpio) → sin cambios
+  ahí. GOLDEN_RULES §9 (70→60) lo edita Sebastián (fuera de este PR).
 
 ### SUB-PR 6 — Tooling: cerrar el bypass + limpieza `chore/tooling-hardening` ✅ CERRADO 2026-06-14
 

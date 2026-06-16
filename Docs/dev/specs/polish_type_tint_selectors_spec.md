@@ -1,5 +1,7 @@
 # Spec — Tinte por tipo elemental en selectores de Hoguera y Tienda (pulido pre-M4, #104)
 
+> **ESTADO: IMPLEMENTADO — PR #107 (2026-06-09).** (`#104` es el issue de backlog de origen.)
+
 ## Origen
 Backlog #104 / pedido directo de Sebastián. Pulido pre-M4. Continúa la línea de
 trabajo de la auditoría de arte C8 (tinte por tipo, `ElementTypeColors`) que ya
