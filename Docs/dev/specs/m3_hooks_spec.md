@@ -348,7 +348,7 @@ public class RelicHookDispatcher
 
 | Punto | Hook | Justificación |
 |-------|------|---------------|
-| `InitializeCombat()`, **después de** `BeginPlayerTurn(useStartingHand: true)` (último statement del método) | `OnCombatStart` | Crítico: se inserta DESPUÉS de `BeginPlayerTurn` para evitar que `ClearBlock(_player)` (línea 356 de `TurnManager`) borre el bloque que un Retazo "+4 bloque al iniciar combate" haya otorgado. En el primer turno `ClearBlock` es no-op (block = 0), así que invocar el hook después es semánticamente correcto: el combate ya está inicializado, el primer turno comenzó, y el GrantBlock del Retazo aplica sobre estado limpio. |
+| `InitializeCombat()`, **después de** `BeginPlayerTurn(useStartingHand: true)` (último statement del método) | `OnCombatStart` | Crítico: se inserta DESPUÉS de `BeginPlayerTurn` para evitar que `ClearBlock(_player)` (que corre dentro de `BeginPlayerTurn`) borre el bloque que un Retazo "+4 bloque al iniciar combate" haya otorgado. En el primer turno `ClearBlock` es no-op (block = 0), así que invocar el hook después es semánticamente correcto: el combate ya está inicializado, el primer turno comenzó, y el GrantBlock del Retazo aplica sobre estado limpio. |
 | `BeginPlayerTurn()`, después de `ClearBlock(_player)` y **antes de** `_player.DrawCards(...)` | `OnPlayerTurnStart` | Permite Retazos que modifican draw size, energía extra, etc. |
 | `ApplyPlayerToEnemyEffectiveness()`, después de calcular `finalAmount` y **antes de** `PlayerHitEffectiveness?.Invoke(...)` | `OnDamageDealt` | El daño post-efectividad es el que el jugador "siente", y los Retazos deben poder mutarlo antes de la cola. |
 | `ApplyEnemyToPlayerEffectiveness()`, después de calcular `finalAmount` y antes de `EnemyHitEffectiveness?.Invoke(...)` | `OnDamageTaken` | Permite Retazos defensivos ("daño recibido -1"). |
@@ -366,6 +366,18 @@ acciones post-combate. El efecto del Retazo escribe directo:
 `ctx.RunState.Gold += 5`, `ctx.RunState.PlayerCurrentHP = Mathf.Min(...)`. La
 `ActionQueue` ya no se procesa una vez detectado Victory/Defeat, por lo que
 encolar ahí sería frágil.
+
+**Aclaración (fix de fin-de-combate, SUB-PR 1 / 2026-06-14, Opción B).** Los
+métodos `Grant*` del contexto (`GrantHeal`, `GrantBlock`, `GrantStyleCharge`, …)
+son **no-op en `OnCombatEnd`**. `CheckCombatEndConditions` setea
+`_phase = Victory/Defeat` ANTES de llamar a `DispatchCombatEnd`, así que durante
+el dispatch `IsCombatFinished == true` y cada `RelicGrant*` hace early-return
+(el guard de §Guards comunes). Por eso heal/escudo post-combate van **sí o sí
+por mutación directa de `RunState`**, no por la API de combate. Y es seguro
+porque `DispatchCombatEnd` sincroniza `RunState.PlayerCurrentHP/MaxHP =
+_player.*` ANTES del dispatch → el `RunState` es autoritativo en este hook. Esto
+**invierte** la guía vieja D7/D8 (que trataba la mutación directa como "patrón
+roto" y `GrantHeal` como "vía correcta"): el fix demostró lo contrario.
 
 ### Eventos
 
@@ -433,7 +445,7 @@ Cobertura por categoría del Insight 3:
 | "Cada 3 cartas Skill → +1 energía siguiente turno" | counter en `OnCardPlayed` + `GrantEnergy` en `OnPlayerTurnStart` siguiente |
 | "+5 oro al final de combate" | `ctx.RunState.Gold += 5` (mutación directa, [CERRADO 3]) |
 | "Al cambiar de mundo, +5 bloque" | `GrantBlock(player, 5)` en `OnWorldSwitch` |
-| "Heal 3 al matar enemigo" | `GrantHeal(player, 3)` en `OnCombatEnd` (Victory) |
+| "Heal 3 al matar enemigo" | mutación directa `ctx.RunState.PlayerCurrentHP = Mathf.Min(RunState.PlayerMaxHP, RunState.PlayerCurrentHP + 3)` en `OnCombatEnd` (Victory). **NO** `GrantHeal`: es no-op tras Victory/Defeat ([CERRADO 3]) |
 | "+1 carga de Estilo al cambiar de mundo" | `GrantStyleCharge(1)` en `OnWorldSwitch` |
 | "Tu primer cambio de mundo encola 5 daño extra" | `EnqueueExtraDamage(enemy, 5, type)` en `OnWorldSwitch` |
 
@@ -442,8 +454,9 @@ Implementación en `TurnManager`: cada método del contexto delega a un método
 
 **Semántica precisa de cada método:**
 
-- **`GrantStyleCharge(amount)`** aplica la **misma lógica** que
-  `ApplyPlayerToEnemyEffectiveness` (líneas 583-593 de `TurnManager`):
+- **`GrantStyleCharge(amount)`** delega en el método `IncrementStyleCharges`
+  de `TurnManager` — la **misma fuente de verdad** que usa el path orgánico de
+  `ApplyPlayerToEnemyEffectiveness` cuando un SuperEficaz genera +1 carga:
   incrementa `_styleCharges`; si llega a 5 con `_bonusWorldSwitches == 0`,
   otorga el bonus switch y resetea las cargas a 0. Esto preserva la golden
   rule §4 (Contador de Estilo). NO basta con clampear a 5 — sin el reset +
@@ -604,14 +617,16 @@ Durante la implementación de Sub-PR 3A, el agente tomó 5 decisiones que no
 estaban explícitas en el spec original. Quedan registradas acá para
 trazabilidad y porque varias tienen impacto en sub-PRs futuras.
 
-**[IMPL 1] `OnDamageDealt` se dispara solo en el path tipado, no en el path
-de cartas neutras (`ElementType.None`).** En `ApplyPlayerToEnemyEffectiveness`
-(líneas 588-630), el branch de cartas None retorna temprano sin pasar por el
-hook. Razón: agregar el dispatch ahí hubiera sido un 8º punto en TurnManager
-fuera de los 7 aprobados. Consecuencia: Retazos de modificador de daño NO
-afectan cartas neutras hoy. **Reabrir en Sub-PR 3B** cuando se diseñen
-Retazos de esa categoría — ver Insight 5 para las dos opciones (extender el
-hook al path None con aprobación, o restringir Retazos a cartas tipadas).
+**[IMPL 1] `OnDamageDealt` en el path de cartas neutras (`ElementType.None`) —
+CERRADO en Sub-PR 3B.** En diseño 3A el branch de cartas None retornaba temprano
+sin disparar el hook (el 8º punto de dispatch quedaba fuera de los 7 aprobados).
+**3B cerró esto con aprobación explícita** (ver `RELICS.md §Decisiones cerradas`,
+ítem 1 — opción A del Insight 5): el branch `attackerType == ElementType.None`
+de `ApplyPlayerToEnemyEffectiveness` ahora dispara `OnDamageDealt` con el mismo
+contrato mutable que el path tipado (los Retazos mutan `data.Amount` sobre el
+daño neutro al 90% de DD-002). Consecuencia: los Retazos de modificador de daño
+**sí** afectan cartas neutras hoy. El `TurnManager` quedó con **8** puntos de
+dispatch, no 7.
 
 **[IMPL 2] Try/catch alrededor de `effect.OnHook(hook, data)` en el
 dispatcher.** No estaba en el spec; el agente lo agregó como defensa: un
@@ -627,15 +642,14 @@ implicaría duplicar la efectividad orgánica (el daño raw quedaría con
 multiplicador, lo cual contradice [CERRADO 3] de la doc de
 `EnqueueExtraDamage`). El parámetro se conserva en la signature como metadata
 para futuros usos (animaciones diferenciadas por tipo en UI de 3B, posibles
-Retazos en M5/M6 que sí lo lean). Comentario explícito en
-[TurnManager.cs:1018-1041](Assets/Scripts/Gameplay/Combat/TurnManager.cs#L1018).
+Retazos en M5/M6 que sí lo lean). Comentario explícito en el método
+`RelicEnqueueExtraDamage` de `TurnManager`.
 
 **[IMPL 4] `RelicGrantEnergy` es no-op silencioso para non-player actors.**
 Razón: la energía es concepto del jugador (`PlayerCombatActor.GainEnergy`);
 `ICombatActor` no expone `GainEnergy` y el enemigo no tiene pool de energía.
 Si un Retazo intenta `GrantEnergy(enemy, 1)`, el método valida y retorna sin
-loggear. Documentado en
-[TurnManager.cs:992-1000](Assets/Scripts/Gameplay/Combat/TurnManager.cs#L992).
+loggear. Documentado en el método `RelicGrantEnergy` de `TurnManager`.
 
 **[IMPL 5] Logger del dispatcher no spammea cuando hay 0 subscribers.**
 Aún con `LogDispatches = true`, si el filtrado del hook devuelve 0
@@ -647,6 +661,29 @@ no es prioridad ahora.
 
 Ninguna de estas decisiones rompe el spec ni reabre las 5 [CERRADO]s. Todas
 son refinamientos de implementación dentro del alcance acordado.
+
+## Consecuencias de la semántica del Contador de Estilo (D-A, 2026-06-12)
+
+Sebastián ratificó el Contador de Estilo como **PRE-block** (D-A, ver
+`Docs/dev/audits/2026-06/PLAN_PRE_M4.md §0`): un golpe SuperEficaz otorga +1
+carga aunque el enemigo lo bloquee al 100%. Esto = comportamiento actual del
+código y tiene dos consecuencias para los Retazos:
+
+1. **La carga se otorga ANTES del hook `OnDamageDealt`.** En
+   `ApplyPlayerToEnemyEffectiveness` el orden es: calcular `finalAmount`
+   post-efectividad → `IncrementStyleCharges(1)` si fue SuperEficaz con
+   `finalAmount > 0` → recién entonces `Dispatch(OnDamageDealt)`. La carga
+   depende del daño post-efectividad **pre-block** (el bloqueo del enemigo se
+   aplica más tarde, en `DamageAction.Execute`). Por lo tanto, un Retazo que en
+   `OnDamageDealt` baje `data.Amount` a 0 **no** revierte la carga ya otorgada
+   — la semántica pre-block es independiente del valor final encolado.
+
+2. **Retazos que leen/otorgan cargas operan sobre el conteo pre-block.**
+   `GrantStyleCharge` (R-SW-2 "Estilo Doble") y los Retazos que condicionan por
+   `StyleCharges` (R-DMG-4 "Combo de cargas") ven el contador tal cual lo dejó
+   el pre-block, sin descuento por bloqueos enemigos. Es intencional y es el
+   contrato que el test `StyleCharge_SuperEffectiveHitFullyBlocked_StillGrantsCharge`
+   (SUB-PR 2) congela.
 
 ## Alternativas consideradas
 

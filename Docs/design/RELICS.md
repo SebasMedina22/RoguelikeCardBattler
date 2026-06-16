@@ -45,9 +45,10 @@ Effect            : IRelicEffect           ← clase concreta con campos seriali
 1. **Cartas neutras y `OnDamageDealt`** — Insight 5: hoy el dispatch de `OnDamageDealt` NO se dispara en el path `attackerType == ElementType.None`. Cualquier Retazo de "Modificador de daño ofensivo" basado en `OnDamageDealt` requiere agregar el 8º punto de inserción en `TurnManager` (ya marcado en roadmap 3B con `[REQUIERE APROBACIÓN]`). Decisión confirmada en Insight 5 = opción A (extender al path None). Sin ese cambio, los Retazos ofensivos serán contraintuitivos al jugar Strike neutro.
 2. **`EnqueueExtraDamage` no re-dispara `OnDamageDealt`** — daño "raw" sin efectividad ni cargas de Estilo. Si querés que el daño extra se beneficie de WEAK/RESIST, mutá `data.Amount` en `OnDamageDealt`; no uses `EnqueueExtraDamage`.
 3. **`GrantEnergy` solo aplica al player** ([IMPL 4] del spec 3A) — no-op silencioso para enemigos.
-4. **`OnCombatEnd` muta `RunState` directamente** ([CERRADO 3]) — para +oro, heal post-combate, etc. NO encolar acciones.
+4. **`OnCombatEnd` muta `RunState` directamente** ([CERRADO 3]) — para +oro, heal post-combate, etc. NO encolar acciones. **Regla de autoría (fijada por el fix de fin-de-combate, SUB-PR 1 / 2026-06-14, Opción B):** `TurnManager.DispatchCombatEnd` sincroniza `RunState.PlayerCurrentHP/MaxHP = _player.*` ANTES de disparar los hooks → en `OnCombatEnd` el `RunState` ya es autoritativo y la mutación directa de `PlayerCurrentHP` es la vía CORRECTA. Los `Grant*` del contexto (`GrantHeal`, `GrantBlock`, …) son **no-op** acá: `_phase` ya es Victory/Defeat → `IsCombatFinished == true` → cada `RelicGrant*` hace early-return. Para heal/escudo post-combate, escribí directo a `RunState`. (Esto INVIERTE la guía vieja D7/D8 que llamaba "patrón roto" a la mutación directa y "vía correcta" a `GrantHeal`.)
 5. **`Counters` los maneja el efecto** — el dispatcher no toca counters. Cada efecto resetea sus claves en el hook que tenga sentido (`OnPlayerTurnStart` para por-turno, `OnCombatEnd` para por-combate).
 6. **Orden por `AcquisitionOrder` ascendente** — relevante para Retazos que se encadenan (ej: "+5 daño" antes que "x2 daño" da resultado distinto al inverso). Sebastián puede usar esto como vector de build.
+7. **Orden de hooks en el arranque de combate** — `OnCombatStart` se dispara DESPUÉS del primer `BeginPlayerTurn` (para que `ClearBlock` no borre el bloque de apertura). Como `OnPlayerTurnStart` se dispara DENTRO de `BeginPlayerTurn`, en el turno 1 el orden real es **`OnPlayerTurnStart` → `OnCombatStart`** (contraintuitivo). Consecuencia para Retazos que resetean counters en `OnCombatStart` e incrementan en `OnPlayerTurnStart`: en el turno 1 el incremento ocurre ANTES del reset, y el reset de `OnCombatStart` los deja en 0 para el turno siguiente. Si un counter necesita estar limpio durante el primer `OnPlayerTurnStart`, inicializalo perezosamente (default 0) en vez de depender del reset de `OnCombatStart`.
 
 ---
 
@@ -214,8 +215,8 @@ Total: 23. Las 30 propuestas que siguen son un menú — Sebastián elige cuále
 
 ### Categoría 5 — Economía / fin de combate (`OnCombatEnd`)
 
-> **Hook:** `OnCombatEnd`. **Payload:** `CombatEndHookData { bool Victory, EnemyDefinition Enemy }`.
-> **Acceso a `RunState` directo** ([CERRADO 3] del spec 3A). Mutación de `Gold`, `PlayerCurrentHP` permitida.
+> **Hook:** `OnCombatEnd`. **Payload:** `CombatEndHookData { bool Victory, EnemyDefinition Enemy, bool IsBoss, bool IsElite }`.
+> **Acceso a `RunState` directo** ([CERRADO 3] del spec 3A). **Mutación directa de `Gold` y `PlayerCurrentHP` es la vía CORRECTA** — bajo el fix Opción B (SUB-PR 1, 2026-06-14) `TurnManager.DispatchCombatEnd` sincroniza `RunState.PlayerCurrentHP/MaxHP = _player.*` ANTES del dispatch, así que `RunState` es autoritativo aquí. `ctx.GrantHeal(...)` y demás `Grant*` son **no-op** en este hook (`IsCombatFinished == true`): usá mutación directa de `RunState`, nunca la API de combate.
 
 **R-END-1 — "Botín extra"**
 - Mecánica: +N oro al ganar cada combate.
@@ -225,7 +226,7 @@ Total: 23. Las 30 propuestas que siguen son un menú — Sebastián elige cuále
 
 **R-END-2 — "Heal post-combate"**
 - Mecánica: heal N HP al ganar cada combate.
-- Implementación: en `OnCombatEnd`, si `data.Victory`, mutación directa `ctx.RunState.PlayerCurrentHP = Mathf.Min(maxHp, current + N)` o usar `ctx.GrantHeal(player, N)` (verificar que el actor siga referenciable post-Victory — `[ABIERTO]`; si no, mutación directa de RunState es la vía segura).
+- Implementación: en `OnCombatEnd`, si `data.Victory`, **mutación directa**: `ctx.RunState.PlayerCurrentHP = Mathf.Min(ctx.RunState.PlayerMaxHP, ctx.RunState.PlayerCurrentHP + N)`. **NO usar `ctx.GrantHeal(player, N)`**: en `OnCombatEnd` es no-op (`IsCombatFinished == true`). El `RunState` ya está sincronizado con el HP real del actor (fix Opción B, SUB-PR 1), así que `PlayerCurrentHP`/`PlayerMaxHP` son los valores correctos para el clamp. `[ABIERTO]` cerrado: la vía es mutación directa, sin ambigüedad.
 - Valor: `[PROPUESTA] N = 4`.
 - Rareza: Común. **Recomendado para pool inicial (slot 13).**
 
@@ -237,7 +238,7 @@ Total: 23. Las 30 propuestas que siguen son un menú — Sebastián elige cuále
 
 **R-END-4 — "Recompensa de purista"**
 - Mecánica: si terminaste el combate con HP completo, +N oro.
-- Implementación: en `OnCombatEnd`, si `data.Victory && ctx.RunState.PlayerCurrentHP == maxHp`, `ctx.RunState.Gold += N`.
+- Implementación: en `OnCombatEnd`, si `data.Victory && ctx.RunState.PlayerCurrentHP == ctx.RunState.PlayerMaxHP`, `ctx.RunState.Gold += N`. El chequeo de HP-lleno funciona porque el fix Opción B (SUB-PR 1) sincroniza `RunState.PlayerCurrentHP/MaxHP` con el actor ANTES del dispatch — sin ese sync, `RunState` tendría el HP pre-combate y el chequeo sería incorrecto.
 - Valor: `[PROPUESTA] N = 8`.
 - Rareza: Raro. Backlog candidato Elite.
 
