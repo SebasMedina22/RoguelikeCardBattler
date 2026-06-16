@@ -7,7 +7,19 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-14 — **SUB-PR 1 auditoría: fix de sincronización
+> **Última actualización:** 2026-06-16 — **SUB-PR 5 auditoría: números y estado**
+> (branch `docs/numbers-and-state`). Refresh mecánico de cifras desviadas, sin
+> cambios de código: **108** scripts C# en `Assets/Scripts` (no 53); `TurnManager.cs`
+> **~1098 LOC** (no 735/~960 contradictorios); LOC de vistas de combate corridos
+> (`CombatUIController` 752, `CardHandView` 501, `CombatHudView` 344,
+> `PlayerCombatActor` 246); suite EditMode **148/148** (18 archivos, +`CombatEndSyncTests`);
+> `gh` CLI **presente** (2.92.0) — PRs vía `gh pr create`; **CI parqueado** (GameCI
+> bloqueado por licencias Entitlement de Unity 6; `tests.yml` commiteado pero
+> DESACTIVADO, `workflow_dispatch`); purgada la sección "Restricciones conocidas"
+> de los 3 gaps de TurnManager (PhaseBased / EffectType.Heal / CalculateIntentValue)
+> **resueltos en M2 Sub-PR D**. HP base = 60 (D-C).
+>
+> **Última actualización previa:** 2026-06-14 — **SUB-PR 1 auditoría: fix de sincronización
 > fin-de-combate + retry/reset** (branch `feat/fix-combat-end-sync`, spec
 > `Docs/dev/specs/fix_combat_end_hp_sync_spec.md`, Opción B). Raíz del cluster H1-H4:
 > RunState tenía HP stale cuando corrían los hooks OnCombatEnd. **Fix:**
@@ -226,7 +238,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 17 archivos de test en `Assets/Tests/EditMode/` (suite 142/142)
+- 18 archivos de test en `Assets/Tests/EditMode/` (suite 148/148)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -320,7 +332,7 @@ Exclusivamente vía `RunSession.State` (= `RunState`). Flags principales:
 
 ## Estructura de archivos
 
-### Scripts (`Assets/Scripts/`) — 53 archivos C#
+### Scripts (`Assets/Scripts/`) — 108 archivos C#
 
 ```
 Core/
@@ -368,18 +380,18 @@ Gameplay/
     CardEnums.cs                 ← CardType, EffectType, EffectTarget
     EffectRef.cs                 ← referencia a efecto en SO
   Combat/
-    TurnManager.cs               ← 735 loc — PROTEGIDO
+    TurnManager.cs               ← ~1098 loc — PROTEGIDO
     ActionQueue.cs               ← 85 loc — PROTEGIDO
-    PlayerCombatActor.cs         ← 236 loc — PROTEGIDO
+    PlayerCombatActor.cs         ← 246 loc — PROTEGIDO
     EnemyCombatActor.cs
     ICombatActor.cs, IGameAction.cs, ActionContext.cs
     ElementTypes.cs              ← 7 tipos + matriz de efectividad
     ElementTypeColors.cs         ← C8: fuente única de verdad ElementType→Color (tinte UI)
     SpriteFrameAnimatorUI.cs
-    CombatUIController.cs        ← 710 loc (era 1473)
+    CombatUIController.cs        ← 752 loc (era 1473)
     CombatFeedbackView.cs        ← 357 loc (extraído en Fase 1)
-    CardHandView.cs              ← 400 loc (extraído en Fase 2)
-    CombatHudView.cs             ← 327 loc (extraído en Fase 3)
+    CardHandView.cs              ← 501 loc (extraído en Fase 2)
+    CombatHudView.cs             ← 344 loc (extraído en Fase 3)
     CombatBackgroundView.cs      ← 182 loc (extraído en Fase 4)
     CombatAmbientParticles.cs
     Actions/
@@ -435,7 +447,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 17 archivos (suite EditMode 146/146)
+### Tests (`Assets/Tests/EditMode/`) — 18 archivos (suite EditMode 148/148)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -464,6 +476,9 @@ CardArtTests.cs                  ← Auditoría de arte C7 (5 casos: campo Art d
                                    null, set/omit en SetDebugData, persistencia en el
                                    clon de upgrade, herencia dual por mundo, resolución
                                    vía CardDeckEntry)
+CombatEndSyncTests.cs            ← Auditoría SUB-PR 1 (T1: el seam ApplyCombatResult
+                                   no pisa el heal de Retazos OnCombatEnd; T2: el retry
+                                   tras derrota con 0 HP restaura HP jugable)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
@@ -493,7 +508,7 @@ aprobación explícita de Sebastián antes de proceder:
 
 | Archivo | LOC | Por qué está protegido |
 |---------|-----|------------------------|
-| `TurnManager.cs` | ~960 | Flujo de turnos, efectividad, energía, Contador de Estilo, IA enemiga, world switch, hooks de Retazos (3A) + API delegada |
+| `TurnManager.cs` | ~1098 | Flujo de turnos, efectividad, energía, Contador de Estilo, IA enemiga, world switch, hooks de Retazos (3A) + API delegada |
 | `ActionQueue.cs` | 85 | Orden determinista de ejecución (FIFO) |
 | `PlayerCombatActor.cs` | 236 | Mecánicas del jugador en combate |
 
@@ -550,15 +565,19 @@ de tocar.
 
 ## Restricciones conocidas
 
-- **No CI/CD** configurado. Tests se corren localmente vía Unity Test Runner.
-- **No gh CLI** instalado. PRs se crean manualmente desde la URL que devuelve `git push`.
+- **CI parqueado.** GameCI quedó bloqueado por el modelo de licencias Entitlement
+  de Unity 6. El workflow `tests.yml` está commiteado pero DESACTIVADO
+  (`workflow_dispatch` only); los tests se corren localmente vía Unity Test
+  Runner / Unity-MCP (`tests-run`). Detalle en `_roadmap.md` Future work.
+- **`gh` CLI presente** (2.92.0). Los PRs se crean con `gh pr create`.
 - **Comentarios mezclados español/inglés** sin criterio fijo (deuda menor, ver roadmap).
-- **CombatUIController** (710 loc post-Fase 4). Descomposición completa — es ahora
-  un orquestador puro de BuildUI y lifecycle. Listo para recibir features de M2.
-- **TurnManager tiene gaps conocidos** que requieren tocar el archivo protegido:
-  - PhaseBased AI declarado en enum pero sin implementación en `SelectEnemyMove()`
-  - `EffectType.Heal` no existe (BossAct1 Regenerate usa Block como workaround)
-  - `CalculateIntentValue()` solo maneja Attack+Damage y Defend+Block
+- **CombatUIController** (752 loc post-Fase 4). Descomposición completa — es ahora
+  un orquestador puro de BuildUI y lifecycle.
+
+> **Nota:** los 3 gaps de `TurnManager` que listaba esta sección (PhaseBased AI,
+> `EffectType.Heal`, `CalculateIntentValue`) **se resolvieron en M2 Sub-PR D
+> (2026-05-07)** — ya no son restricciones. Ver `Assets/Scripts/Gameplay/Combat/
+> CLAUDE.md §"Deuda técnica resuelta en Sub-PR D"`.
 
 ---
 

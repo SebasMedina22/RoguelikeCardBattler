@@ -1,5 +1,7 @@
 # Spec — Sub-PR 3F: Mapa horizontal (refactor scroll lateral)
 
+> **ESTADO: IMPLEMENTADO — PR #98 (2026-06-05).** Cierra M3.
+
 > Estado: **CERRADO** (sin decisiones abiertas). Último sub-PR de M3 — su cierre
 > cierra el milestone. Diseñado 2026-06-05 en `modo:diseno`.
 

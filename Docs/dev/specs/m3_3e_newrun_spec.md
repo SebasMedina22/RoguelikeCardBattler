@@ -1,5 +1,7 @@
 # Spec — Sub-PR 3E: NewRunScene (selección de tipos + draft de carta dual + arranque de run)
 
+> **ESTADO: IMPLEMENTADO — PR #97 (2026-06-04).**
+
 > Generado en `modo:diseno` el 2026-06-04. Todas las decisiones cerradas — spec
 > implementable sin tocar archivos protegidos. El prompt de handoff para
 > `modo:implementacion` está al final.

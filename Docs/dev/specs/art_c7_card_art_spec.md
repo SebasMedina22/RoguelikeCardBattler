@@ -1,5 +1,7 @@
 # Spec — C7: Cara de carta (arte de cartas) · habilitación de CÓDIGO
 
+> **ESTADO: IMPLEMENTADO — PR #105 (2026-06-05).** (Código + Fase 4 de integración de placeholders.)
+
 > **Generado en `modo:diseno`, 2026-06-05.** Es el spec de la pieza de CÓDIGO del
 > slot **C7** del plan de auditoría de arte (`Docs/design/ART_NEEDS.md`). C7 es
 > **mixto**: primero el código (este spec), DESPUÉS el prompt de IA.
