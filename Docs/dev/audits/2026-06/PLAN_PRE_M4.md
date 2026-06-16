@@ -129,23 +129,31 @@ aprueba la edición en el hilo principal.
 - [x] `DEV_ONBOARDING.md`: HUD real (Estilo, no Momentum), popup real (WEAK/RESIST/+ESTILO), 5 slash commands (incl. /cierre-sesion), "Dónde mirar primero" con tabla Run layer post-M3 (T2). MCP a "~75+ tools".
 - [x] `CLAUDE_WORKFLOW_GUIDE.md §4`: conteo unificado a "~75+, ver unity-tool-list" (T6) + /cierre-sesion agregado a la lista de commands.
 
-### SUB-PR 4 — Docs paquete (ii): verdad de Retazos `docs/relics-truth`
+### SUB-PR 4 — Docs paquete (ii): verdad de Retazos `docs/relics-truth` ✅ CERRADO 2026-06-16
 
 **Cierra:** D7, D8, D9, D10.
 **Esfuerzo:** S.
 **Coordina con:** SUB-PR 1 ✅ CERRADO — el fix YA fijó la regla de autoría real (ver abajo).
 **Depende de:** decisión D-A (D9 documenta las consecuencias de la semántica).
 
-- `RELICS.md`: corregir §217-218/228/240 con la regla de autoría **que el SUB-PR 1
-  fijó (Opción B, 2026-06-14)**: bajo este diseño la **mutación directa de
-  `PlayerCurrentHP` en OnCombatEnd ES CORRECTA** — `TurnManager.DispatchCombatEnd`
-  sincroniza `RunState.PlayerCurrentHP/MaxHP = _player.*` ANTES de disparar los hooks,
-  así RunState es autoritativo y `BattleFlowController` ya no pisa. `GrantHeal` sobre
-  el actor en OnCombatEnd **NO es viable** (sería no-op: `IsCombatFinished` ya es `true`).
-  Esto INVIERTE la guía vieja de D7/D8 ("mutación directa = patrón roto, GrantHeal =
-  vía correcta"), que el fix refutó. Agregar la regla de orden de hooks
-  (OnPlayerTurnStart/OnCombatStart).
-- `m3_hooks_spec.md`: corregir [CERRADO 3] y la inconsistencia con su tabla :436; registrar el cierre de [IMPL 1] (8º dispatch de cartas neutras); subsección "Consecuencias de la semántica" tras D-A; arreglar referencias de línea corridas (citar métodos).
+- [x] `RELICS.md`: corregido §Advertencias (punto 4 + nuevo punto 7 de orden de
+  hooks), §Categoría 5 (header `OnCombatEnd`), R-END-2 y R-END-4 con la regla de
+  autoría **que el SUB-PR 1 fijó (Opción B, 2026-06-14)**: bajo este diseño la
+  **mutación directa de `PlayerCurrentHP` en OnCombatEnd ES CORRECTA** —
+  `TurnManager.DispatchCombatEnd` sincroniza `RunState.PlayerCurrentHP/MaxHP =
+  _player.*` ANTES de disparar los hooks (verificado en `TurnManager.cs` líneas
+  746-755), así RunState es autoritativo y `BattleFlowController` ya no pisa.
+  `GrantHeal` sobre el actor en OnCombatEnd **NO es viable** (no-op: `_phase` ya
+  es Victory/Defeat → `IsCombatFinished == true` → `RelicGrantHeal` early-return,
+  verificado líneas 1015-1019). Invierte la guía vieja D7/D8. Agregada la regla de
+  orden de hooks (en turno 1: `OnPlayerTurnStart` → `OnCombatStart`).
+- [x] `m3_hooks_spec.md`: corregido [CERRADO 3] (aclaración Grant* no-op) y la
+  inconsistencia con su tabla :436 (heal por mutación directa, no `GrantHeal`);
+  registrado el cierre de [IMPL 1] (8º dispatch de cartas neutras, verificado
+  líneas 608-620); subsección "Consecuencias de la semántica del Contador de
+  Estilo" tras D-A; referencias de línea corridas reemplazadas por nombres de
+  método (`IncrementStyleCharges`, `ClearBlock`, `RelicEnqueueExtraDamage`,
+  `RelicGrantEnergy`).
 
 ### SUB-PR 5 — Docs paquete (iii): números y estado `docs/numbers-and-state`
 
