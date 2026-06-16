@@ -10,7 +10,17 @@
 > **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-15 (`modo:implementacion`: **SUB-PR 3 CERRADO** —
+> **Última actualización:** 2026-06-16 (`modo:implementacion`: **SUB-PR 4 ✅ (#117) +
+> SUB-PR 5 ✅ (#118) CERRADOS** — paquetes docs (ii) verdad de Retazos y (iii) números/estado.
+> SUB-PR 4 (D7-D10): `RELICS.md` + `m3_hooks_spec.md` invierten la guía D7/D8 — mutación
+> directa de `PlayerCurrentHP` en OnCombatEnd es CORRECTA (sync Opción B), `Grant*` son
+> no-op ahí; + regla de orden de hooks + consecuencias D-A. SUB-PR 5 (D11-D14+D-C):
+> `_tech_snapshot` (108 scripts, TurnManager ~1098 LOC, suite 148, gh presente, CI parqueado,
+> gaps purgados) + `Combat/CLAUDE.md` (efectividad **bidireccional** DD-018) + 4 specs marcados
+> IMPLEMENTADO + campo Estado en plantilla + paso en /cierre-sesion. **Remediación pre-M4: solo
+> queda SUB-PR 2** (red de tests + cap Estilo a 5, requiere aprobación de edición de TurnManager).
+> Detalle en `audits/2026-06/PLAN_PRE_M4.md §SUB-PR 4/5`.)
+> **Previa:** 2026-06-15 (`modo:implementacion`: **SUB-PR 3 CERRADO** —
 > docs paquete (i) Momentum → Estilo. Cierra D1/D2/D3/B11/T2/T6. `COMBAT_ARCHITECTURE.md`
 > reescrito con Contador de Estilo + subsistemas M2/M3 + pipeline fin-de-combate.
 > `GLOSSARY.md` purgado y ampliado con términos M2/M3. `DEV_ONBOARDING.md` con HUD
