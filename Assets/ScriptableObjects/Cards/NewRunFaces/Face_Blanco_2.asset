@@ -27,10 +27,16 @@ MonoBehaviour:
     statusType: 0
     extraParams: []
   elementType: 6
+  affinity: 0
   art: {fileID: 21300000, guid: 07049f0ce0267e44d9bf1c7a32e088e0, type: 3}
   _upgrade:
     overrideCost: 0
     upgradedCost: 0
-    upgradedEffects: []
+    upgradedEffects:
+    - effectType: 1
+      value: 10
+      target: 0
+      statusType: 0
+      extraParams: []
     upgradedName: 
-    upgradedDescription: 
+    upgradedDescription: Bloquea 10.

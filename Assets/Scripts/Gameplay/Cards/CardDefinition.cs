@@ -20,6 +20,13 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         [SerializeField] private List<string> tags = new List<string>();
         [SerializeField] private List<EffectRef> effects = new List<EffectRef>();
         [SerializeField] private ElementType elementType = ElementType.None;
+        // Afinidad de tipo (4a, DD-022 opción A): si true, la carta NO tiene tipo
+        // fijo — adopta en runtime el tipo del mundo activo. AffinityResolver la
+        // resuelve a una dual runtime (lado A = tipo Mundo A, lado B = tipo Mundo B)
+        // antes de que llegue al mazo. Su elementType autorado en el SO es
+        // irrelevante (se autora None). affinity=false → usa elementType fijo
+        // (incluido None = carta neutra 90%).
+        [SerializeField] private bool affinity = false;
         [SerializeField] private Sprite art = null;   // ilustración de la carta (C7). null = fallback a texto.
         [SerializeField] private CardUpgradeDef _upgrade = new CardUpgradeDef();
 
@@ -35,6 +42,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
         public IReadOnlyList<string> Tags => tags;
         public IReadOnlyList<EffectRef> Effects => effects;
         public ElementType ElementType => elementType;
+        public bool Affinity => affinity;
         public Sprite Art => art;
 
         public void SetDebugData(
@@ -48,7 +56,8 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             List<string> newTags,
             List<EffectRef> newEffects,
             ElementType newElementType = ElementType.None,
-            Sprite newArt = null)
+            Sprite newArt = null,
+            bool newAffinity = false)
         {
             id = newId;
             cardName = newName;
@@ -61,6 +70,7 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             effects = newEffects;
             elementType = newElementType;
             art = newArt;
+            affinity = newAffinity;
         }
 
         /// <summary>
@@ -98,8 +108,45 @@ namespace RoguelikeCardBattler.Gameplay.Cards
                 new List<string>(tags),
                 newEffects,
                 elementType,
-                art);   // el clon de upgrade conserva la ilustración base (D3)
+                art,        // el clon de upgrade conserva la ilustración base (D3)
+                affinity);  // y el flag de afinidad (caso defensivo: en el flujo normal
+                            // el afín ya es dual antes de mejorarse, ver CreateAffinityVariant)
 
+            return clone;
+        }
+
+        /// <summary>
+        /// Crea una variante runtime de esta carta tipada para un mundo concreto
+        /// (4a, afinidad DD-022). Idéntica al cuerpo (effects, cost, name,
+        /// description, type, rarity, target, tags, art) salvo que su
+        /// <see cref="ElementType"/> pasa a ser <paramref name="worldType"/> y su
+        /// <see cref="Affinity"/> queda en false (ya resuelta a un tipo).
+        ///
+        /// A diferencia de <see cref="CreateUpgradedClone"/> (que NO copia el
+        /// payload de upgrade), PRESERVA <c>_upgrade</c> compartiendo la referencia
+        /// para que la dual afín resuelta siga siendo mejorable en la Hoguera.
+        /// El <see cref="CardUpgradeDef"/> es read-only en runtime, así que
+        /// compartir la referencia es seguro. NO toca el SO de origen.
+        /// </summary>
+        public CardDefinition CreateAffinityVariant(ElementType worldType)
+        {
+            CardDefinition clone = ScriptableObject.CreateInstance<CardDefinition>();
+
+            clone.SetDebugData(
+                id,
+                cardName,
+                description,
+                cost,
+                type,
+                rarity,
+                target,
+                new List<string>(tags),
+                new List<EffectRef>(effects),
+                worldType,
+                art,
+                false);   // affinity=false: la variante ya está resuelta a worldType
+
+            clone._upgrade = _upgrade;   // comparte el payload de upgrade (read-only)
             return clone;
         }
     }

@@ -27,10 +27,16 @@ MonoBehaviour:
     statusType: 0
     extraParams: []
   elementType: 5
+  affinity: 0
   art: {fileID: 21300000, guid: 0e8b93a41569cd84a945ba212ad84940, type: 3}
   _upgrade:
     overrideCost: 0
     upgradedCost: 0
-    upgradedEffects: []
+    upgradedEffects:
+    - effectType: 0
+      value: 9
+      target: 1
+      statusType: 0
+      extraParams: []
     upgradedName: 
-    upgradedDescription: 
+    upgradedDescription: "Inflige 9 de da\xF1o."

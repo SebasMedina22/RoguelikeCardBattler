@@ -16,20 +16,24 @@ MonoBehaviour:
   choicesCount: 3
   defaultEnemy: {fileID: 11400000, guid: a5f86b9e5ecb4de5bf5dfbcfbcff3577, type: 2}
   starterDeck:
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: 9adafdc7d3964a2ba54afa9b5740d5af, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: 9adafdc7d3964a2ba54afa9b5740d5af, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: ce1ce5bd21da4478861f66b51d98d240, type: 2}
-  - singleCard: {fileID: 0}
-    dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
+  - singleCard: {fileID: 11400000, guid: 024230aa8255f0c459f367763fdd8b50, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 024230aa8255f0c459f367763fdd8b50, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 024230aa8255f0c459f367763fdd8b50, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 3fe0f3064d148024389c15328f3635e0, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 3fe0f3064d148024389c15328f3635e0, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 16b3c3158630c944a994d96546b6b2e0, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: 16b3c3158630c944a994d96546b6b2e0, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: c07b53e2a8aa92f40b4753800f76d375, type: 2}
+    dualCard: {fileID: 0}
+  - singleCard: {fileID: 11400000, guid: c07b53e2a8aa92f40b4753800f76d375, type: 2}
+    dualCard: {fileID: 0}
   rewardPool:
   - singleCard: {fileID: 0}
     dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}

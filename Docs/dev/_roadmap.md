@@ -7,10 +7,30 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-16).
+> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-17). Bloque 4a: ✅ CERRADO (2026-06-17).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
-> **Próximo bloque:** M4 bloque 4a — Integridad del sistema de cartas (spec pendiente)
-> **Última actualización:** 2026-06-16 (`modo:implementacion`: **Visor de mazo ✅ CERRADO + fixes
+> **Próximo bloque:** M4 bloque 4b — Eventos + Quests (arranca con sesión `modo:diseno` para su spec)
+> **Última actualización:** 2026-06-17 (`modo:implementacion`: **Bloque 4a ✅ CERRADO** — integridad
+> del sistema de cartas. Afinidad (DD-022 opción A) + cobertura de mejoras (DD-023). Nuevos:
+> `Assets/Scripts/Gameplay/Cards/AffinityResolver.cs` (static puro: afín single → dual runtime tipada
+> por mundo; neutras/duales pasan sin tocar), `Assets/Editor/StarterDeckSetup.cs` (menú
+> `Roguelike > Setup Starter Deck (4a)`: 4 cuerpos + 18 upgrades de caras + recomposición del starter),
+> `AffinityTests.cs` (8 casos) + `CardUpgradeCoverageTests.cs` (guard DD-023, 2 casos). `CardDefinition`
+> gana flag `affinity` + getter + `CreateAffinityVariant` (preserva el payload de upgrade, a diferencia
+> de `CreateUpgradedClone`); propagación en `SetDebugData`/`CreateUpgradedClone`.
+> `RunSession.ConfigureCombat` resuelve afinidad detrás del guard `Deck.Count==0`;
+> `RunCombatConfig.EditorPopulateStarterDeck` (#if UNITY_EDITOR). SOs autorados vía menú: 4 cuerpos
+> (Strike/Defend × afín/neutra; upg Strike 6→9 / Defend 5→10), 18 caras con upgrade,
+> `RunCombatConfig_Act1.starterDeck` = 3 Strike_Affine + 2 Strike_Neutral + 2 Defend_Affine +
+> 2 Defend_Neutral (9 entradas; la 10ª es la dual drafteada). **CERO cambios en archivos protegidos**
+> (la afinidad se monta sobre el mecanismo dual existente). Suite EditMode **181 → 191/191**,
+> compilación limpia. E2E data-layer validado en Unity-MCP (config real → 9 entradas: 5 afines tipadas
+> A/B + 4 neutras None → mazo de 10, todas mejorables). E2E visual en escena pendiente de confirmación
+> manual por Sebastián.)
+> **Previa:** 2026-06-17 (`modo:diseno`: **Spec M4 bloque 4a ✅ CERRADO** →
+> `Docs/dev/specs/m4_4a_card_integrity_spec.md`. TurnManager confirmado SIN cambios para afinidad.
+> PR #123 visor de mazo MERGED a main (46347fb), E2E visual confirmado por Sebastián.)
+> **Previa:** 2026-06-16 (`modo:implementacion`: **Visor de mazo ✅ CERRADO + fixes
 > de revisión aplicados**. `DeckViewerView.cs` (sub-Canvas overlay, badge `Mazo (N)` en esquina sup.
 > izquierda, modal scrolleable, tooltip FadeIn/Out, helpers static puros). Post-revisión: nuevo
 > `CardDisplay.cs` (hogar canónico `public static` de helpers de label — corrige la 3ª copia
@@ -92,8 +112,8 @@
 
 ### Pulido pre-M4 — Visor de mazo ("librito" estilo Slay the Spire)
 
-**Estado:** ✅ **IMPLEMENTADO 2026-06-16** — branch `feat/deck-viewer`, PR pendiente.
-Spec: `Docs/dev/specs/visor_de_mazo_spec.md`.
+**Estado:** ✅ **MERGED 2026-06-17** — PR #123 squasheado a `main` (46347fb).
+E2E visual confirmado por Sebastián. Spec: `Docs/dev/specs/visor_de_mazo_spec.md`.
 
 - [x] `DeckViewerView.cs` — sub-Canvas overlay, badge `Mazo (N)`, modal scrolleable,
       tooltip FadeIn/Out. Helpers static puros: `SortForDisplay`/`BuildRowLabel`/
@@ -105,7 +125,7 @@ Spec: `Docs/dev/specs/visor_de_mazo_spec.md`.
 - [x] Montado en `RunFlowController` (RunScene: build + Refresh + Cleanup en 3 transiciones).
 - [x] Montado en `CombatUIController` (BattleScene: build + Refresh null-safe).
 - [x] Suite EditMode 166 → **181/181**. Compilación limpia.
-- [ ] E2E visual en RunScene + BattleScene — pendiente de validación manual por Sebastián.
+- [x] E2E visual en RunScene + BattleScene — confirmado por Sebastián, PR #123 merged 2026-06-17.
 
 **Objetivo:** UI consultable que lista el mazo completo del run. Visible siempre
 (mapa, Tienda/Hoguera sobre paneles opacos, combate). Solo lectura.
@@ -130,23 +150,24 @@ maquinaria transdimensional que M5 necesita para el boss.
 **Bloques ordenados (sub-PRs chicos como en M3; cada bloque arranca con
 sesión `modo:diseno` para su spec):**
 
-#### Bloque 4a — Integridad del sistema de cartas
-- [ ] **Cobertura de mejoras (DD-013, re-scopeada):** el MECANISMO ya existe
+#### Bloque 4a — Integridad del sistema de cartas ✅ CERRADO (2026-06-17)
+- [x] **Cobertura de mejoras (DD-013, re-scopeada / DD-023):** el MECANISMO ya existía
       desde 3C (`CardUpgradeDef`, `CanUpgrade`/`ApplyUpgrade`, UI Hoguera,
-      dual mejora ambos lados). Lo que falta son DATOS: poblar `CardUpgradeDef`
-      en las 18 caras de `NewRunFaces/` (la dual drafteada se vuelve mejorable
-      gratis: `ComposeDualCard` usa las caras como lados y `CanUpgrade` exige
-      upgrade en ambos). **Decisión cerrada 2026-06-10 (DD-023):** mejora
-      autorada a mano por carta (NO fallback genérico) + **test guard EditMode**
-      que recorre todos los `CardDefinition` SOs y falla si alguno queda sin
-      `HasUpgrade` → la Hoguera no vuelve a "verse rota" en silencio.
-- [ ] **Afinidad de cartas (DD-022, cerrada 2026-06-10 → opción A):** flag de
-      afinidad en `CardDefinition`; las cartas con afinidad NO tienen tipo fijo —
-      adoptan en runtime el tipo elegido para el mundo activo (Mundo A = tipo 1,
-      Mundo B = tipo 2). Recomposición del mazo inicial según GDD §5: 5 Strike
-      (3 afines + 2 neutras) + 4 Defend (2 afines + 2 neutras) + 1 dual
-      drafteada. La resolución debería vivir en `CardDeckEntry`/`CardDefinition`
-      (capa de datos); **confirmar en el spec si TurnManager necesita cambios**.
+      dual mejora ambos lados). Se poblaron los DATOS: `CardUpgradeDef` en las 18
+      caras de `NewRunFaces/` (vía menú `Setup Starter Deck (4a)`) → la dual
+      drafteada se volvió mejorable (sus 2 caras ahora tienen upgrade). **Guard
+      EditMode** `CardUpgradeCoverageTests.cs`: recorre todos los `CardDefinition`
+      SOs y falla si alguno queda sin `HasUpgrade` (mensaje accionable que los lista)
+      → la Hoguera no vuelve a "verse rota" en silencio.
+- [x] **Afinidad de cartas (DD-022 → opción A):** flag `affinity` + getter en
+      `CardDefinition`; las cartas afines NO tienen tipo fijo — adoptan en runtime
+      el tipo del mundo activo (A = tipo 1, B = tipo 2). Mecanismo: `AffinityResolver`
+      (static puro) resuelve cada afín a una **dual runtime** tipada por mundo
+      (reusa `InitRuntimeSides`/`GetSide`; `CreateAffinityVariant` preserva el payload
+      de upgrade) → **TurnManager NO cambió** (ya lee `GetActiveCard(CurrentWorld).ElementType`).
+      Resolución en `RunSession.ConfigureCombat` detrás del guard `Deck.Count==0`. Mazo
+      inicial recompuesto a GDD §5: 5 Strike (3 afín + 2 neutra) + 4 Defend (2 afín +
+      2 neutra) + 1 dual drafteada = 10. BattleFocus sale del starter (queda para recompensas).
 
 #### Bloque 4b — Eventos + Quests (narrativo, lo grande)
 - [ ] Eventos (DD-005): `EventDefinition` SO + `EventNodeController` (hoy el
@@ -170,7 +191,8 @@ sesión `modo:diseno` para su spec):**
   contenido de enemigos comunes transdim/ancla llega en M6a/M6b.
 
 **Toca archivos protegidos:** sí, SOLO el bloque 4c (TurnManager —
-[REQUIERE APROBACIÓN] al llegar). 4a probablemente no (confirmar en spec);
+[REQUIERE APROBACIÓN] al llegar). 4a **NO** (confirmado en implementación
+2026-06-17: cero cambios; la afinidad se monta sobre el mecanismo dual);
 4b no (rewards vía RunState).
 
 **Dependencias:** M3 cerrado ✅ 2026-06-05. Orden interno duro:

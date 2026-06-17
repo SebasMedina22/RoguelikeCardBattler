@@ -27,10 +27,16 @@ MonoBehaviour:
     statusType: 0
     extraParams: []
   elementType: 4
+  affinity: 0
   art: {fileID: 21300000, guid: 5e62f3c933c82a84a86a4f1cdb3d651a, type: 3}
   _upgrade:
     overrideCost: 0
     upgradedCost: 0
-    upgradedEffects: []
+    upgradedEffects:
+    - effectType: 0
+      value: 11
+      target: 1
+      statusType: 0
+      extraParams: []
     upgradedName: 
-    upgradedDescription: 
+    upgradedDescription: "Inflige 11 de da\xF1o."

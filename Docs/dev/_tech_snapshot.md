@@ -7,7 +7,38 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-16 — **Visor de mazo + fixes de revisión**
+> **Última actualización:** 2026-06-17 — **M4 bloque 4a: integridad del sistema de cartas**
+> (branch `feat/m4-4a-card-integrity`). Afinidad de tipo (DD-022 opción A) + cobertura de
+> mejoras (DD-023), **sin tocar archivos protegidos** (la afinidad se monta sobre el mecanismo
+> dual existente). `CardDefinition` gana `[SerializeField] bool affinity` + getter `Affinity` y
+> el método `CreateAffinityVariant(ElementType)`: clona el cuerpo tipado para un mundo (effects/
+> cost/name/type/target/art idénticos, `elementType=worldType`, `affinity=false`) y **preserva el
+> payload de upgrade** compartiendo la referencia `_upgrade` (a diferencia de `CreateUpgradedClone`,
+> que no lo copia) → la dual afín resuelta sigue mejorable en la Hoguera. `affinity` se propaga en
+> `SetDebugData` (nuevo param `newAffinity=false` al final) y en `CreateUpgradedClone`. Nuevo
+> `Assets/Scripts/Gameplay/Cards/AffinityResolver.cs` (static puro, espejo de `StarterDraft`):
+> `Resolve(entry, typeA, typeB)` convierte una single afín en una `DualCardDefinition` runtime
+> (lado A=typeA, lado B=typeB vía `InitRuntimeSides`/`CreateAffinityVariant`); neutras (None) y
+> ya-duales pasan con `Clone()`. `ResolveDeck(...)` mapea sobre la lista. `RunSession.ConfigureCombat`
+> resuelve afinidad **detrás del guard `State.Deck.Count == 0`** (evita re-crear/descartar SOs runtime
+> cada combate) y pasa el mazo resuelto a `InitializeDeck`; `RunState`/`InitializeDeck` no cambian de
+> contrato. `RunCombatConfig.EditorPopulateStarterDeck(List<CardDeckEntry>)` (#if UNITY_EDITOR, patrón
+> `NewRunConfig.EditorPopulateFaces`). Nuevo `Assets/Editor/StarterDeckSetup.cs` — menú
+> `Roguelike > Setup Starter Deck (4a)` idempotente: crea/asegura 4 cuerpos
+> (`Strike_Affine`/`Strike_Neutral`/`Defend_Affine`/`Defend_Neutral`, upg Strike 6→9 / Defend 5→10,
+> elementType None), autora upgrade en las 18 caras de `NewRunFaces/`, y reescribe
+> `RunCombatConfig_Act1.starterDeck` a la composición GDD §5 (3 Strike_Affine + 2 Strike_Neutral +
+> 2 Defend_Affine + 2 Defend_Neutral = 9; la 10ª es la dual drafteada inyectada por
+> `PendingStarterCard`). BattleFocus sale del starter (queda en `rewardPool`). Nuevos tests
+> `Assets/Tests/EditMode/AffinityTests.cs` (8 casos: resolución afín→dual, preservación de cuerpo/
+> upgrade, neutra sin tocar, integración `CardDeckEntry` + `TurnManager` real, composición de mazo,
+> round-trip del flag) + `CardUpgradeCoverageTests.cs` (guard DD-023 editor-only `#if UNITY_EDITOR`:
+> todo `CardDefinition` tiene upgrade + dual compuesta de caras es mejorable). Suite EditMode
+> **181 → 191/191**, compilación limpia. **Validado en Unity-MCP:** menú corrido (4 cuerpos + 18 caras
+> + starter 9 entradas), E2E data-layer (config real → 9 entradas: 5 afines tipadas A/B + 4 neutras
+> None → mazo de 10, todas mejorables). E2E visual en escena pendiente de confirmación manual.
+>
+> **Última actualización previa:** 2026-06-16 — **Visor de mazo + fixes de revisión**
 > (branch `feat/deck-viewer`). Nuevo `Assets/Scripts/Gameplay/Cards/UI/DeckViewerView.cs`:
 > clase de presentación pura (no MonoBehaviour), sub-Canvas overlay propio
 > (`overrideSorting=true`, `sortingOrder=100`), badge `Mazo (N)` (esquina superior
@@ -269,7 +300,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 23 archivos de test en `Assets/Tests/EditMode/` (suite 181/181)
+- 25 archivos de test en `Assets/Tests/EditMode/` (suite 191/191)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -363,7 +394,7 @@ Exclusivamente vía `RunSession.State` (= `RunState`). Flags principales:
 
 ## Estructura de archivos
 
-### Scripts (`Assets/Scripts/`) — 108 archivos C#
+### Scripts (`Assets/Scripts/`) — 109 archivos C#
 
 ```
 Core/
@@ -405,9 +436,11 @@ Run/
 
 Gameplay/
   Cards/
-    CardDefinition.cs            ← SO base de carta
+    CardDefinition.cs            ← SO base de carta (+ flag `affinity` + CreateAffinityVariant, 4a)
     DualCardDefinition.cs        ← SO con sideA/sideB
     CardDeckEntry.cs             ← entrada de mazo (puede ser simple o dual)
+    AffinityResolver.cs          ← 4a: static puro — afín single → dual runtime tipada por mundo
+                                   (Resolve/ResolveDeck); neutras/duales pasan con Clone()
     CardEnums.cs                 ← CardType, EffectType, EffectTarget
     EffectRef.cs                 ← referencia a efecto en SO
     CardDisplay.cs               ← hogar canónico de helpers de label de carta en
@@ -485,9 +518,15 @@ RoguelikeCardBattler.Editor.asmdef   ← editor-only, references runtime asmdef
 RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Assets":
                                         crea los 23 .asset en Assets/ScriptableObjects/Relics/
                                         (idempotente — saltea archivos existentes)
+StarterDeckSetup.cs                   ← 4a: MenuItem "Roguelike/Setup Starter Deck (4a)"
+                                        (idempotente): 4 cuerpos del starter + upgrade en las
+                                        18 caras + recomposición de RunCombatConfig_Act1.starterDeck
+CardUpgradeSetup.cs                   ← MenuItem "Roguelike/Setup Placeholder Card Upgrades"
+                                        (3C): upgrades de los 6 SOs básicos del starter
+NewRunConfigSetup.cs / ShopConfigSetup.cs  ← menús de config (3E / 3D)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 23 archivos (suite EditMode 181/181)
+### Tests (`Assets/Tests/EditMode/`) — 25 archivos (suite EditMode 191/191)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -535,14 +574,23 @@ DeckViewerTests.cs               ← Visor de mazo (15 casos: orden tipo→coste
                                    dual SideA null, label simple/dual/None, preview
                                    single/dual/sin-upgrade/ya-mejorada, + BuildTooltip
                                    dual/lado-null/ya-mejorada)
+AffinityTests.cs                 ← M4 4a (8 casos: resolución afín→dual tipada por mundo,
+                                   preservación de cuerpo/upgrade, neutra sin tocar, integración
+                                   CardDeckEntry, composición de mazo 5/4, TurnManager real
+                                   —afín SuperEficaz vs neutra 90%—, round-trip del flag affinity)
+CardUpgradeCoverageTests.cs      ← M4 4a guard DD-023, editor-only #if UNITY_EDITOR (2 casos:
+                                   todo CardDefinition tiene upgrade; dual compuesta de 2 caras
+                                   es mejorable)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
 
 ```
 Cards/
-  StrikeBasic.asset, DefendBasic.asset, BattleFocus.asset
-  [+ duales]
+  StrikeBasic.asset, DefendBasic.asset, BattleFocus.asset (+ lados SideB)
+  Strike_Affine/Strike_Neutral/Defend_Affine/Defend_Neutral.asset  ← 4a: cuerpos del starter
+  Dual/ [StrikeDual, DefendDual, BattleFocusDual]  ← rewardPool
+  NewRunFaces/ [18 caras tipadas, con upgrade autorado en 4a]
 Enemies/
   WeakSlime.asset, Goblin.asset, SkeletonWarrior.asset, DarkMage.asset
   BossAct1.asset
