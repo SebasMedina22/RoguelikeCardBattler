@@ -7,6 +7,7 @@ using RoguelikeCardBattler.Core;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Gameplay.Cards.UI;
 using RoguelikeCardBattler.Gameplay.Relics.UI;
 using RoguelikeCardBattler.Run.Campfire;
 using RoguelikeCardBattler.Run.Shop;
@@ -41,6 +42,7 @@ namespace RoguelikeCardBattler.Run
         private Text _titleText;
         private RunMapView _mapView;
         private RelicInventoryView _relicView;
+        private DeckViewerView _deckViewer;
         private Text _resolveTitleText;
         private Text _resolveBodyText;
         private Button _resolveCompleteButton;
@@ -154,6 +156,10 @@ namespace RoguelikeCardBattler.Run
             BuildActoCompletedPanel();
             BuildCampfireController();
             BuildShopController();
+
+            // Visor de mazo: sub-Canvas overlay, flota sobre paneles opacos (Tienda/Hoguera).
+            _deckViewer = new DeckViewerView(_canvas, uiFont);
+            _deckViewer.Refresh(_state.GetDeckSnapshot());
         }
 
         private void BuildCampfireController()
@@ -257,6 +263,8 @@ namespace RoguelikeCardBattler.Run
             // Suficiente refrescar acá: los Retazos sólo cambian fuera del mapa
             // (combate/elite/boss/tienda) y todo retorno al mapa pasa por ShowMap.
             _relicView?.Refresh(_state.Relics);
+            // El mazo puede cambiar al volver de combate (recompensa) o de Tienda/Hoguera.
+            _deckViewer?.Refresh(_state.GetDeckSnapshot());
         }
 
         private void EnterNode(int index)
@@ -372,6 +380,7 @@ namespace RoguelikeCardBattler.Run
             }
             _mapView?.Cleanup();
             _relicView?.Cleanup();
+            _deckViewer?.Cleanup();
             SceneTransitionManager.LoadScene(BattleSceneName);
         }
 
@@ -656,6 +665,7 @@ namespace RoguelikeCardBattler.Run
                 _state.PrepareForRetry();
                 _mapView?.Cleanup();
                 _relicView?.Cleanup();
+                _deckViewer?.Cleanup();
                 SceneTransitionManager.LoadScene(BattleSceneName);
             });
 
@@ -685,6 +695,7 @@ namespace RoguelikeCardBattler.Run
             }
             _mapView?.Cleanup();
             _relicView?.Cleanup();
+            _deckViewer?.Cleanup();
             SceneTransitionManager.LoadScene(MainMenuSceneName);
         }
 

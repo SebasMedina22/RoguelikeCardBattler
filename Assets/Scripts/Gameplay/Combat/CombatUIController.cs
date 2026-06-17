@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using RoguelikeCardBattler.Gameplay.Enemies;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Gameplay.Cards.UI;
 using RoguelikeCardBattler.Gameplay.Relics.UI;
 using RoguelikeCardBattler.Run;
 
@@ -57,6 +58,8 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         // copia equivalente en RunMapView.
         private RelicInventoryView _relicView;
         private int _lastRelicCount;
+        // Visor de mazo: sub-Canvas overlay propio, montado en BuildUI junto al _relicView.
+        private DeckViewerView _deckViewer;
 
         // Layout/estilo del HUD: constantes para mantener jerarquía visual y escalado.
         private const float TopBarMinY = 0.92f;
@@ -434,6 +437,11 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 new Vector2(1f, TopBarMinY),
                 new Color(0f, 0f, 0f, 0f));
             _relicView = new RelicInventoryView(relicBar, uiFont);
+
+            // Visor de mazo: overlay propio sobre el canvas de combate.
+            // RunSession puede ser null en standalone BattleScene sin run → Refresh(null) es null-safe.
+            _deckViewer = new DeckViewerView(_canvas, uiFont);
+            _deckViewer.Refresh(RunSession.Instance?.State?.GetDeckSnapshot());
 
             InitializePlayerAnimator();
             InitializeExtractedViews(

@@ -7,10 +7,18 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
+> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-16).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
-> **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-16 (`modo:implementacion`: **SUB-PR 2 ✅ (#120) CERRADO
+> **Próximo bloque:** M4 bloque 4a — Integridad del sistema de cartas (spec pendiente)
+> **Última actualización:** 2026-06-16 (`modo:implementacion`: **Visor de mazo ✅ CERRADO + fixes
+> de revisión aplicados**. `DeckViewerView.cs` (sub-Canvas overlay, badge `Mazo (N)` en esquina sup.
+> izquierda, modal scrolleable, tooltip FadeIn/Out, helpers static puros). Post-revisión: nuevo
+> `CardDisplay.cs` (hogar canónico `public static` de helpers de label — corrige la 3ª copia
+> privada que marcó la revisión, M1), Test 7 des-tautologizado (M3), +3 tests de `BuildTooltip`
+> (M2), Test 1 cubre los 5 `CardType`, badge reubicado para no tapar Change World en combate.
+> `DeckViewerTests.cs` **15 casos**. Suite EditMode **166 → 181**, compilación limpia. Branch
+> `feat/deck-viewer` (PR #123). E2E visual pendiente de confirmación manual por Sebastián.)
+> **Previa:** 2026-06-16 (`modo:implementacion`: **SUB-PR 2 ✅ (#120) CERRADO
 > → REMEDIACIÓN PRE-M4 COMPLETA**. Red de tests pre-cirugía + cap de Estilo a 5 (D-B). 4
 > archivos EditMode nuevos (T3 pre-block, T4 reset+sangrado R-6, T5 dispatchabilidad de los
 > 23 `.asset`, T6 ×10 Grant* sobre TurnManager real, T7 cap a 5, T9 carta None 90%): suite
@@ -84,21 +92,26 @@
 
 ### Pulido pre-M4 — Visor de mazo ("librito" estilo Slay the Spire)
 
-**Estado:** pendiente — **siguiente paso del proyecto** (formato pulido
-independiente, como el #104).
+**Estado:** ✅ **IMPLEMENTADO 2026-06-16** — branch `feat/deck-viewer`, PR pendiente.
+Spec: `Docs/dev/specs/visor_de_mazo_spec.md`.
 
-**Objetivo:** UI consultable que lista el mazo completo fuera de combate
-(alcance mínimo: mapa; si entra también en nodos/combate se decide en el spec).
-Hoy NO existe ninguna vista del mazo fuera de combate.
+- [x] `DeckViewerView.cs` — sub-Canvas overlay, badge `Mazo (N)`, modal scrolleable,
+      tooltip FadeIn/Out. Helpers static puros: `SortForDisplay`/`BuildRowLabel`/
+      `BuildTooltip`/`BuildUpgradePreview`. Preview de mejora PER-LADO en duales.
+- [x] `CardDisplay.cs` (post-revisión, M1) — hogar canónico `public static` de los
+      helpers de label (`RepresentativeCard`/`CardToken`/`SideType`/`EntryToken`); el
+      visor los consume en vez de duplicarlos.
+- [x] `DeckViewerTests.cs` — 15 casos EditMode en verde (incluye fixes M2/M3 de revisión).
+- [x] Montado en `RunFlowController` (RunScene: build + Refresh + Cleanup en 3 transiciones).
+- [x] Montado en `CombatUIController` (BattleScene: build + Refresh null-safe).
+- [x] Suite EditMode 166 → **181/181**. Compilación limpia.
+- [ ] E2E visual en RunScene + BattleScene — pendiente de validación manual por Sebastián.
 
-**Molde:** espejo de `RelicInventoryView` (clase pura no-MonoBehaviour,
-Refresh + tooltips, instanciada por `RunFlowController`). No toca protegidos.
+**Objetivo:** UI consultable que lista el mazo completo del run. Visible siempre
+(mapa, Tienda/Hoguera sobre paneles opacos, combate). Solo lectura.
 
-**Por qué va ANTES de M4:** es la herramienta de playtesting de 4a y 4b —
-sin visor, los eventos que dan/quitan/mejoran cartas son invisibles para
-verificar qué pasó en el mazo.
-
-**Complejidad:** baja. Requiere sesión `modo:diseno` corta para el spec.
+**Por qué va ANTES de M4:** herramienta de playtesting de 4a y 4b — sin visor,
+los eventos que dan/quitan/mejoran cartas son invisibles para verificar el mazo.
 
 ---
 
@@ -579,6 +592,13 @@ cierren los milestones actuales:
   helper. Tests: `ElementTypeColorsTests.cs` ampliado con 4 casos nuevos
   (TypePrefix None, token con corchetes, hex coincide con ReadableOnDark, todos
   los tipos producen prefijo no vacío). Suite EditMode: 146/146 (4 nuevos).
+- **Migrar `ShopNodeController`/`CampfireNodeController` a `CardDisplay`**: el visor
+  de mazo (PR #123) extrajo los helpers de label de carta (`RepresentativeCard`/
+  `CardToken`/`SideType`/`EntryToken`) a `Assets/Scripts/Gameplay/Cards/CardDisplay.cs`
+  como `public static` (hogar canónico). Shop y Campfire todavía tienen sus copias
+  `private static` de `BuildCardSelectLabel`/`CardToken`/`RepresentativeCard` (2 copias
+  pre-existentes). Reemplazarlas por llamadas a `CardDisplay` elimina el drift. NO se
+  hizo en el PR del visor para no tocar los tests de Tienda/Hoguera. Riesgo bajo, ~20 min.
 - **Refactor cross-cutting de los `Initialize()` de las views**: introducir un
   struct `ViewRefs` compartido en lugar de 25+ parámetros. Tiene sentido HACER
   después de Fase 4 cerrada (cuando las 3 views estén estables). ~30 min.
