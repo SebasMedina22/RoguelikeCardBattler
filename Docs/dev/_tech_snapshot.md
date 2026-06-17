@@ -269,7 +269,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 22 archivos de test en `Assets/Tests/EditMode/` (suite 166/166)
+- 23 archivos de test en `Assets/Tests/EditMode/` (suite 181/181)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
