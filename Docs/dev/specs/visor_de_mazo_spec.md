@@ -1,7 +1,10 @@
 # Spec — Visor de mazo ("librito" estilo Slay the Spire)
 
-> **ESTADO: IMPLEMENTADO — PR pendiente (2026-06-16).** Branch `feat/deck-viewer`.
-> Suite EditMode 166 → 178/178. E2E visual pendiente de confirmación por Sebastián.
+> **ESTADO: IMPLEMENTADO + fixes de revisión (2026-06-16).** Branch `feat/deck-viewer`
+> (PR #123). Suite EditMode 166 → 181/181. Revisión aplicada: helpers de label
+> canonizados en `CardDisplay` (M1), Test 7 des-tautologizado (M3), +3 tests de
+> `BuildTooltip` (M2), badge reubicado a esquina sup. izquierda. E2E visual pendiente
+> de confirmación por Sebastián.
 
 ## Origen
 - Roadmap `_roadmap.md` § "Pulido pre-M4 — Visor de mazo". Pieza de pulido

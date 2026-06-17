@@ -42,6 +42,19 @@ public class DeckViewerTests
         return e;
     }
 
+    // Cuenta ocurrencias (no solapadas) de una subcadena. Usado para verificar que
+    // un nombre colapsado aparece exactamente una vez en el label.
+    private static int CountOccurrences(string haystack, string needle)
+    {
+        int count = 0, idx = 0;
+        while ((idx = haystack.IndexOf(needle, idx, System.StringComparison.Ordinal)) != -1)
+        {
+            count++;
+            idx += needle.Length;
+        }
+        return count;
+    }
+
     // ────────────────────────────────────────
     // TEST 1 — Orden tipo → coste → nombre
     // ────────────────────────────────────────
@@ -53,19 +66,25 @@ public class DeckViewerTests
         var cB = MakeCard("b", "Alpha",  1, CardType.Skill);
         var cC = MakeCard("c", "Mend",   2, CardType.Attack);   // mismo tipo/coste que cA, nombre menor
         var cD = MakeCard("d", "Heal",   1, CardType.Power);
+        var cE = MakeCard("e", "Hex",    1, CardType.Curse);    // cubre el resto del enum
+        var cF = MakeCard("f", "Burn",   1, CardType.Status);
 
         var deck = new List<CardDeckEntry>
         {
-            SingleEntry(cA), SingleEntry(cB), SingleEntry(cC), SingleEntry(cD)
+            // Orden de entrada deliberadamente mezclado para que el sort tenga que trabajar.
+            SingleEntry(cF), SingleEntry(cA), SingleEntry(cE),
+            SingleEntry(cB), SingleEntry(cC), SingleEntry(cD)
         };
 
         List<CardDeckEntry> sorted = DeckViewerView.SortForDisplay(deck);
 
-        // Attack (0) < Skill (1) < Power (2) → Attack primero, luego coste asc dentro del tipo.
+        // Cadena completa del enum: Attack(0) < Skill(1) < Power(2) < Curse(3) < Status(4).
         Assert.AreEqual(CardType.Attack, sorted[0].SingleCard.Type);
         Assert.AreEqual(CardType.Attack, sorted[1].SingleCard.Type);
         Assert.AreEqual(CardType.Skill,  sorted[2].SingleCard.Type);
         Assert.AreEqual(CardType.Power,  sorted[3].SingleCard.Type);
+        Assert.AreEqual(CardType.Curse,  sorted[4].SingleCard.Type);
+        Assert.AreEqual(CardType.Status, sorted[5].SingleCard.Type);
 
         // Dentro de Attack (coste 2 ambas): Mend < Zephyr por nombre.
         Assert.AreEqual("Mend",   sorted[0].SingleCard.CardName);
@@ -190,20 +209,24 @@ public class DeckViewerTests
 
         string label = DeckViewerView.BuildRowLabel(entry);
 
-        // Nombre y tipo distintos → NO colapsa; ambos lados presentes.
+        // Nombre y tipo distintos → NO colapsa: ambos lados presentes + separador " / ".
         StringAssert.Contains("BladeA", label);
         StringAssert.Contains("BladeB", label);
-        StringAssert.Contains("/",      label);
+        StringAssert.Contains(" / ",    label);
 
-        // Caso colapso: mismo nombre Y mismo tipo en ambos lados.
+        // Caso colapso: mismo nombre Y mismo tipo en ambos lados no-null.
         var sameA = MakeCard("sa", "Twin", 1, CardType.Skill, ElementType.Azul);
         var sameB = MakeCard("sb", "Twin", 1, CardType.Skill, ElementType.Azul);
         var sameEntry = DualEntry(sameA, sameB);
 
         string collapsed = DeckViewerView.BuildRowLabel(sameEntry);
-        // Colapsa: aparece "Twin" una sola vez (sin "/").
-        StringAssert.Contains("Twin", collapsed);
-        Assert.IsFalse(collapsed.Contains("Twin / Twin"), "No debe mostrar ambos tokens cuando colapsa");
+        // Al colapsar, el separador " / " desaparece y el nombre aparece UNA sola vez.
+        // (Si una regresión rompiera el colapso, el resultado sería "<tokenA> / <tokenB>"
+        // — con separador y "Twin" dos veces — y ambos asserts fallarían. La aserción
+        // anterior `!Contains("Twin / Twin")` era tautológica: los tags de color entre
+        // medio hacían que esa subcadena literal nunca apareciera ni sin colapso.)
+        Assert.IsFalse(collapsed.Contains(" / "), "No debe quedar el separador cuando colapsa");
+        Assert.AreEqual(1, CountOccurrences(collapsed, "Twin"), "El nombre colapsado debe aparecer una sola vez");
     }
 
     // ────────────────────────────────────────
@@ -331,5 +354,69 @@ public class DeckViewerTests
         // El label lleva el marcador ★ (no "+").
         StringAssert.Contains("★", label);
         Assert.IsFalse(label.Contains(" +"), "Una carta ya mejorada no debe mostrar el marcador '+'");
+    }
+
+    // ────────────────────────────────────────
+    // TEST 13 — BuildTooltip dual: ambos lados con nombre/descripción + preview anexado
+    // ────────────────────────────────────────
+
+    [Test]
+    public void BuildTooltip_Dual_ContainsBothSidesAndAppendedPreview()
+    {
+        var sideA = MakeCard("a", "BladeA", 2, CardType.Attack, ElementType.Azul);
+        sideA.Upgrade.SetTestData(false, 0, null, "BladeA+", "A más filosa.");
+        var sideB = MakeCard("b", "BladeB", 1, CardType.Skill, ElementType.Morado);
+        var entry = DualEntry(sideA, sideB);
+
+        string tooltip = DeckViewerView.BuildTooltip(entry);
+
+        // Ambos lados presentes con sus nombres y descripciones base.
+        StringAssert.Contains("BladeA", tooltip);
+        StringAssert.Contains("BladeB", tooltip);
+        StringAssert.Contains("Desc BladeA", tooltip);
+        StringAssert.Contains("Desc BladeB", tooltip);
+        // Etiquetas de lado A/B.
+        StringAssert.Contains("[A]", tooltip);
+        StringAssert.Contains("[B]", tooltip);
+        // El bloque de preview de mejora queda anexado al final (per-lado: A mejora, B no).
+        StringAssert.Contains("Mejora", tooltip);
+        StringAssert.Contains("BladeA+", tooltip);
+    }
+
+    // ────────────────────────────────────────
+    // TEST 14 — BuildTooltip con un lado null no crashea y rinde "[A] ?"
+    // ────────────────────────────────────────
+
+    [Test]
+    public void BuildTooltip_NullSide_DoesNotThrowAndRendersPlaceholder()
+    {
+        var sideB = MakeCard("b", "SoloB", 1, CardType.Skill);
+        var entry = DualEntry(null, sideB);
+
+        string tooltip = null;
+        Assert.DoesNotThrow(() => tooltip = DeckViewerView.BuildTooltip(entry));
+
+        // El lado A null se renderiza como "[A] ?"; el B válido muestra su nombre.
+        StringAssert.Contains("[A] ?", tooltip);
+        StringAssert.Contains("SoloB", tooltip);
+    }
+
+    // ────────────────────────────────────────
+    // TEST 15 — BuildTooltip de carta ya mejorada contiene "Mejorada"
+    // ────────────────────────────────────────
+
+    [Test]
+    public void BuildTooltip_AlreadyUpgraded_ContainsMejorada()
+    {
+        var c = MakeCard("m", "Enhanced", 1, CardType.Attack);
+        c.Upgrade.SetTestData(false, 0, null, "Enhanced+", "Mucho mejor.");
+        var entry = SingleEntry(c);
+        entry.ApplyUpgrade();
+
+        string tooltip = DeckViewerView.BuildTooltip(entry);
+
+        // No muestra el "se convertiría en…", solo la marca de ya-mejorada.
+        StringAssert.Contains("Mejorada", tooltip);
+        StringAssert.Contains("Enhanced", tooltip);
     }
 }

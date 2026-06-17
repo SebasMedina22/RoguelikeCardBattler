@@ -7,18 +7,24 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-16 — **Visor de mazo** (branch `feat/deck-viewer`).
-> Nuevo `Assets/Scripts/Gameplay/Cards/UI/DeckViewerView.cs`: clase de presentación
-> pura (no MonoBehaviour), sub-Canvas overlay propio (`overrideSorting=true`,
-> `sortingOrder=100`), badge `Mazo (N)` + modal scrolleable + tooltip FadeIn/FadeOut.
-> Helpers static puros `SortForDisplay`/`BuildRowLabel`/`BuildTooltip`/
-> `BuildUpgradePreview` (testeables sin UI). Preview de mejora PER-LADO en duales,
-> leyendo `CardUpgradeDef` directo sin `CreateUpgradedClone`. Orden estable
-> `CardType→coste→nombre→Id` (LINQ OrderBy/ThenBy). Refresh null-safe.
-> Montado en `RunFlowController.BuildUI()` (RunScene: `Refresh` + `Cleanup` en 3
-> transiciones de escena) y en `CombatUIController.BuildUI()` (BattleScene: `Refresh`
-> con `RunSession.Instance?.State?.GetDeckSnapshot()`). Nuevo
-> `Assets/Tests/EditMode/DeckViewerTests.cs` (12 casos). Suite EditMode **166 → 178**.
+> **Última actualización:** 2026-06-16 — **Visor de mazo + fixes de revisión**
+> (branch `feat/deck-viewer`). Nuevo `Assets/Scripts/Gameplay/Cards/UI/DeckViewerView.cs`:
+> clase de presentación pura (no MonoBehaviour), sub-Canvas overlay propio
+> (`overrideSorting=true`, `sortingOrder=100`), badge `Mazo (N)` (esquina superior
+> IZQUIERDA — libre en mapa y combate; la derecha taparía el botón Change World) +
+> modal scrolleable + tooltip FadeIn/FadeOut. Helpers static puros
+> `SortForDisplay`/`BuildRowLabel`/`BuildTooltip`/`BuildUpgradePreview` (testeables
+> sin UI). Preview de mejora PER-LADO en duales, leyendo `CardUpgradeDef` directo sin
+> `CreateUpgradedClone`. Orden estable `CardType→coste→nombre→Id` (LINQ OrderBy/ThenBy,
+> representante resuelto 1× por entry). Refresh null-safe. **Nuevo
+> `Assets/Scripts/Gameplay/Cards/CardDisplay.cs`** (post-revisión): hogar canónico
+> `public static` de los helpers de label (`RepresentativeCard`/`CardToken`/`SideType`/
+> `EntryToken`) que antes eran 3 copias `private static` (Shop/Campfire/visor);
+> el visor los consume. **Migrar Shop/Campfire a `CardDisplay` queda como follow-up**
+> (ver `_roadmap.md` Future work). Montado en `RunFlowController.BuildUI()` (RunScene:
+> `Refresh` + `Cleanup` en 3 transiciones de escena) y en `CombatUIController.BuildUI()`
+> (BattleScene: `Refresh` con `RunSession.Instance?.State?.GetDeckSnapshot()`). Nuevo
+> `Assets/Tests/EditMode/DeckViewerTests.cs` (15 casos). Suite EditMode **166 → 181**.
 >
 > **Última actualización previa:** 2026-06-16 — **SUB-PR 2 auditoría: red de tests pre-cirugía
 > + cap de Estilo** (branch `feat/test-net-pre-surgery`). 4 archivos de test EditMode
@@ -404,6 +410,10 @@ Gameplay/
     CardDeckEntry.cs             ← entrada de mazo (puede ser simple o dual)
     CardEnums.cs                 ← CardType, EffectType, EffectTarget
     EffectRef.cs                 ← referencia a efecto en SO
+    CardDisplay.cs               ← hogar canónico de helpers de label de carta en
+                                   texto (public static: RepresentativeCard/CardToken/
+                                   SideType/EntryToken). Consumido por el visor; Shop/
+                                   Campfire aún tienen copias privadas (follow-up)
     UI/
       DeckViewerView.cs          ← visor de mazo (sub-Canvas overlay, badge + modal
                                    + scroll + tooltip; static puros SortForDisplay/
@@ -477,7 +487,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 23 archivos (suite EditMode 178/178)
+### Tests (`Assets/Tests/EditMode/`) — 23 archivos (suite EditMode 181/181)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -520,10 +530,11 @@ RelicGrantEffectsOnTurnManagerTests.cs ← Auditoría SUB-PR 2 (T6: 10 casos de 
                                    TurnManager real, dispatch manual del hook)
 NeutralCardDamageTests.cs        ← Auditoría SUB-PR 2 (T9: carta None aplica 90% del
                                    daño base, DD-002, contra cualquier tipo)
-DeckViewerTests.cs               ← Visor de mazo (12 casos: orden tipo→coste→nombre,
-                                   estabilidad, no-mutación, null/vacío, dual SideA null,
-                                   label simple/dual/None, preview single/dual/sin-upgrade/
-                                   ya-mejorada)
+DeckViewerTests.cs               ← Visor de mazo (15 casos: orden tipo→coste→nombre
+                                   los 5 CardType, estabilidad, no-mutación, null/vacío,
+                                   dual SideA null, label simple/dual/None, preview
+                                   single/dual/sin-upgrade/ya-mejorada, + BuildTooltip
+                                   dual/lado-null/ya-mejorada)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

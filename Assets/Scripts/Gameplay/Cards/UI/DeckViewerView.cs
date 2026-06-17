@@ -138,12 +138,17 @@ namespace RoguelikeCardBattler.Gameplay.Cards.UI
         {
             if (deck == null) return new List<CardDeckEntry>();
 
+            // Resuelve el representante UNA sola vez por entry (en el Select) en vez
+            // de recalcularlo en cada cláusula de orden; luego ordena sobre el par.
             return deck
-                .Where(e => e != null && e.IsValid && RepresentativeCard(e) != null)
-                .OrderBy(e =>  (int)RepresentativeCard(e).Type)
-                .ThenBy(e =>  RepresentativeCard(e).Cost)
-                .ThenBy(e =>  RepresentativeCard(e).CardName)
-                .ThenBy(e =>  RepresentativeCard(e).Id)
+                .Where(e => e != null && e.IsValid)
+                .Select(e => (entry: e, rep: CardDisplay.RepresentativeCard(e)))
+                .Where(x => x.rep != null)
+                .OrderBy(x => (int)x.rep.Type)
+                .ThenBy(x => x.rep.Cost)
+                .ThenBy(x => x.rep.CardName)
+                .ThenBy(x => x.rep.Id)
+                .Select(x => x.entry)
                 .ToList();
         }
 
@@ -156,26 +161,11 @@ namespace RoguelikeCardBattler.Gameplay.Cards.UI
         {
             if (entry == null || !entry.IsValid) return "";
 
-            string body;
-            if (entry.DualCard != null)
-            {
-                CardDefinition a   = entry.DualCard.SideA;
-                CardDefinition b   = entry.DualCard.SideB;
-                string tokenA      = CardToken(a);
-                string tokenB      = CardToken(b);
-                bool sameName      = NameOf(a) == NameOf(b);
-                bool sameType      = SideType(a) == SideType(b);
-                bool bothNonNull   = a != null && b != null;
-                string display     = (sameName && sameType && bothNonNull) ? tokenA : $"{tokenA} / {tokenB}";
-
-                CardDefinition rep = RepresentativeCard(entry);
-                body = rep != null ? $"{display} · {rep.Cost}⚡" : display;
-            }
-            else
-            {
-                CardDefinition c = entry.SingleCard;
-                body = c != null ? $"{CardToken(c)} · {c.Cost}⚡" : "";
-            }
+            // Token (single o dual con colapso) canónico en CardDisplay; el coste se
+            // toma del representante (las duales no exponen un Cost propio).
+            string token = CardDisplay.EntryToken(entry);
+            CardDefinition rep = CardDisplay.RepresentativeCard(entry);
+            string body = rep != null ? $"{token} · {rep.Cost}⚡" : token;
 
             string marker = entry.IsUpgraded    ? " ★"
                           : entry.CanUpgrade()  ? " +"
@@ -250,32 +240,10 @@ namespace RoguelikeCardBattler.Gameplay.Cards.UI
         // ────────────────────────────────────────
         // Helpers estáticos internos
         // ────────────────────────────────────────
-
-        /// <summary>
-        /// Carta representante para orden/coste/tipo. Espejo de ShopNodeController.
-        /// Fallback SideA → SideB para duales con SideA null.
-        /// </summary>
-        private static CardDefinition RepresentativeCard(CardDeckEntry entry)
-        {
-            if (entry == null) return null;
-            if (entry.SingleCard != null) return entry.SingleCard;
-            if (entry.DualCard   != null) return entry.DualCard.SideA ?? entry.DualCard.SideB;
-            return null;
-        }
-
-        // Token rich-text "[Tipo] Nombre" para un lado. null → "?".
-        private static string CardToken(CardDefinition c)
-        {
-            if (c == null) return "?";
-            string prefix = ElementTypeColors.TypePrefix(c.ElementType);
-            return string.IsNullOrEmpty(prefix) ? c.CardName : $"{prefix} {c.CardName}";
-        }
-
-        private static ElementType SideType(CardDefinition c) =>
-            c != null ? c.ElementType : ElementType.None;
-
-        private static string NameOf(CardDefinition c) =>
-            c != null ? c.CardName : "?";
+        // Los helpers de label/representante (RepresentativeCard / CardToken /
+        // SideType / criterio de colapso dual) viven en CardDisplay (módulo Cards),
+        // hogar canónico compartido. Acá solo quedan los helpers exclusivos del
+        // tooltip y del preview de mejora.
 
         private static void AppendSideTooltip(StringBuilder sb, CardDefinition c, string sideLabel)
         {
@@ -392,15 +360,20 @@ namespace RoguelikeCardBattler.Gameplay.Cards.UI
 
         private void BuildBadge(RectTransform parent)
         {
-            // Esquina superior: zona entre el WorldPanel (38-62%) y el borde derecho,
-            // por encima de la RelicBar → el badge no colisiona con ningún HUD existente.
+            // Esquina superior IZQUIERDA. Es la zona libre en ambas escenas:
+            // - Combate: el topBar tiene WorldPanel (x 0.38–0.62) y ChangeWorldButton
+            //   (x 0.74–0.98); la franja izquierda x 0.02–0.17 está vacía. (La esquina
+            //   derecha NO sirve: con sortingOrder=100 el badge taparía el botón Change
+            //   World y bloquearía sus clics.)
+            // - Mapa: el título y el status van centrados (texto en x 0.1–0.9), así que
+            //   el extremo izquierdo queda visualmente libre.
             GameObject badgeGo = new GameObject("DeckViewerBadge",
                 typeof(RectTransform), typeof(Image), typeof(Button));
             badgeGo.transform.SetParent(parent, false);
 
             RectTransform rt = (RectTransform)badgeGo.transform;
-            rt.anchorMin = new Vector2(0.72f, 0.93f);
-            rt.anchorMax = new Vector2(0.88f, 0.99f);
+            rt.anchorMin = new Vector2(0.02f, 0.93f);
+            rt.anchorMax = new Vector2(0.17f, 0.99f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
