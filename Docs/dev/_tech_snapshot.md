@@ -7,7 +7,19 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-16 — **SUB-PR 5 auditoría: números y estado**
+> **Última actualización:** 2026-06-16 — **SUB-PR 2 auditoría: red de tests pre-cirugía
+> + cap de Estilo** (branch `feat/test-net-pre-surgery`). 4 archivos de test EditMode
+> nuevos (suite **148 → 166**, archivos **18 → 22**): `StyleChargeTests` (T3 pre-block /
+> T4 reset de estado + sangrado de counters R-6 / T7 cap a 5), `RelicAssetTests` (T5:
+> los 23 `.asset` de Retazos — cada hook declarado es despachable sin error),
+> `RelicGrantEffectsOnTurnManagerTests` (T6: 10 casos de Grant* sobre TurnManager real),
+> `NeutralCardDamageTests` (T9: carta None = 90% de daño, DD-002). **Fix D-B en el
+> protegido `TurnManager.IncrementStyleCharges`** (+8 líneas): clamp `else if
+> (_styleCharges > 5) _styleCharges = 5;` — antes solo `SetStyleChargesForTest`
+> clampaba; el path de producción acumulaba >5 vía Retazos con un switch bonus pendiente
+> (`TurnManager.cs` ahora **~1107 LOC**). Validado: compilación limpia, EditMode **166/166**.
+>
+> **Última actualización previa:** 2026-06-16 — **SUB-PR 5 auditoría: números y estado**
 > (branch `docs/numbers-and-state`). Refresh mecánico de cifras desviadas, sin
 > cambios de código: **108** scripts C# en `Assets/Scripts` (no 53); `TurnManager.cs`
 > **~1098 LOC** (no 735/~960 contradictorios); LOC de vistas de combate corridos
@@ -238,7 +250,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 18 archivos de test en `Assets/Tests/EditMode/` (suite 148/148)
+- 22 archivos de test en `Assets/Tests/EditMode/` (suite 166/166)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -380,7 +392,7 @@ Gameplay/
     CardEnums.cs                 ← CardType, EffectType, EffectTarget
     EffectRef.cs                 ← referencia a efecto en SO
   Combat/
-    TurnManager.cs               ← ~1098 loc — PROTEGIDO
+    TurnManager.cs               ← ~1107 loc — PROTEGIDO
     ActionQueue.cs               ← 85 loc — PROTEGIDO
     PlayerCombatActor.cs         ← 246 loc — PROTEGIDO
     EnemyCombatActor.cs
@@ -447,7 +459,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
                                         (idempotente — saltea archivos existentes)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 18 archivos (suite EditMode 148/148)
+### Tests (`Assets/Tests/EditMode/`) — 22 archivos (suite EditMode 166/166)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -479,6 +491,17 @@ CardArtTests.cs                  ← Auditoría de arte C7 (5 casos: campo Art d
 CombatEndSyncTests.cs            ← Auditoría SUB-PR 1 (T1: el seam ApplyCombatResult
                                    no pisa el heal de Retazos OnCombatEnd; T2: el retry
                                    tras derrota con 0 HP restaura HP jugable)
+StyleChargeTests.cs              ← Auditoría SUB-PR 2 (T3 pre-block: golpe SuperEficaz
+                                   bloqueado al 100% igual da carga; T4 reset de estado
+                                   de Estilo en re-init + sangrado de counters R-6;
+                                   T7 cap a 5 / overshoot — D-B)
+RelicAssetTests.cs               ← Auditoría SUB-PR 2 (T5: carga los 23 .asset reales y
+                                   valida que cada hook declarado es despachable)
+RelicGrantEffectsOnTurnManagerTests.cs ← Auditoría SUB-PR 2 (T6: 10 casos de Grant*
+                                   —Block/StyleCharge/Heal/Energy/DrawCards— sobre un
+                                   TurnManager real, dispatch manual del hook)
+NeutralCardDamageTests.cs        ← Auditoría SUB-PR 2 (T9: carta None aplica 90% del
+                                   daño base, DD-002, contra cualquier tipo)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
@@ -508,7 +531,7 @@ aprobación explícita de Sebastián antes de proceder:
 
 | Archivo | LOC | Por qué está protegido |
 |---------|-----|------------------------|
-| `TurnManager.cs` | ~1098 | Flujo de turnos, efectividad, energía, Contador de Estilo, IA enemiga, world switch, hooks de Retazos (3A) + API delegada |
+| `TurnManager.cs` | ~1107 | Flujo de turnos, efectividad, energía, Contador de Estilo, IA enemiga, world switch, hooks de Retazos (3A) + API delegada |
 | `ActionQueue.cs` | 85 | Orden determinista de ejecución (FIFO) |
 | `PlayerCombatActor.cs` | 236 | Mecánicas del jugador en combate |
 

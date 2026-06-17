@@ -116,9 +116,10 @@
 
 ### Reglas
 - El Contador de Estilo se reinicia a 0 al iniciar cada combate
-- **+1 carga** cuando un ataque del jugador hace dano SuperEficaz contra el enemigo
+- **+1 carga** cuando un ataque del jugador es SuperEficaz contra el enemigo. El bloqueo del enemigo NO anula la carga: se evalua sobre el dano calculado pre-bloqueo, asi que un SuperEficaz absorbido al 100% igual otorga carga (decision pre-block, 2026-06-14)
 - **-1 carga** cuando un ataque del enemigo hace dano SuperEficaz contra el tipo activo del jugador
 - El contador no baja de 0
+- El contador nunca supera **5**: si un efecto (p. ej. un Retazo) sumaria cargas por encima de 5, se dispara el bonus de las 5 una sola vez y el contador vuelve a 0 (nunca queda en 6+)
 - Al alcanzar **5 cargas**:
   - Se otorga 1 cambio de mundo adicional para ese combate
   - El contador se reinicia a 0
@@ -244,7 +245,7 @@
 
 ## 9. ACTOS Y DIFICULTAD (⏳ DD-011)
 
-- HP base del jugador: **70** al inicio de cada run. Sin maximo definido por diseno (lo limita la economia del run)
+- HP base del jugador: **60** al inicio de cada run. Sin maximo definido por diseno (lo limita la economia del run)
 - 3 actos. Cada acto incrementa HP enemigo, complejidad de patrones, mecanicas activas
 - **Acto 1**: enemigos con 1 tipo fijo, patrones simples (atacar, defender, cargar). Elites con 1 mecanica unica simple
 - **Acto 2**: enemigos con 2 tipos simultaneos, patrones con fases por umbral de HP. Aparecen enemigos transdimensionales. Elites combinan al menos 2 mecanicas
@@ -330,6 +331,6 @@
 
 ---
 
-> Ultima actualizacion: 2026-04-28 (post-GDD v2)
+> Ultima actualizacion: 2026-06-14 (DD pre-block + cap de Estilo a 5 + HP base 60; auditoria integral 2026-06)
 > Solo agregar reglas que esten cerradas por diseno o probadas en codigo.
 > Para decisiones de diseno abiertas, ver Docs/design/DESIGN_DECISIONS.md

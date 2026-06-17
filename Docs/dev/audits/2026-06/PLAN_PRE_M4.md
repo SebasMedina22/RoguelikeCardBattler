@@ -100,24 +100,26 @@ H1). BattleFlowController y RunFlowController no son protegidos.
   OnCombatEnd es CORRECTA** (TurnManager sincroniza antes del dispatch), NO el patrón
   roto que asumía la "vía segura" vía `GrantHeal` (no-op por `IsCombatFinished`).
 
-### SUB-PR 2 — Red de tests pre-cirugía + cap de Estilo `feat/test-net-pre-surgery`
+### SUB-PR 2 — Red de tests pre-cirugía + cap de Estilo `feat/test-net-pre-surgery` ✅ CERRADO 2026-06-16
 
 **Cierra:** T3, T4, T5, T6, T7, T9 (los 6 tests pendientes del top 8) + el fix
-del cap a 5 (D-B) + suplentes opcionales.
+del cap a 5 (D-B).
 **Esfuerzo:** S-M (todos EditMode puros, verificados factibles uno a uno) + un
 fix chico en TurnManager.
 **Depende de:** D-A y D-B (ambas ya resueltas → desbloqueado).
-**Incluye 1 edición de archivo protegido** (cap a 5 en TurnManager) → Sebastián
-aprueba la edición en el hilo principal.
+**Incluyó 1 edición de archivo protegido** (cap a 5 en TurnManager) → aprobada por
+Sebastián en el hilo (hook protect-files toggleado temporalmente, restaurado al cerrar).
+**Validación:** compilación limpia, suite EditMode **166/166** (148 + 18 nuevos), corrida
+en vivo vía Unity-MCP.
 
-- `RelicAssets_AllDeclaredHooksAreDispatchable` (T5) — única validación datos↔código; carga los 23 `.asset` reales.
-- `RelicGrantEffects_OnRealTurnManager_MutateState` ×10 param. (T6) — media tabla de relics gana asserts de conducta.
-- `StyleCharge_SuperEffectiveHitFullyBlocked_StillGrantsCharge` (T3, **invertido por D-A**) — ratifica que el pre-block otorga carga aunque el golpe se bloquee al 100%. Hoy PASA (congela comportamiento).
-- `GrantStyleCharge_Overshoot_ResetsAndGrantsSingleBonus` (T7) — invariante de D-B (cap a 5). **Hoy FALLA** → documenta el bug; se arregla en este mismo PR con el cap en `TurnManager.cs:992-996`.
-- `InitializeCombat_SecondCall_ResetsStyleStateAndRelicCounters` (T4) — congela el contrato; documenta el counter que sangra (R-6).
-- `NeutralCard_Applies90PercentDamage` (T9) — regla de balance viva.
-- **Suplentes si hay apetito:** T8 (`InitializeDeck` ×2), T10 (round-trip de tipos).
-- **Propósito:** estos tests **congelan el comportamiento que la cirugía pre-M5 no debe romper.** Por eso van antes.
+- [x] `RelicAssets_AllDeclaredHooksAreDispatchable` (T5) — `RelicAssetTests.cs`. Carga los 23 `.asset` reales vía AssetDatabase y valida que cada hook declarado se despacha sin lanzar por el RelicHookDispatcher real (datos↔código).
+- [x] `RelicGrantEffects_OnRealTurnManager` ×10 (T6) — `RelicGrantEffectsOnTurnManagerTests.cs`. 10 casos de Grant* (Block ×4, StyleCharge ×1, Heal ×2, Energy ×1, DrawCards ×2) disparados con dispatch manual del hook sobre un TurnManager real; asserts sobre el estado de combate (bloque/cargas/HP/energía/mano).
+- [x] `StyleCharge_SuperEffectiveHitFullyBlocked_StillGrantsCharge` (T3, **D-A**) — `StyleChargeTests.cs`. Enemigo con BaseBlock=100 absorbe el golpe entero; el pre-block otorga carga igual. Pasa (congela comportamiento).
+- [x] `GrantStyleCharge_OverflowWhileBonusPending_CapsAtFive` (T7-B, **D-B**) — `StyleChargeTests.cs`. **Falló fail-first** (acumulaba 6) → arreglado con el clamp en `TurnManager.IncrementStyleCharges` (`else if (_styleCharges > 5) _styleCharges = 5;`). Acompañado de T7-A (`GrantStyleCharge_OvershootFromCleanState_GrantsSingleBonusAndResets`).
+- [x] `InitializeCombat_SecondCall_ResetsStyleState_RelicCountersBleed` (T4) — `StyleChargeTests.cs`. Congela el contrato: re-init resetea el estado de Estilo combat-local pero NO los Counters de Retazos (RunState-level) → documenta el sangrado R-6 (diferido).
+- [x] `NeutralCard_Applies90PercentDamage` (T9) — `NeutralCardDamageTests.cs` (×3 tipos enemigos). Regla de balance viva (DD-002). El 8º dispatch para cartas neutras depende de RunSession.RelicDispatcher (Awake, que no corre en EditMode) → verificado por código/Play.
+- **Nota:** suplentes T8/T10 NO se tomaron (alcance ya cubierto por los 6 del top 8).
+- **Propósito:** estos tests **congelan el comportamiento que la cirugía pre-M5 no debe romper.**
 
 ### SUB-PR 3 — Docs paquete (i): Momentum → Estilo `docs/momentum-to-style` ✅ CERRADO 2026-06-15
 

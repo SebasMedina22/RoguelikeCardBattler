@@ -10,15 +10,22 @@
 > **Fase actual:** M4 activo, reordenado 2026-06-10. Próximo paso: pulido pre-M4 (visor de mazo).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M5 — Bosses con fases + Boss Acto 1 según GDD v2
-> **Última actualización:** 2026-06-16 (`modo:implementacion`: **SUB-PR 4 ✅ (#117) +
+> **Última actualización:** 2026-06-16 (`modo:implementacion`: **SUB-PR 2 ✅ (#120) CERRADO
+> → REMEDIACIÓN PRE-M4 COMPLETA**. Red de tests pre-cirugía + cap de Estilo a 5 (D-B). 4
+> archivos EditMode nuevos (T3 pre-block, T4 reset+sangrado R-6, T5 dispatchabilidad de los
+> 23 `.asset`, T6 ×10 Grant* sobre TurnManager real, T7 cap a 5, T9 carta None 90%): suite
+> **148 → 166**, archivos **18 → 22**. Fix D-B en el protegido `TurnManager.IncrementStyleCharges`
+> (clamp `> 5 → 5`; aprobado en hilo, hook toggleado y restaurado). **Los 6 sub-PRs de la
+> auditoría 2026-06 están cerrados.** Pendiente de Sebastián (hook bloquea): GOLDEN_RULES §4
+> (pre-block + cap a 5) y §9 (HP 70→60). Detalle en `audits/2026-06/PLAN_PRE_M4.md §SUB-PR 2`.)
+> **Previa:** 2026-06-16 (`modo:implementacion`: **SUB-PR 4 ✅ (#117) +
 > SUB-PR 5 ✅ (#118) CERRADOS** — paquetes docs (ii) verdad de Retazos y (iii) números/estado.
 > SUB-PR 4 (D7-D10): `RELICS.md` + `m3_hooks_spec.md` invierten la guía D7/D8 — mutación
 > directa de `PlayerCurrentHP` en OnCombatEnd es CORRECTA (sync Opción B), `Grant*` son
 > no-op ahí; + regla de orden de hooks + consecuencias D-A. SUB-PR 5 (D11-D14+D-C):
 > `_tech_snapshot` (108 scripts, TurnManager ~1098 LOC, suite 148, gh presente, CI parqueado,
 > gaps purgados) + `Combat/CLAUDE.md` (efectividad **bidireccional** DD-018) + 4 specs marcados
-> IMPLEMENTADO + campo Estado en plantilla + paso en /cierre-sesion. **Remediación pre-M4: solo
-> queda SUB-PR 2** (red de tests + cap Estilo a 5, requiere aprobación de edición de TurnManager).
+> IMPLEMENTADO + campo Estado en plantilla + paso en /cierre-sesion.
 > Detalle en `audits/2026-06/PLAN_PRE_M4.md §SUB-PR 4/5`.)
 > **Previa:** 2026-06-15 (`modo:implementacion`: **SUB-PR 3 CERRADO** —
 > docs paquete (i) Momentum → Estilo. Cierra D1/D2/D3/B11/T2/T6. `COMBAT_ARCHITECTURE.md`
