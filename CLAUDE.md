@@ -98,11 +98,14 @@ activa un modo, el primer paso del ritual es leer el archivo correspondiente.**
 - Convenciones consistentes entre archivos.
 
 ### Sobre archivos
-- **Archivos protegidos** (NO modificar sin aprobación explícita):
+- **Archivos protegidos** (Claude los edita TRAS confirmación; el hook
+  `protect-files` pide allow/deny en el momento, ya NO bloquea de forma dura):
   - `Assets/Scripts/Gameplay/Combat/TurnManager.cs`
   - `Assets/Scripts/Gameplay/Combat/ActionQueue.cs`
   - `Assets/Scripts/Gameplay/Combat/PlayerCombatActor.cs`
-- **Archivos solo de Sebastián** (Claude propone, Sebastián cierra):
+- **Docs de autoridad de Sebastián** (Claude los EDITA tras confirmación, pero la
+  DECISIÓN es de Sebastián — Claude transcribe reglas/decisiones ya tomadas, NO
+  inventa ni cierra diseño por su cuenta):
   - `Docs/dev/GOLDEN_RULES.md` — reglas del juego cerradas
   - `Docs/design/_gdd.md` — GDD vigente
   - `Docs/design/DESIGN_DECISIONS.md` — decisiones de diseño abiertas
@@ -110,8 +113,9 @@ activa un modo, el primer paso del ritual es leer el archivo correspondiente.**
   - `Docs/dev/_tech_snapshot.md` — al terminar cambios estructurales en `modo:implementacion`
   - `Docs/dev/_roadmap.md` — al cerrar sub-tareas (checkbox `[x]`)
   - `Docs/dev/_insights.md` — cuando Sebastián escribe una observación
-- **Archivos protegidos solo cambian si Sebastián autoriza**: cualquier cambio
-  estructural se discute primero.
+- **Los protegidos cambian con la confirmación de Sebastián en el momento**
+  (prompt del hook `protect-files`, que devuelve `ask`). En los 3 archivos de
+  combate, los cambios estructurales se discuten primero igual.
 
 ### Sobre comunicación
 - Sebastián habla en español. Responde en español.
@@ -135,7 +139,7 @@ activa un modo, el primer paso del ritual es leer el archivo correspondiente.**
   contexto, es overkill.
 - **Archivos protegidos:** NUNCA delegues a un subagente la EDICIÓN de
   `TurnManager.cs`, `ActionQueue.cs` ni `PlayerCombatActor.cs`. Leer/explorar sí;
-  editar lo hago yo en el hilo principal con tu aprobación.
+  editar lo hago yo en el hilo principal tras tu confirmación (prompt del hook).
 - Mapeo por modo y ejemplos: `Docs/dev/modes/_subagentes.md`.
 
 ### Sobre skills propias (gaps de tooling)
