@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Strike_Affine
   m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Cards.CardDefinition
   id: strike_affine
-  cardName: Strike
-  description: Deal 6 damage to an enemy.
+  cardName: Golpe
+  description: "Inflige 6 de da\xF1o."
   cost: 1
   type: 0
   rarity: 0
@@ -39,4 +39,4 @@ MonoBehaviour:
       statusType: 0
       extraParams: []
     upgradedName: 
-    upgradedDescription: Deal 9 damage to an enemy.
+    upgradedDescription: "Inflige 9 de da\xF1o."

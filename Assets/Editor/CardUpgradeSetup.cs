@@ -55,8 +55,8 @@ namespace RoguelikeCardBattler.Editor
             CardDefinition card = LoadCard(assetName);
             if (card == null) { missing++; return 0; }
 
-            List<EffectRef> upgraded = CloneEffectsAddingTo(card, EffectType.Damage, delta);
-            int newValue = FindFirstEffectValue(upgraded, EffectType.Damage, fallback: 0);
+            List<EffectRef> upgraded = EditorCardAuthoring.CloneEffectsBoostingFirst(card, EffectType.Damage, delta);
+            int newValue = EditorCardAuthoring.FirstEffectValue(upgraded, EffectType.Damage, fallback: 0);
             string newDesc = $"Deal {newValue} damage to an enemy.";
             card.Upgrade.SetTestData(false, 0, upgraded, null, newDesc);
             EditorUtility.SetDirty(card);
@@ -68,8 +68,8 @@ namespace RoguelikeCardBattler.Editor
             CardDefinition card = LoadCard(assetName);
             if (card == null) { missing++; return 0; }
 
-            List<EffectRef> upgraded = CloneEffectsAddingTo(card, EffectType.Block, delta);
-            int newValue = FindFirstEffectValue(upgraded, EffectType.Block, fallback: 0);
+            List<EffectRef> upgraded = EditorCardAuthoring.CloneEffectsBoostingFirst(card, EffectType.Block, delta);
+            int newValue = EditorCardAuthoring.FirstEffectValue(upgraded, EffectType.Block, fallback: 0);
             string newDesc = $"Gain {newValue} Block.";
             card.Upgrade.SetTestData(false, 0, upgraded, null, newDesc);
             EditorUtility.SetDirty(card);
@@ -87,44 +87,6 @@ namespace RoguelikeCardBattler.Editor
             card.Upgrade.SetTestData(true, newCost, null, null, null);
             EditorUtility.SetDirty(card);
             return 1;
-        }
-
-        private static int FindFirstEffectValue(List<EffectRef> list, EffectType type, int fallback)
-        {
-            foreach (EffectRef e in list)
-            {
-                if (e.effectType == type) return e.value;
-            }
-            return fallback;
-        }
-
-        /// <summary>
-        /// Devuelve una nueva lista de EffectRef copiando los del card y sumando
-        /// <paramref name="delta"/> al primer efecto cuyo type coincide. Si no
-        /// hay efecto del tipo pedido, devuelve la lista clonada sin cambios
-        /// (CardUpgradeDef seguirá detectando HasUpgrade porque la lista es != vacía).
-        /// </summary>
-        private static List<EffectRef> CloneEffectsAddingTo(CardDefinition card, EffectType type, int delta)
-        {
-            var result = new List<EffectRef>();
-            bool boosted = false;
-            foreach (EffectRef src in card.Effects)
-            {
-                EffectRef copy = new EffectRef
-                {
-                    effectType = src.effectType,
-                    value = src.value,
-                    target = src.target,
-                    statusType = src.statusType
-                };
-                if (!boosted && copy.effectType == type)
-                {
-                    copy.value += delta;
-                    boosted = true;
-                }
-                result.Add(copy);
-            }
-            return result;
         }
 
         private static CardDefinition LoadCard(string assetName)

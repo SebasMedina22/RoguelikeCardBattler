@@ -17,21 +17,48 @@ namespace RoguelikeCardBattler.Tests.EditMode
     /// </summary>
     public class AffinityTests : CombatTestBase
     {
-        // SOs runtime creados a mano por estos tests (afines: CombatTestBase no expone
-        // un helper de afinidad). Se destruyen en TearDown local; el base limpia los suyos.
-        private readonly List<UnityEngine.Object> _affineAssets = new List<UnityEngine.Object>();
+        // SOs runtime creados por estos tests (cuerpos a mano + duales/variantes que
+        // produce el resolver y los clones de upgrade). CombatTestBase no expone un
+        // helper de afinidad ni rastrea estos SOs runtime, así que los registramos acá
+        // y los destruimos en TearDown — sin esto cada Resolve/upgrade dejaría SOs
+        // huérfanos en memoria (higiene de test).
+        private readonly List<UnityEngine.Object> _runtimeSos = new List<UnityEngine.Object>();
 
         [TearDown]
-        public void CleanupAffineAssets()
+        public void CleanupRuntimeSos()
         {
-            foreach (UnityEngine.Object asset in _affineAssets)
+            foreach (UnityEngine.Object so in _runtimeSos)
             {
-                if (asset != null) UnityEngine.Object.DestroyImmediate(asset);
+                if (so != null) UnityEngine.Object.DestroyImmediate(so);
             }
-            _affineAssets.Clear();
+            _runtimeSos.Clear();
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
+
+        // Registra un SO runtime para limpieza. Devuelve el mismo objeto (fluido).
+        private T TrackSO<T>(T so) where T : UnityEngine.Object
+        {
+            if (so != null) _runtimeSos.Add(so);
+            return so;
+        }
+
+        // Registra los SOs que cuelgan de una entry dual (la dual + sus 2 lados).
+        // Las entries single comparten el SO del cuerpo (ya rastreado), no crean SOs.
+        private CardDeckEntry TrackEntry(CardDeckEntry entry)
+        {
+            if (entry?.DualCard != null)
+            {
+                TrackSO(entry.DualCard);
+                TrackSO(entry.DualCard.SideA);
+                TrackSO(entry.DualCard.SideB);
+            }
+            return entry;
+        }
+
+        // Resolve + registro de los SOs runtime que produce.
+        private CardDeckEntry ResolveTracked(CardDeckEntry authored, ElementType typeA, ElementType typeB)
+            => TrackEntry(AffinityResolver.Resolve(authored, typeA, typeB));
 
         private CardDefinition MakeAffineStrike(string id = "aff_strike", int damage = 6)
         {
@@ -41,8 +68,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardRarity.Common, CardTarget.SingleEnemy, new List<string>(),
                 new List<EffectRef> { CreateEffect(EffectType.Damage, damage, EffectTarget.SingleEnemy) },
                 ElementType.None, null, /*affinity*/ true);
-            _affineAssets.Add(card);
-            return card;
+            return TrackSO(card);
         }
 
         private CardDefinition MakeAffineDefend(string id = "aff_defend", int block = 5)
@@ -53,8 +79,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardRarity.Common, CardTarget.Self, new List<string>(),
                 new List<EffectRef> { CreateEffect(EffectType.Block, block, EffectTarget.Self) },
                 ElementType.None, null, /*affinity*/ true);
-            _affineAssets.Add(card);
-            return card;
+            return TrackSO(card);
         }
 
         // Neutra: mismo cuerpo que la afín pero affinity=false (sigue None → 90%).
@@ -68,8 +93,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardRarity.Common, CardTarget.SingleEnemy, new List<string>(),
                 new List<EffectRef> { CreateEffect(EffectType.Damage, damage, EffectTarget.SingleEnemy) },
                 ElementType.None, null, /*affinity*/ false);
-            _affineAssets.Add(card);
-            return card;
+            return TrackSO(card);
         }
 
         private CardDefinition MakeNeutralDefend(string id, int block = 5)
@@ -80,8 +104,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardRarity.Common, CardTarget.Self, new List<string>(),
                 new List<EffectRef> { CreateEffect(EffectType.Block, block, EffectTarget.Self) },
                 ElementType.None, null, /*affinity*/ false);
-            _affineAssets.Add(card);
-            return card;
+            return TrackSO(card);
         }
 
         private void SetStrikeUpgrade(CardDefinition card, int upgradedDamage)
@@ -108,12 +131,15 @@ namespace RoguelikeCardBattler.Tests.EditMode
             return manager;
         }
 
+        private EnemyDefinition Enemy(string id, ElementType type, int hp = 50) =>
+            CreateEnemyDefinition(id, "Enemy", hp, EnemyAIPattern.Sequence, new List<EnemyMove>(), type);
+
         // ── Casos ──────────────────────────────────────────────────────────────────
 
         [Test] // 1 — Resolución afín → dual tipada por mundo
         public void Resolve_AffineSingle_BecomesDualTypedPerWorld()
         {
-            CardDeckEntry resolved = AffinityResolver.Resolve(
+            CardDeckEntry resolved = ResolveTracked(
                 CardDeckEntry.CreateSingle(MakeAffineStrike()), ElementType.Rojo, ElementType.Azul);
 
             Assert.IsNotNull(resolved.DualCard, "Una carta afín se resuelve a una entrada dual.");
@@ -126,7 +152,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         public void CreateAffinityVariant_PreservesBody_OnlyTypeDiffers()
         {
             CardDefinition body = MakeAffineStrike("body_test", damage: 7);
-            CardDefinition variant = body.CreateAffinityVariant(ElementType.Morado);
+            CardDefinition variant = TrackSO(body.CreateAffinityVariant(ElementType.Morado));
 
             Assert.AreEqual(body.CardName, variant.CardName);
             Assert.AreEqual(body.Cost, variant.Cost);
@@ -145,11 +171,12 @@ namespace RoguelikeCardBattler.Tests.EditMode
             CardDefinition affine = MakeAffineStrike("upg_strike", damage: 6);
             SetStrikeUpgrade(affine, 9);
 
-            CardDeckEntry resolved = AffinityResolver.Resolve(
+            CardDeckEntry resolved = ResolveTracked(
                 CardDeckEntry.CreateSingle(affine), ElementType.Rojo, ElementType.Azul);
 
             Assert.IsTrue(resolved.CanUpgrade(), "La dual afín conserva el payload de upgrade.");
             resolved.ApplyUpgrade();
+            TrackEntry(resolved);   // ApplyUpgrade reemplaza la dual por un clon nuevo
             Assert.AreEqual(9, FirstDamage(resolved.DualCard.SideA), "Lado A mejorado.");
             Assert.AreEqual(9, FirstDamage(resolved.DualCard.SideB), "Lado B mejorado.");
         }
@@ -157,7 +184,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test] // 4 — Una neutra (sin afinidad, None) pasa sin tocar (sigue single None)
         public void Resolve_NeutralSingle_StaysSingleNone()
         {
-            CardDeckEntry resolved = AffinityResolver.Resolve(
+            CardDeckEntry resolved = ResolveTracked(
                 CreateSingleCardEntry(MakeNeutralStrike("neutral_strike")), ElementType.Rojo, ElementType.Azul);
 
             Assert.IsNotNull(resolved.SingleCard, "Una neutra no se convierte en dual.");
@@ -168,7 +195,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
         [Test] // 5 — Integración con CardDeckEntry: GetActiveCard conmuta tipo por mundo
         public void Resolve_GetActiveCard_SwitchesTypePerWorld()
         {
-            CardDeckEntry resolved = AffinityResolver.Resolve(
+            CardDeckEntry resolved = ResolveTracked(
                 CardDeckEntry.CreateSingle(MakeAffineStrike()), ElementType.Negro, ElementType.Blanco);
 
             Assert.AreEqual(ElementType.Negro, resolved.GetActiveCard(TurnManager.WorldSide.A).ElementType);
@@ -185,6 +212,7 @@ namespace RoguelikeCardBattler.Tests.EditMode
             for (int i = 0; i < 2; i++) authored.Add(CreateSingleCardEntry(MakeNeutralDefend("dn" + i)));        // 2 Defend neutra
 
             List<CardDeckEntry> resolved = AffinityResolver.ResolveDeck(authored, ElementType.Rojo, ElementType.Azul);
+            foreach (CardDeckEntry e in resolved) TrackEntry(e);
 
             Assert.AreEqual(9, resolved.Count, "9 entradas single autoradas (la 10ª es la dual drafteada).");
             Assert.AreEqual(5, resolved.Count(e => RepName(e) == "Strike"), "5 Strike.");
@@ -200,11 +228,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
         {
             // Afín Strike (base 6) en Mundo A con tipo Rojo, enemigo Azul → Rojo es
             // SuperEficaz vs Azul → 6 × 1.5 = 9 daño y +1 carga de Estilo.
-            CardDeckEntry affineEntry = AffinityResolver.Resolve(
+            CardDeckEntry affineEntry = ResolveTracked(
                 CardDeckEntry.CreateSingle(MakeAffineStrike("tm_affine", 6)), ElementType.Rojo, ElementType.Azul);
-            EnemyDefinition azulEnemy = CreateEnemyDefinition("azul_a", "Enemy", 50,
-                EnemyAIPattern.Sequence, new List<EnemyMove>(), ElementType.Azul);
-            TurnManager mAff = CreateManager(affineEntry, azulEnemy);
+            TurnManager mAff = CreateManager(affineEntry, Enemy("azul_a", ElementType.Azul));
             mAff.SetCurrentWorldForTest(TurnManager.WorldSide.A);
             int hpBeforeAff = mAff.EnemyHP;
             mAff.PlayCard(mAff.PlayerHand[0]);
@@ -212,11 +238,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
             Assert.AreEqual(1, mAff.StyleCharges, "Un SuperEficaz otorga 1 carga de Estilo.");
 
             // Neutra Strike (base 6) → None → round(6 × 0.9) = 5 daño, Estilo sin cambios.
-            CardDeckEntry neutralEntry = AffinityResolver.Resolve(
+            CardDeckEntry neutralEntry = ResolveTracked(
                 CreateSingleCardEntry(MakeNeutralStrike("tm_neutral", 6)), ElementType.Rojo, ElementType.Azul);
-            EnemyDefinition azulEnemy2 = CreateEnemyDefinition("azul_b", "Enemy", 50,
-                EnemyAIPattern.Sequence, new List<EnemyMove>(), ElementType.Azul);
-            TurnManager mNeu = CreateManager(neutralEntry, azulEnemy2);
+            TurnManager mNeu = CreateManager(neutralEntry, Enemy("azul_b", ElementType.Azul));
             mNeu.SetCurrentWorldForTest(TurnManager.WorldSide.A);
             int hpBeforeNeu = mNeu.EnemyHP;
             mNeu.PlayCard(mNeu.PlayerHand[0]);
@@ -230,11 +254,53 @@ namespace RoguelikeCardBattler.Tests.EditMode
             CardDefinition affine = MakeAffineStrike("rt_strike", 6);
             SetStrikeUpgrade(affine, 9);
 
-            CardDefinition upgraded = affine.CreateUpgradedClone();
+            CardDefinition upgraded = TrackSO(affine.CreateUpgradedClone());
             Assert.IsTrue(upgraded.Affinity, "CreateUpgradedClone preserva el flag de afinidad.");
 
-            CardDefinition variant = affine.CreateAffinityVariant(ElementType.Rojo);
+            CardDefinition variant = TrackSO(affine.CreateAffinityVariant(ElementType.Rojo));
             Assert.IsFalse(variant.Affinity, "CreateAffinityVariant resuelve el flag a false.");
+        }
+
+        [Test] // 9 — La MISMA carta afín conmuta su tipo por mundo a través del TurnManager real
+        public void Resolve_SameAffineCard_SwitchesTypeByWorld_OnRealTurnManager()
+        {
+            // Afín base 8, A=Rojo / B=Azul. Una sola dual resuelta, clonada en dos managers.
+            CardDeckEntry resolved = ResolveTracked(
+                CardDeckEntry.CreateSingle(MakeAffineStrike("wb", 8)), ElementType.Rojo, ElementType.Azul);
+
+            // Mundo A → tipo Rojo, enemigo Azul: Rojo→Azul SuperEficaz → 8×1.5 = 12, +1 Estilo.
+            TurnManager mA = CreateManager(resolved.Clone(), Enemy("e_a", ElementType.Azul));
+            mA.SetCurrentWorldForTest(TurnManager.WorldSide.A);
+            int hpA = mA.EnemyHP;
+            mA.PlayCard(mA.PlayerHand[0]);
+            Assert.AreEqual(hpA - 12, mA.EnemyHP, "En Mundo A usa el tipo A (Rojo, SuperEficaz vs Azul).");
+            Assert.AreEqual(1, mA.StyleCharges);
+
+            // Mundo B → tipo Azul, enemigo Azul: Azul→Azul mismo tipo = Neutro → 8×1.0 = 8, sin Estilo.
+            TurnManager mB = CreateManager(resolved.Clone(), Enemy("e_b", ElementType.Azul));
+            mB.SetCurrentWorldForTest(TurnManager.WorldSide.B);
+            int hpB = mB.EnemyHP;
+            mB.PlayCard(mB.PlayerHand[0]);
+            Assert.AreEqual(hpB - 8, mB.EnemyHP, "En Mundo B usa el tipo B (Azul, Neutro vs Azul) — conmutó en vivo.");
+            Assert.AreEqual(0, mB.StyleCharges, "Neutro no otorga Estilo → confirma que el tipo cambió con el mundo.");
+        }
+
+        [Test] // 10 — Una afín YA MEJORADA juega su daño mejorado en combate
+        public void Resolve_UpgradedAffine_PlaysUpgradedDamage_InCombat()
+        {
+            CardDefinition affine = MakeAffineStrike("upg_combat", damage: 6);
+            SetStrikeUpgrade(affine, 9);
+            CardDeckEntry resolved = ResolveTracked(
+                CardDeckEntry.CreateSingle(affine), ElementType.Rojo, ElementType.Azul);
+            resolved.ApplyUpgrade();
+            TrackEntry(resolved);
+
+            // Mundo A → tipo Rojo, enemigo Morado: Rojo→Morado Neutro → daño mejorado 9 × 1.0 = 9.
+            TurnManager m = CreateManager(resolved, Enemy("morado", ElementType.Morado));
+            m.SetCurrentWorldForTest(TurnManager.WorldSide.A);
+            int hp = m.EnemyHP;
+            m.PlayCard(m.PlayerHand[0]);
+            Assert.AreEqual(hp - 9, m.EnemyHP, "La afín mejorada inflige su daño mejorado (9) en combate.");
         }
 
         // Nombre de la carta representante de una entry (single → su carta; dual → SideA).

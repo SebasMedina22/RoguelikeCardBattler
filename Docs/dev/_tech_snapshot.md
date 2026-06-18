@@ -30,13 +30,19 @@
 > `RunCombatConfig_Act1.starterDeck` a la composición GDD §5 (3 Strike_Affine + 2 Strike_Neutral +
 > 2 Defend_Affine + 2 Defend_Neutral = 9; la 10ª es la dual drafteada inyectada por
 > `PendingStarterCard`). BattleFocus sale del starter (queda en `rewardPool`). Nuevos tests
-> `Assets/Tests/EditMode/AffinityTests.cs` (8 casos: resolución afín→dual, preservación de cuerpo/
+> `Assets/Tests/EditMode/AffinityTests.cs` (10 casos: resolución afín→dual, preservación de cuerpo/
 > upgrade, neutra sin tocar, integración `CardDeckEntry` + `TurnManager` real, composición de mazo,
-> round-trip del flag) + `CardUpgradeCoverageTests.cs` (guard DD-023 editor-only `#if UNITY_EDITOR`:
+> round-trip del flag, **misma carta afín conmuta tipo por mundo en combate (A vs B)**, **afín mejorada
+> juega su daño mejorado**) + `CardUpgradeCoverageTests.cs` (guard DD-023 editor-only `#if UNITY_EDITOR`:
 > todo `CardDefinition` tiene upgrade + dual compuesta de caras es mejorable). Suite EditMode
-> **181 → 191/191**, compilación limpia. **Validado en Unity-MCP:** menú corrido (4 cuerpos + 18 caras
+> **181 → 193/193**, compilación limpia. **Validado en Unity-MCP:** menú corrido (4 cuerpos + 18 caras
 > + starter 9 entradas), E2E data-layer (config real → 9 entradas: 5 afines tipadas A/B + 4 neutras
 > None → mazo de 10, todas mejorables). E2E visual en escena pendiente de confirmación manual.
+> **Fixes de revisión (modo:revision):** helper editor compartido `Assets/Editor/EditorCardAuthoring.cs`
+> (consolida el clonado de efectos que duplicaban StarterDeckSetup y CardUpgradeSetup → sin drift);
+> los 4 cuerpos del starter pasan a texto en español ("Golpe"/"Guardia") para matchear las caras del
+> draft en la misma mano; trackeo de SOs runtime en los tests (sin huérfanos). El campo `affinity` se
+> serializa ahora en todos los `CardDefinition` (default `0`).
 >
 > **Última actualización previa:** 2026-06-16 — **Visor de mazo + fixes de revisión**
 > (branch `feat/deck-viewer`). Nuevo `Assets/Scripts/Gameplay/Cards/UI/DeckViewerView.cs`:
@@ -300,7 +306,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 25 archivos de test en `Assets/Tests/EditMode/` (suite 191/191)
+- 25 archivos de test en `Assets/Tests/EditMode/` (suite 193/193)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -523,10 +529,12 @@ StarterDeckSetup.cs                   ← 4a: MenuItem "Roguelike/Setup Starter 
                                         18 caras + recomposición de RunCombatConfig_Act1.starterDeck
 CardUpgradeSetup.cs                   ← MenuItem "Roguelike/Setup Placeholder Card Upgrades"
                                         (3C): upgrades de los 6 SOs básicos del starter
+EditorCardAuthoring.cs                ← 4a: helper compartido (CloneEffectsBoostingFirst /
+                                        FirstEffectValue) que consumen StarterDeckSetup y CardUpgradeSetup
 NewRunConfigSetup.cs / ShopConfigSetup.cs  ← menús de config (3E / 3D)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 25 archivos (suite EditMode 191/191)
+### Tests (`Assets/Tests/EditMode/`) — 25 archivos (suite EditMode 193/193)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -574,10 +582,11 @@ DeckViewerTests.cs               ← Visor de mazo (15 casos: orden tipo→coste
                                    dual SideA null, label simple/dual/None, preview
                                    single/dual/sin-upgrade/ya-mejorada, + BuildTooltip
                                    dual/lado-null/ya-mejorada)
-AffinityTests.cs                 ← M4 4a (8 casos: resolución afín→dual tipada por mundo,
+AffinityTests.cs                 ← M4 4a (10 casos: resolución afín→dual tipada por mundo,
                                    preservación de cuerpo/upgrade, neutra sin tocar, integración
                                    CardDeckEntry, composición de mazo 5/4, TurnManager real
-                                   —afín SuperEficaz vs neutra 90%—, round-trip del flag affinity)
+                                   —afín SuperEficaz vs neutra 90%—, round-trip del flag affinity,
+                                   misma carta afín conmuta tipo A↔B en combate, afín mejorada en combate)
 CardUpgradeCoverageTests.cs      ← M4 4a guard DD-023, editor-only #if UNITY_EDITOR (2 casos:
                                    todo CardDefinition tiene upgrade; dual compuesta de 2 caras
                                    es mejorable)

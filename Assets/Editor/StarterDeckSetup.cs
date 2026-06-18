@@ -62,20 +62,24 @@ namespace RoguelikeCardBattler.Editor
         // 1. Cuerpos del starter
         // ──────────────────────────────────────────────
 
+        // Texto en español, espejo del vocabulario de las caras del draft
+        // (NewRunConfigSetup: "Golpe"/"Guardia", "Inflige N de daño."/"Bloquea N.")
+        // para que el mazo inicial — cuerpos + la dual drafteada — lea consistente
+        // en la misma mano. (El número/identidad es placeholder hasta el curado real.)
         private static CardDefinition EnsureStrikeBody(string assetName, bool affinity)
         {
             return EnsureBody(
                 assetName,
                 id: assetName.ToLowerInvariant(),
-                cardName: "Strike",
-                description: $"Deal {StrikeBaseDamage} damage to an enemy.",
+                cardName: "Golpe",
+                description: $"Inflige {StrikeBaseDamage} de daño.",
                 type: CardType.Attack,
                 cardTarget: CardTarget.SingleEnemy,
                 effectType: EffectType.Damage,
                 effectTarget: EffectTarget.SingleEnemy,
                 baseValue: StrikeBaseDamage,
                 upgradeDelta: StrikeUpgradeDelta,
-                upgradedDescription: $"Deal {StrikeBaseDamage + StrikeUpgradeDelta} damage to an enemy.",
+                upgradedDescription: $"Inflige {StrikeBaseDamage + StrikeUpgradeDelta} de daño.",
                 affinity: affinity);
         }
 
@@ -84,15 +88,15 @@ namespace RoguelikeCardBattler.Editor
             return EnsureBody(
                 assetName,
                 id: assetName.ToLowerInvariant(),
-                cardName: "Defend",
-                description: $"Gain {DefendBaseBlock} Block.",
+                cardName: "Guardia",
+                description: $"Bloquea {DefendBaseBlock}.",
                 type: CardType.Skill,
                 cardTarget: CardTarget.Self,
                 effectType: EffectType.Block,
                 effectTarget: EffectTarget.Self,
                 baseValue: DefendBaseBlock,
                 upgradeDelta: DefendUpgradeDelta,
-                upgradedDescription: $"Gain {DefendBaseBlock + DefendUpgradeDelta} Block.",
+                upgradedDescription: $"Bloquea {DefendBaseBlock + DefendUpgradeDelta}.",
                 affinity: affinity);
         }
 
@@ -177,39 +181,11 @@ namespace RoguelikeCardBattler.Editor
 
             int delta = isBlock ? DefendUpgradeDelta : StrikeUpgradeDelta;
             int newValue = baseValue + delta;
-            List<EffectRef> upgradedEffects = CloneEffectsBoostingFirst(face, primary, delta);
+            List<EffectRef> upgradedEffects = EditorCardAuthoring.CloneEffectsBoostingFirst(face, primary, delta);
             string desc = isBlock ? $"Bloquea {newValue}." : $"Inflige {newValue} de daño.";
 
             face.Upgrade.SetTestData(false, 0, upgradedEffects, null, desc);
             EditorUtility.SetDirty(face);
-        }
-
-        /// <summary>
-        /// Clona la lista de efectos sumando <paramref name="delta"/> al primer
-        /// efecto cuyo tipo coincide. Espejo de CardUpgradeSetup.CloneEffectsAddingTo
-        /// (dev tools editor-only; duplicación local acotada para no acoplar ambos menús).
-        /// </summary>
-        private static List<EffectRef> CloneEffectsBoostingFirst(CardDefinition card, EffectType type, int delta)
-        {
-            var result = new List<EffectRef>();
-            bool boosted = false;
-            foreach (EffectRef src in card.Effects)
-            {
-                EffectRef copy = new EffectRef
-                {
-                    effectType = src.effectType,
-                    value = src.value,
-                    target = src.target,
-                    statusType = src.statusType
-                };
-                if (!boosted && copy.effectType == type)
-                {
-                    copy.value += delta;
-                    boosted = true;
-                }
-                result.Add(copy);
-            }
-            return result;
         }
 
         // ──────────────────────────────────────────────

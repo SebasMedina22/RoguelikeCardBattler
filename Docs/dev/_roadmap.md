@@ -15,7 +15,7 @@
 > `Assets/Scripts/Gameplay/Cards/AffinityResolver.cs` (static puro: afín single → dual runtime tipada
 > por mundo; neutras/duales pasan sin tocar), `Assets/Editor/StarterDeckSetup.cs` (menú
 > `Roguelike > Setup Starter Deck (4a)`: 4 cuerpos + 18 upgrades de caras + recomposición del starter),
-> `AffinityTests.cs` (8 casos) + `CardUpgradeCoverageTests.cs` (guard DD-023, 2 casos). `CardDefinition`
+> `AffinityTests.cs` (10 casos) + `CardUpgradeCoverageTests.cs` (guard DD-023, 2 casos). `CardDefinition`
 > gana flag `affinity` + getter + `CreateAffinityVariant` (preserva el payload de upgrade, a diferencia
 > de `CreateUpgradedClone`); propagación en `SetDebugData`/`CreateUpgradedClone`.
 > `RunSession.ConfigureCombat` resuelve afinidad detrás del guard `Deck.Count==0`;
@@ -23,10 +23,13 @@
 > (Strike/Defend × afín/neutra; upg Strike 6→9 / Defend 5→10), 18 caras con upgrade,
 > `RunCombatConfig_Act1.starterDeck` = 3 Strike_Affine + 2 Strike_Neutral + 2 Defend_Affine +
 > 2 Defend_Neutral (9 entradas; la 10ª es la dual drafteada). **CERO cambios en archivos protegidos**
-> (la afinidad se monta sobre el mecanismo dual existente). Suite EditMode **181 → 191/191**,
+> (la afinidad se monta sobre el mecanismo dual existente). Suite EditMode **181 → 193/193**,
 > compilación limpia. E2E data-layer validado en Unity-MCP (config real → 9 entradas: 5 afines tipadas
 > A/B + 4 neutras None → mazo de 10, todas mejorables). E2E visual en escena pendiente de confirmación
-> manual por Sebastián.)
+> manual por Sebastián. **Pasada de `modo:revision` (sin críticos ni mayores):** se aplicaron los
+> fixes — helper editor compartido `EditorCardAuthoring` (elimina la duplicación del clonado de efectos
+> entre StarterDeckSetup/CardUpgradeSetup), cuerpos del starter a texto en español (matchean las caras),
+> trackeo de SOs runtime en tests, y 2 tests extra (conmutación de tipo A↔B en combate + afín mejorada).)
 > **Previa:** 2026-06-17 (`modo:diseno`: **Spec M4 bloque 4a ✅ CERRADO** →
 > `Docs/dev/specs/m4_4a_card_integrity_spec.md`. TurnManager confirmado SIN cambios para afinidad.
 > PR #123 visor de mazo MERGED a main (46347fb), E2E visual confirmado por Sebastián.)
