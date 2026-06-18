@@ -116,6 +116,44 @@ namespace RoguelikeCardBattler.Tests.EditMode
             Assert.AreSame(other, rs.Deck[0].SingleCard, "La carta no objetivo debe permanecer.");
         }
 
+        [Test]
+        public void Apply_RemoveCard_MatchesDualBySide()
+        {
+            // Rama dual de RemoveMatchingCard: una entry dual se quita si la carta
+            // objetivo coincide con SideA o SideB (un autor puede referenciar un lado).
+            RunState rs = new RunState();
+            CardDefinition sideA = MakeCard("a", "LadoA", ElementType.Rojo);
+            CardDefinition sideB = MakeCard("b", "LadoB", ElementType.Azul);
+            DualCardDefinition dual = ScriptableObject.CreateInstance<DualCardDefinition>();
+            dual.InitRuntimeSides("dual1", "Dual", sideA, sideB);
+            rs.Deck.Add(CardDeckEntry.CreateDual(dual));
+            // Segunda carta para confirmar que sólo se quita la que matchea.
+            CardDefinition other = MakeCard("c", "Otra", ElementType.None);
+            rs.Deck.Add(CardDeckEntry.CreateSingle(other));
+
+            // Apuntar al lado B → debe quitar la entrada dual entera.
+            EventConsequence.Apply(rs, null, new EventConsequence(ConsequenceType.RemoveCard, card: sideB));
+
+            Assert.AreEqual(1, rs.Deck.Count, "RemoveCard debe quitar la entrada dual que referencia ese lado.");
+            Assert.AreSame(other, rs.Deck[0].SingleCard, "La carta no objetivo debe permanecer.");
+        }
+
+        [Test]
+        public void Apply_RemoveCard_AbsentCard_NoChange()
+        {
+            // No-op de carta ausente: si la carta objetivo no está en el mazo, el
+            // mazo queda intacto (no lanza, no quita por error).
+            RunState rs = new RunState();
+            CardDefinition inDeck = MakeCard("c1", "Carta", ElementType.None);
+            rs.Deck.Add(CardDeckEntry.CreateSingle(inDeck));
+            CardDefinition absent = MakeCard("c2", "Ausente", ElementType.None);
+
+            EventConsequence.Apply(rs, null, new EventConsequence(ConsequenceType.RemoveCard, card: absent));
+
+            Assert.AreEqual(1, rs.Deck.Count, "Una carta no presente no debe alterar el mazo.");
+            Assert.AreSame(inDeck, rs.Deck[0].SingleCard);
+        }
+
         // ────────────────────────────────────────
         // Caso 4 — Retazos con AcquisitionOrder
         // ────────────────────────────────────────

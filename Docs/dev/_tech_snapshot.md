@@ -32,8 +32,8 @@
 > `Assets/Editor/EventConfigSetup.cs` (menú `Roguelike > Setup Event Config`, idempotente, patrón
 > `ShopConfigSetup`): crea `EventPoolConfig.asset` + 3 EventDefinitions placeholder
 > (`evt_merchant`/`evt_altar`/`evt_chest` en `Assets/ScriptableObjects/Events/`) que cubren las 6
-> consecuencias. Nuevo `Assets/Tests/EditMode/EventTests.cs` (10 casos, cubre 1-7 del spec). Suite
-> EditMode **197 → 207/207**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
+> consecuencias. Nuevo `Assets/Tests/EditMode/EventTests.cs` (12 casos, cubre 1-7 del spec +
+> bordes de RemoveCard: rama dual y carta ausente). Suite EditMode **197 → 209/209**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
 > eventos), datos serializados verificados, E2E data-path en assets reales (SelectEvent → choice
 > "Comprar carta" → oro -20 + mazo +1). E2E visual en play pendiente de confirmación manual.
 > Eventos multidimensionales + quest/MCguffin = 4b-2 (FUERA de scope).

@@ -170,6 +170,14 @@ string SourceWorldLabel;         // "A"/"B" para flavor del resaltado
   destino activo, otorga `FinalRewardGold`, desactiva el quest y devuelve true.
 - `EventNodeController.Initialize(Canvas, RunState, RelicHookDispatcher, EventPoolConfig, Action<int> onComplete)`
   + `Show(int nodeId)` — firma espejo de `CampfireNodeController`.
+  - **Ajuste de firma (implementado en 4b-1, autoritativo para 4b-2):** la firma real
+    es `Show(int nodeId, EventDefinition definition)`. El evento autoritativo vive en
+    `MapNode.AssignedEvent` (fijado por seed al generar el mapa) y el controller no
+    tiene la seed ni referencia al mapa; re-resolverlo internamente arriesgaría divergir
+    del evento ya fijado. Por eso `RunFlowController` le pasa la definición. La analogía
+    con `CampfireNodeController` no transfiere en este punto porque la Hoguera no tiene
+    contenido por-nodo que pasar. 4b-2 hereda `Show(int nodeId, EventDefinition)` (la
+    pantalla de elección de mundo opera sobre esa misma definición).
 
 ### Eventos / Hooks
 - **Sin hooks nuevos en TurnManager.** El MCguffin Mundo A reusa
