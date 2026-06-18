@@ -38,6 +38,17 @@ namespace RoguelikeCardBattler.Run
         {
             starterDeck = entries ?? new List<CardDeckEntry>();
         }
+
+        /// <summary>
+        /// Setter editor-only para que <c>StarterDeckSetup</c> (4a follow-up) reescriba
+        /// el reward pool a cartas AFINES, de modo que las recompensas de combate adopten
+        /// los tipos de mundo del jugador al ganarlas (vía RunState.AddCardToDeck →
+        /// AffinityResolver). Antes el pool tenía duales Rojo/Negro fijos que no resolvían.
+        /// </summary>
+        public void EditorPopulateRewardPool(List<CardDeckEntry> entries)
+        {
+            rewardPool = entries ?? new List<CardDeckEntry>();
+        }
 #endif
     }
 }

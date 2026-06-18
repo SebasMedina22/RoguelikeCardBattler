@@ -178,7 +178,18 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
-            Deck.Add(entry.Clone());
+            // 4a follow-up: toda carta ganada/comprada/de-evento durante la run pasa por
+            // la MISMA resolución de afinidad que el mazo inicial (RunSession.ConfigureCombat).
+            // Una carta afín adopta los tipos de mundo elegidos por el jugador (A/B); las
+            // neutras y las ya-duales se clonan sin cambios. Sin esto, una recompensa afín
+            // (single, ElementType.None) entraría al mazo sin tipo de mundo y nunca
+            // explotaría la afinidad — se veía como una carta de tipos ajenos a los elegidos.
+            // AffinityResolver.Resolve ya clona internamente → no duplicar Clone aquí.
+            CardDeckEntry resolved = AffinityResolver.Resolve(entry, PlayerWorldAType, PlayerWorldBType);
+            if (resolved != null)
+            {
+                Deck.Add(resolved);
+            }
         }
 
         public void AddCardToDeck(CardDefinition card)

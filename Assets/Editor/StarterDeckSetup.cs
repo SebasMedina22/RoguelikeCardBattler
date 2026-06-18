@@ -51,11 +51,16 @@ namespace RoguelikeCardBattler.Editor
             // 3. Recomposición del starter deck (9 entradas single).
             bool deckWritten = RecomposeStarterDeck(strikeAffine, strikeNeutral, defendAffine, defendNeutral);
 
+            // 4. Reward pool afín (4a follow-up): las recompensas de combate adoptan los
+            //    tipos de mundo del jugador al ganarlas, en vez de los duales Rojo/Negro fijos.
+            bool rewardWritten = RecomposeRewardPool(strikeAffine, defendAffine, strikeNeutral);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log($"[StarterDeckSetup] bodies=4 facesUpgraded={facesUpgraded} " +
-                      $"starterDeck={(deckWritten ? "9 entradas" : "NO escrito (config faltante)")}.");
+                      $"starterDeck={(deckWritten ? "9 entradas" : "NO escrito (config faltante)")} " +
+                      $"rewardPool={(rewardWritten ? "3 afines/neutra" : "NO escrito (config faltante)")}.");
         }
 
         // ──────────────────────────────────────────────
@@ -220,6 +225,39 @@ namespace RoguelikeCardBattler.Editor
             {
                 deck.Add(CardDeckEntry.CreateSingle(card));
             }
+        }
+
+        // ──────────────────────────────────────────────
+        // 4. Reward pool afín (4a follow-up)
+        // ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Reescribe RunCombatConfig_Act1.rewardPool a cartas AFINES single (+1 neutra):
+        /// Strike afín, Defend afín, Strike neutra. Al ganarlas, RunState.AddCardToDeck
+        /// las rutea por AffinityResolver → las afines adoptan los tipos elegidos por el
+        /// jugador (Mundo A/B), la neutra entra como None. Reusa los mismos cuerpos del
+        /// starter (no crea SOs nuevos). GetRewardOptions toma las primeras ChoicesCount.
+        /// </summary>
+        private static bool RecomposeRewardPool(
+            CardDefinition strikeAffine, CardDefinition defendAffine, CardDefinition strikeNeutral)
+        {
+            RunCombatConfig config = AssetDatabase.LoadAssetAtPath<RunCombatConfig>(ConfigPath);
+            if (config == null)
+            {
+                Debug.LogWarning($"[StarterDeckSetup] No se encontró {ConfigPath}; reward pool no recompuesto.");
+                return false;
+            }
+
+            var pool = new List<CardDeckEntry>
+            {
+                CardDeckEntry.CreateSingle(strikeAffine),
+                CardDeckEntry.CreateSingle(defendAffine),
+                CardDeckEntry.CreateSingle(strikeNeutral),
+            };
+
+            config.EditorPopulateRewardPool(pool);
+            EditorUtility.SetDirty(config);
+            return true;
         }
     }
 }
