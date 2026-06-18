@@ -7,7 +7,18 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-17 — **M4 bloque 4a: integridad del sistema de cartas**
+> **Última actualización:** 2026-06-18 — **M4 4a follow-up: fix de afinidad en recompensas** —
+> `RunState.AddCardToDeck` ahora rutea por `AffinityResolver` → toda carta ganada/comprada/de-evento
+> adopta los tipos del jugador (afín→dual runtime; neutra/dual pasan sin cambios). Seam único:
+> cubre recompensas + tienda + eventos de 4b. `RunCombatConfig.EditorPopulateRewardPool`
+> (#if UNITY_EDITOR). `StarterDeckSetup.RecomposeRewardPool` (paso 4 del menú): reescribe
+> `rewardPool` de `RunCombatConfig_Act1` a 3 cartas afines/neutras (Strike afín, Defend afín,
+> Strike neutra). Nuevo `Assets/Tests/EditMode/RunStateAffinityTests.cs` (4 casos: afín→dual,
+> neutra→None, dual ya-tipada pasa sin cambios, sin aliasing). **E2E visual confirmado por
+> Sebastián:** strike de recompensa adopta `[Amarillo]/[Morado]` (tipos del jugador). Suite
+> EditMode **193 → 197/197** (26 archivos de test). Cero archivos protegidos.
+>
+> **Última actualización previa:** 2026-06-17 — **M4 bloque 4a: integridad del sistema de cartas**
 > (branch `feat/m4-4a-card-integrity`). Afinidad de tipo (DD-022 opción A) + cobertura de
 > mejoras (DD-023), **sin tocar archivos protegidos** (la afinidad se monta sobre el mecanismo
 > dual existente). `CardDefinition` gana `[SerializeField] bool affinity` + getter `Affinity` y
@@ -306,7 +317,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 25 archivos de test en `Assets/Tests/EditMode/` (suite 193/193)
+- 26 archivos de test en `Assets/Tests/EditMode/` (suite 197/197)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -527,6 +538,7 @@ RelicSoGenerator.cs                   ← MenuItem "Roguelike/Generate Relic Ass
 StarterDeckSetup.cs                   ← 4a: MenuItem "Roguelike/Setup Starter Deck (4a)"
                                         (idempotente): 4 cuerpos del starter + upgrade en las
                                         18 caras + recomposición de RunCombatConfig_Act1.starterDeck
+                                        + reescritura del rewardPool a afines (4a follow-up, paso 4)
 CardUpgradeSetup.cs                   ← MenuItem "Roguelike/Setup Placeholder Card Upgrades"
                                         (3C): upgrades de los 6 SOs básicos del starter
 EditorCardAuthoring.cs                ← 4a: helper compartido (CloneEffectsBoostingFirst /
@@ -590,6 +602,9 @@ AffinityTests.cs                 ← M4 4a (10 casos: resolución afín→dual t
 CardUpgradeCoverageTests.cs      ← M4 4a guard DD-023, editor-only #if UNITY_EDITOR (2 casos:
                                    todo CardDefinition tiene upgrade; dual compuesta de 2 caras
                                    es mejorable)
+RunStateAffinityTests.cs         ← M4 4a follow-up: afinidad en AddCardToDeck (4 casos: afín→dual
+                                   tipada por mundo, neutra→None, dual ya-tipada pasa sin cambios,
+                                   sin aliasing de entry)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

@@ -9,8 +9,21 @@
 >
 > **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-17). Bloque 4a: ✅ CERRADO (2026-06-17).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
-> **Próximo bloque:** M4 bloque 4b — Eventos + Quests (arranca con sesión `modo:diseno` para su spec)
-> **Última actualización:** 2026-06-17 (`modo:implementacion`: **Bloque 4a ✅ CERRADO** — integridad
+> **Próximo bloque:** M4 bloque 4b — Eventos + Quests. **Spec ✅ CERRADO (2026-06-18)** →
+> `Docs/dev/specs/m4_4b_events_quests_spec.md`, dividido en 2 sub-PRs (4b-1 motor + simples,
+> 4b-2 multidim + quest). Próximo paso: implementar 4b-1 con `modo:implementacion`.
+> **Última actualización:** 2026-06-18 (4a follow-up: **fix de afinidad en recompensas** —
+> `RunState.AddCardToDeck` ahora rutea por `AffinityResolver`: toda carta ganada/comprada/de-evento
+> durante la run adopta los tipos del jugador. Seam único que cubre recompensas + tienda + futuros
+> eventos de 4b. `RunCombatConfig.EditorPopulateRewardPool` (#if UNITY_EDITOR) + `StarterDeckSetup`
+> gana paso 4 `RecomposeRewardPool`: reescribe `rewardPool` de `RunCombatConfig_Act1` a 3 cartas
+> afines/neutras (Strike afín + Defend afín + Strike neutra). Nuevo `RunStateAffinityTests.cs` (4
+> casos: afín→dual, neutra→None, dual ya-tipada pasa sin cambios, sin aliasing de entry). **E2E visual
+> confirmado por Sebastián:** strike de recompensa adopta `[Amarillo]/[Morado]` (tipos del jugador),
+> no los Rojo/Negro fijos previos. Suite EditMode **193 → 197/197**. Cero archivos protegidos.
+> **Spec 4b ✅ CERRADO 2026-06-18** → `Docs/dev/specs/m4_4b_events_quests_spec.md`, DD-021
+> cerrada (MCguffin = Retazo + `QuestState`, variantes A/B), 2 sub-PRs definidos.)
+> **Previa:** 2026-06-17 (`modo:implementacion`: **Bloque 4a ✅ CERRADO** — integridad
 > del sistema de cartas. Afinidad (DD-022 opción A) + cobertura de mejoras (DD-023). Nuevos:
 > `Assets/Scripts/Gameplay/Cards/AffinityResolver.cs` (static puro: afín single → dual runtime tipada
 > por mundo; neutras/duales pasan sin tocar), `Assets/Editor/StarterDeckSetup.cs` (menú
@@ -173,12 +186,22 @@ sesión `modo:diseno` para su spec):**
       2 neutra) + 1 dual drafteada = 10. BattleFocus sale del starter (queda para recompensas).
 
 #### Bloque 4b — Eventos + Quests (narrativo, lo grande)
-- [ ] Eventos (DD-005): `EventDefinition` SO + `EventNodeController` (hoy el
-      nodo Event es stub: panel genérico "Contenido placeholder" en
-      `RunFlowController.ShowResolvePanel`), choice UI, sistema de decisiones
-- [ ] Eventos multidimensionales: elegir mundo al entrar al evento
-- [ ] Quests con MCguffin (DD-021 se cierra aquí): tracking en RunState, marca
-      de nodo destino en mapa, eventos de aceptar/robar
+
+**Spec cerrado 2026-06-18** (`modo:diseno`) → `Docs/dev/specs/m4_4b_events_quests_spec.md`.
+Las 4 decisiones abiertas se cerraron: 2 sub-PRs · MCguffin = Retazo + quest tracking
+(DD-021) · recompensa de quest = oro al llegar al destino (sin reward si no se llega) ·
+pasivo Mundo B = `RelicCardPlayedBlockEffect` nuevo sobre `OnCardPlayed`. **Cero archivos
+protegidos.**
+
+- [ ] **Sub-PR 4b-1 — Motor de eventos + eventos simples:** `EventDefinition`/`EventChoice`/
+      `EventConsequence`/`EventResolver`/`EventNodeController`/`EventPoolConfig` +
+      `EventConfigSetup` (menú) + `EventTests`. `RunFlowController` ramifica `NodeType.Event`
+      (hoy stub: "Contenido placeholder" en `ShowResolvePanel`); `MapNode.AssignedEvent` +
+      `RunMapGenerator.AssignEvents`. Consecuencias: dar/quitar carta, ±oro, ±HP, dar Retazo.
+- [ ] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** elección de mundo + variantes
+      A/B; `QuestState` en RunState (`StartQuest`/`CompleteQuestIfDestination`); nodo destino
+      resaltado en `RunMapView` (alcanzabilidad en DAG); `RelicCardPlayedBlockEffect`.
+      Depende de 4b-1 mergeado. (DD-021 ya transcripta en DESIGN_DECISIONS.md 2026-06-18.)
 - Dependencia interna: 4a cerrado (eventos que otorgan mejoras necesitan que
   toda carta sea mejorable) + visor pre-M4 (verificación en playtest)
 

@@ -43,7 +43,7 @@ En la revision de M4 (2026-06-10) se abrieron y cerraron **DD-022 y DD-023**.
 | DD-018 | Multiplicador de dano enemigo SuperEficaz contra el tipo activo del jugador | **Si**: el dano se multiplica x1.5 (igual que dano del jugador). El multiplicador es configurable (constante en codigo, ajustable sin cambiar logica). Esto reabre la regla anterior de "efectividad solo al dano jugador->enemigo": ahora aplica en ambas direcciones | GOLDEN_RULES §3 |
 | DD-019 | Sangrado y Virus: genericos o exclusivos del boss | **Exclusivos del Boss Acto 1** (Costura Maldita / UNIT-RB7). No son debuffs genericos del juego. Si en futuros bosses se necesita el mismo concepto, se reevalua entonces | GOLDEN_RULES §6 |
 | DD-020 | Carta especial dual inicial: filtrada o pool fijo | **Filtrada** por los 2 tipos elementales que el jugador elige al inicio del run | GOLDEN_RULES §5 |
-| DD-021 | Representacion del MCguffin de quests | **Diferida** al diseno de M4 (Eventos). No es bloqueante para diseno actual. Se decide cuando se ataque el sistema de eventos | — |
+| DD-021 | Representacion del MCguffin de quests | **Cerrada 2026-06-18** (sesion `modo:diseno`, spec `Docs/dev/specs/m4_4b_events_quests_spec.md`). El "objeto" del quest **ES un Retazo** (RelicDefinition) entregado al Aceptar el quest → reusa el sistema de Retazos completo (pasivo, inventario, hooks); no se crea infra de items dedicada. El "llevarlo a un punto del mapa" es tracking en RunState (`QuestState` con `DestinationNodeId`); completar el nodo destino otorga la recompensa final (oro, sin reward si no se llega). Variante por mundo: pasivo Mundo A = +oro por combate (`RelicEndGoldEffect`), Mundo B = +bloqueo por carta de escudo (`RelicCardPlayedBlockEffect`, nuevo, hook `OnCardPlayed`) | GOLDEN_RULES §7, §10 |
 
 ---
 
@@ -69,5 +69,5 @@ Tema: vinetas narrativas, dialogo de los hermanos, lore. **Postponed** hasta que
 
 ---
 
-> Ultima actualizacion: 2026-06-10 (DD-022 y DD-023 cerradas en revision de M4)
+> Ultima actualizacion: 2026-06-18 (DD-021 cerrada — MCguffin como Retazo + QuestState; variantes A/B)
 > Cuando una decision se cierra, su regla resultante se mueve a GOLDEN_RULES.md y se marca su entrada aqui con la referencia a la seccion correspondiente.
