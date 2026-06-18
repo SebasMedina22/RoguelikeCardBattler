@@ -3,6 +3,7 @@ using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Run.Events;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -25,6 +26,9 @@ namespace RoguelikeCardBattler.Run
         [SerializeField] private EnemyDefinition bossAct1Enemy;
         [SerializeField] private Act1MapConfig mapConfig;
         [SerializeField] private EnemyPoolConfig enemyPoolConfig;
+        [SerializeField] private EventPoolConfig eventPoolConfig;
+
+        public EventPoolConfig EventPoolConfig => eventPoolConfig;
 
         public static RunSession GetOrCreate()
         {
@@ -97,6 +101,14 @@ namespace RoguelikeCardBattler.Run
                 RunMapGenerator.AssignEnemies(map, enemyPoolConfig, seed);
             }
 
+            // Eventos asignados con la MISMA seed → "misma seed = mismo mapa,
+            // mismos enemigos, mismos eventos". No-op si no hay pool (los nodos
+            // Event caen al panel genérico).
+            if (eventPoolConfig != null)
+            {
+                RunMapGenerator.AssignEvents(map, eventPoolConfig, seed);
+            }
+
             return map;
         }
 
@@ -140,6 +152,12 @@ namespace RoguelikeCardBattler.Run
             if (enemyPoolConfig == null && source.enemyPoolConfig != null)
             {
                 enemyPoolConfig = source.enemyPoolConfig;
+                copiedConfigs = true;
+            }
+
+            if (eventPoolConfig == null && source.eventPoolConfig != null)
+            {
+                eventPoolConfig = source.eventPoolConfig;
                 copiedConfigs = true;
             }
 

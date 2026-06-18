@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using RoguelikeCardBattler.Gameplay.Enemies;
+using RoguelikeCardBattler.Run.Events;
 using UnityEngine;
 
 namespace RoguelikeCardBattler.Run
@@ -227,6 +228,35 @@ namespace RoguelikeCardBattler.Run
 
 #if UNITY_EDITOR
             Debug.Log($"[MapGen] AssignEnemies seed={seed}, depths=[{FormatDepths(depths)}]");
+#endif
+        }
+
+        /// <summary>
+        /// Assigns an EventDefinition to each NodeType.Event node, deterministically
+        /// by seed (mirror of <see cref="AssignEnemies"/>). The same seed fixes the
+        /// event of each node; nodes that are not Event are left untouched. No-op if
+        /// the pool is null/empty (Event nodes keep AssignedEvent = null → the flow
+        /// falls back to the generic resolve panel).
+        /// </summary>
+        public static void AssignEvents(ActMap map, EventPoolConfig pool, int seed)
+        {
+            if (pool == null || map == null)
+            {
+                return;
+            }
+
+            foreach (MapNode node in map.Nodes)
+            {
+                if (node.Type != NodeType.Event)
+                {
+                    continue;
+                }
+
+                node.AssignedEvent = EventResolver.SelectEvent(pool, node.Id, seed);
+            }
+
+#if UNITY_EDITOR
+            Debug.Log($"[MapGen] AssignEvents seed={seed}");
 #endif
         }
 

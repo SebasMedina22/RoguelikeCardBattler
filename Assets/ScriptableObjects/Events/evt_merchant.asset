@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319b0164a650064dac7df34b4e37e50, type: 3}
+  m_Name: evt_merchant
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Events.EventDefinition
+  id: evt_merchant
+  title: El mercader errante
+  body: Un mercader ambulante extiende su manta de trueques frente a ti.
+  choices:
+  - label: Comprar una carta
+    resultText: Guardas la carta en tu mazo.
+    minGoldRequired: 20
+    consequences:
+    - type: 3
+      amount: 20
+      card: {fileID: 0}
+      relic: {fileID: 0}
+    - type: 0
+      amount: 0
+      card: {fileID: 11400000, guid: 3d528c055ad84181a6d0bfaae6a0c97c, type: 2}
+      relic: {fileID: 0}
+  - label: Pedir indicaciones
+    resultText: "El mercader agradece tu compa\xF1\xEDa y te da 15 de oro."
+    minGoldRequired: 0
+    consequences:
+    - type: 2
+      amount: 15
+      card: {fileID: 0}
+      relic: {fileID: 0}
+  - label: Seguir tu camino
+    resultText: "Contin\xFAas tu viaje."
+    minGoldRequired: 0
+    consequences: []
