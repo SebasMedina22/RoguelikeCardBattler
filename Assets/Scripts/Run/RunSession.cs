@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Enemies;
 using RoguelikeCardBattler.Gameplay.Relics;
 
@@ -157,7 +158,20 @@ namespace RoguelikeCardBattler.Run
             }
 
             CombatConfig = config;
-            State.InitializeDeck(config.StarterDeck);
+
+            // 4a: resolver afinidad SOLO al poblar el mazo por primera vez. El guard
+            // Deck.Count==0 evita re-crear (y descartar) ScriptableObjects runtime en
+            // cada combate — InitializeDeck ya no-opea tras el primero, así que sin
+            // este guard resolveríamos y tiraríamos SOs cada vez (leak de instancias).
+            // Los tipos por mundo ya están en RunState (los escribe NewRunScene vía
+            // StarterDraft.ApplySelectionToState antes de cargar RunScene); si se
+            // entra directo a BattleScene caen a los defaults de RunState (no crashea).
+            if (State.Deck.Count == 0)
+            {
+                var resolved = AffinityResolver.ResolveDeck(
+                    config.StarterDeck, State.PlayerWorldAType, State.PlayerWorldBType);
+                State.InitializeDeck(resolved);
+            }
         }
     }
 }

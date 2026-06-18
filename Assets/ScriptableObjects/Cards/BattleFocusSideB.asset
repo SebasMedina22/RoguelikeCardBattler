@@ -29,6 +29,7 @@ MonoBehaviour:
     statusType: 0
     extraParams: []
   elementType: 0
+  affinity: 0
   art: {fileID: 21300000, guid: 10e79b2b516d0d948b496c4e010159f9, type: 3}
   _upgrade:
     overrideCost: 1

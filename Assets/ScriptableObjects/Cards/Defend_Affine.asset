@@ -10,33 +10,33 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 829af9ee0e044e9f9aae0fd53295d85f, type: 3}
-  m_Name: Face_Rojo_3
+  m_Name: Defend_Affine
   m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Cards.CardDefinition
-  id: face_rojo_3
-  cardName: Golpe Rojo
-  description: "Inflige 8 de da\xF1o."
+  id: defend_affine
+  cardName: Guardia
+  description: Bloquea 5.
   cost: 1
-  type: 0
-  rarity: 1
-  target: 2
+  type: 1
+  rarity: 0
+  target: 1
   tags: []
   effects:
-  - effectType: 0
-    value: 8
-    target: 1
+  - effectType: 1
+    value: 5
+    target: 0
     statusType: 0
     extraParams: []
-  elementType: 1
-  affinity: 0
-  art: {fileID: 21300000, guid: 41a999b1ee711eb4fa34520717f9793d, type: 3}
+  elementType: 0
+  affinity: 1
+  art: {fileID: 0}
   _upgrade:
     overrideCost: 0
     upgradedCost: 0
     upgradedEffects:
-    - effectType: 0
-      value: 11
-      target: 1
+    - effectType: 1
+      value: 10
+      target: 0
       statusType: 0
       extraParams: []
     upgradedName: 
-    upgradedDescription: "Inflige 11 de da\xF1o."
+    upgradedDescription: Bloquea 10.

@@ -26,5 +26,29 @@ namespace RoguelikeCardBattler.Run
         public IReadOnlyList<CardDeckEntry> RewardPool => rewardPool;
         public IReadOnlyList<RelicDefinition> EliteRelicDropPool => eliteRelicDropPool;
         public RelicDefinition BossRelicDrop => bossRelicDrop;
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Setter editor-only para que <c>StarterDeckSetup</c> (4a) reescriba el
+        /// starter deck a la composición GDD §5 sin edición manual del inspector.
+        /// Mismo patrón que <c>NewRunConfig.EditorPopulateFaces</c> /
+        /// <c>ShopConfig.EditorPopulatePools</c>. No disponible en runtime.
+        /// </summary>
+        public void EditorPopulateStarterDeck(List<CardDeckEntry> entries)
+        {
+            starterDeck = entries ?? new List<CardDeckEntry>();
+        }
+
+        /// <summary>
+        /// Setter editor-only para que <c>StarterDeckSetup</c> (4a follow-up) reescriba
+        /// el reward pool a cartas AFINES, de modo que las recompensas de combate adopten
+        /// los tipos de mundo del jugador al ganarlas (vía RunState.AddCardToDeck →
+        /// AffinityResolver). Antes el pool tenía duales Rojo/Negro fijos que no resolvían.
+        /// </summary>
+        public void EditorPopulateRewardPool(List<CardDeckEntry> entries)
+        {
+            rewardPool = entries ?? new List<CardDeckEntry>();
+        }
+#endif
     }
 }
