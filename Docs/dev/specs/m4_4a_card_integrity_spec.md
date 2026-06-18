@@ -1,8 +1,12 @@
 # Spec — M4 Bloque 4a: Integridad del sistema de cartas
 
-> **ESTADO: IMPLEMENTADO** — branch `feat/m4-4a-card-integrity` (2026-06-17), PR a
-> `main`. Suite EditMode 191/191; CERO cambios en archivos protegidos (la afinidad se
-> monta sobre el mecanismo dual). `/cierre-sesion` puede fijar el número de PR exacto.
+> **ESTADO: IMPLEMENTADO — PR #124 (2026-06-17)** — branch `feat/m4-4a-card-integrity`,
+> pendiente de merge a `main`. Suite EditMode **193/193**; CERO cambios en archivos
+> protegidos (la afinidad se monta sobre el mecanismo dual). Pasada de `modo:revision`
+> aplicada (sin críticos ni mayores): helper compartido `EditorCardAuthoring`, texto
+> español en cuerpos del starter, trackeo de SOs en tests, 2 tests extra (A↔B en combate
+> + afín mejorada). Pendiente de Sebastián: E2E visual en escena + tabla efectividad
+> GOLDEN_RULES §3 (reconciliar vs código).
 
 ## Origen
 - Roadmap `_roadmap.md` §M4 Bloque 4a (reordenado 2026-06-10, `modo:gdd`).
