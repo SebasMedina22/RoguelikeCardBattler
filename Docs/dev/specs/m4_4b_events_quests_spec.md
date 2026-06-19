@@ -1,8 +1,6 @@
 # Spec — M4 bloque 4b: Eventos + Quests (DD-005, DD-021)
 
-> **ESTADO: PROPUESTA.** (Al implementarse, cambiar a `IMPLEMENTADO — PR #N
-> (YYYY-MM-DD)` por sub-PR. Lo actualiza `/cierre-sesion` al cerrar el spec en
-> código.)
+> **ESTADO: 4b-1 IMPLEMENTADO — PR #125 (2026-06-18). 4b-2 PROPUESTA.**
 >
 > Spec cerrado el 2026-06-18 en sesión `modo:diseno`. Las 4 decisiones abiertas
 > quedaron cerradas por Sebastián (ver §Decisiones cerradas). Dividido en **2

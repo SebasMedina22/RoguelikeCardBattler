@@ -41,7 +41,7 @@
 > adoptará ("[A] Golpe / [B] Golpe"), distinguiéndose de una neutra homónima; `RunFlowController` lo consume
 > en el panel de recompensa (+3 casos en `DeckViewerTests`). Suite EditMode **197 → 212/212**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
 > eventos), datos serializados verificados, E2E data-path en assets reales (SelectEvent → choice
-> "Comprar carta" → oro -20 + mazo +1). E2E visual en play pendiente de confirmación manual.
+> "Comprar carta" → oro -20 + mazo +1). E2E visual en play **confirmado por Sebastián 2026-06-18**: eventos, fondos por-evento y labels afín/neutra diferenciadas en recompensa.
 > Eventos multidimensionales + quest/MCguffin = 4b-2 (FUERA de scope).
 >
 > **Última actualización previa:** 2026-06-18 — **M4 4a follow-up: fix de afinidad en recompensas** —

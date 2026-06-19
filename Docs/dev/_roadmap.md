@@ -16,7 +16,10 @@
 > eventos + eventos simples. Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos) +
 > `EventConfigSetup` + `EventTests` (12 casos). `RunFlowController` ramifica `NodeType.Event`;
 > `MapNode.AssignedEvent` + `RunMapGenerator.AssignEvents` por seed; `RunSession` cablea
-> `EventPoolConfig`. Suite EditMode **197 → 212/212**. Cero archivos protegidos.)
+> `EventPoolConfig`. Extras: fondos por-evento (`EventDefinition.backgroundSprite`, chain
+> def→pool→color) + `CardDisplay.RewardToken` (previsualiza afinidad en recompensa, +3 tests).
+> Suite EditMode **197 → 212/212**. Cero archivos protegidos. **E2E visual confirmado por Sebastián
+> 2026-06-18**: eventos funcionando + fondos por-evento + labels afín/neutra diferenciadas.)
 > **Previa:** 2026-06-18 (4a follow-up: **fix de afinidad en recompensas** —
 > `RunState.AddCardToDeck` ahora rutea por `AffinityResolver`: toda carta ganada/comprada/de-evento
 > durante la run adopta los tipos del jugador. Seam único que cubre recompensas + tienda + futuros
@@ -207,7 +210,8 @@ protegidos.**
       (determinista por seed, cableado en `RunSession.GenerateMap`). Consecuencias en
       `EventConsequence.Apply` (static puro): dar/quitar carta, ±oro, ±HP, dar Retazo. Suite
       EditMode **197 → 212/212**. Cero archivos protegidos. E2E data-path validado en assets
-      reales (Unity-MCP); E2E visual en play pendiente de confirmación manual.
+      reales (Unity-MCP). E2E visual en play **confirmado por Sebastián 2026-06-18**: eventos +
+      fondos por-evento + labels afín/neutra diferenciadas en panel de recompensa.
 - [ ] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** elección de mundo + variantes
       A/B; `QuestState` en RunState (`StartQuest`/`CompleteQuestIfDestination`); nodo destino
       resaltado en `RunMapView` (alcanzabilidad en DAG); `RelicCardPlayedBlockEffect`.
