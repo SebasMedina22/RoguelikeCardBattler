@@ -25,6 +25,7 @@ namespace RoguelikeCardBattler.Editor
         private const string EventsFolder = "Assets/ScriptableObjects/Events";
         private const string CardsFolder = "Assets/ScriptableObjects/Cards";
         private const string RelicsFolder = "Assets/ScriptableObjects/Relics";
+        private const string EventArtFolder = "Assets/Art/Events";
 
         [MenuItem("Roguelike/Setup Event Config")]
         public static void Setup()
@@ -163,9 +164,18 @@ namespace RoguelikeCardBattler.Editor
                 def = ScriptableObject.CreateInstance<EventDefinition>();
                 AssetDatabase.CreateAsset(def, path);
             }
-            def.SetDebugData(id, title, body, choices);
+            // Fondo por-evento si existe el PNG (Assets/Art/Events/fondo_<id>.png).
+            // Null-safe: sin arte, el panel usa el color de fallback.
+            Sprite background = FindBackground(id);
+            def.SetDebugData(id, title, body, choices, background);
             EditorUtility.SetDirty(def);
             return def;
+        }
+
+        private static Sprite FindBackground(string id)
+        {
+            string path = $"{EventArtFolder}/fondo_{id}.png";
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         private static void EnsureFolder(string parent, string newFolder, string fullPath)

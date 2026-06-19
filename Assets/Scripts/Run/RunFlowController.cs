@@ -848,11 +848,14 @@ namespace RoguelikeCardBattler.Run
                 }
 
                 CardDeckEntry entry = _rewardOptions[i];
-                CardDefinition card = entry != null ? entry.GetActiveCard(TurnManager.WorldSide.A) : null;
                 Text label = button.GetComponentInChildren<Text>();
                 if (label != null)
                 {
-                    label.text = card != null ? card.CardName : "Carta";
+                    // Previsualiza la afinidad: una recompensa afín muestra los tipos
+                    // de mundo que adoptará al recogerla, así dos cartas del mismo
+                    // nombre (afín vs neutra) no se ven idénticas en el panel.
+                    string token = CardDisplay.RewardToken(entry, _state.PlayerWorldAType, _state.PlayerWorldBType);
+                    label.text = string.IsNullOrEmpty(token) ? "Carta" : token;
                 }
             }
 

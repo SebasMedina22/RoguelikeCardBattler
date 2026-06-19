@@ -69,6 +69,35 @@ namespace RoguelikeCardBattler.Gameplay.Cards
             return entry.SingleCard != null ? CardToken(entry.SingleCard) : "";
         }
 
+        /// <summary>
+        /// Token para el panel de recompensa, que previsualiza la afinidad. Una single
+        /// AFÍN tiene <c>ElementType.None</c> hasta que <c>RunState.AddCardToDeck</c> la
+        /// resuelve al recogerla, así que mostrar su tipo crudo no la distingue de una
+        /// neutra del mismo nombre (ambas se verían "Golpe"). Acá se muestran los DOS
+        /// tipos de mundo que adoptará ("[A] Nombre / [B] Nombre"), colapsados a uno si
+        /// A==B. Neutras / ya-tipadas / duales caen en <see cref="EntryToken"/>.
+        /// </summary>
+        public static string RewardToken(CardDeckEntry entry, ElementType worldA, ElementType worldB)
+        {
+            if (entry == null || !entry.IsValid) return "";
+
+            CardDefinition single = entry.SingleCard;
+            if (single != null && single.Affinity)
+            {
+                string name = single.CardName;
+                if (worldA == worldB) return TokenWithType(name, worldA);
+                return $"{TokenWithType(name, worldA)} / {TokenWithType(name, worldB)}";
+            }
+            return EntryToken(entry);
+        }
+
+        // "[Tipo] Nombre" para un nombre + tipo (None ⇒ solo el nombre).
+        private static string TokenWithType(string name, ElementType type)
+        {
+            string prefix = ElementTypeColors.TypePrefix(type);
+            return string.IsNullOrEmpty(prefix) ? name : $"{prefix} {name}";
+        }
+
         // Nombre de un lado, null-safe (null ⇒ "?"), usado por el criterio de colapso.
         private static string NameOf(CardDefinition card) =>
             card != null ? card.CardName : "?";

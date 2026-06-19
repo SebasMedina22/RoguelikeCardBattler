@@ -33,7 +33,13 @@
 > `ShopConfigSetup`): crea `EventPoolConfig.asset` + 3 EventDefinitions placeholder
 > (`evt_merchant`/`evt_altar`/`evt_chest` en `Assets/ScriptableObjects/Events/`) que cubren las 6
 > consecuencias. Nuevo `Assets/Tests/EditMode/EventTests.cs` (12 casos, cubre 1-7 del spec +
-> bordes de RemoveCard: rama dual y carta ausente). Suite EditMode **197 → 209/209**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
+> bordes de RemoveCard: rama dual y carta ausente). **Fondo por-evento:** `backgroundSprite` vive en
+> `EventDefinition` (no en `EventPoolConfig`, que queda como fallback); `EventNodeController.ApplyBackground`
+> resuelve por-Show (def → pool → color); `EventConfigSetup` asigna `Assets/Art/Events/fondo_<id>.png` a
+> cada evento (3 fondos importados como Sprite Single). **Label de recompensa:** `CardDisplay.RewardToken`
+> previsualiza la afinidad — una recompensa afín (None hasta resolverse) muestra los 2 tipos de mundo que
+> adoptará ("[A] Golpe / [B] Golpe"), distinguiéndose de una neutra homónima; `RunFlowController` lo consume
+> en el panel de recompensa (+3 casos en `DeckViewerTests`). Suite EditMode **197 → 212/212**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
 > eventos), datos serializados verificados, E2E data-path en assets reales (SelectEvent → choice
 > "Comprar carta" → oro -20 + mazo +1). E2E visual en play pendiente de confirmación manual.
 > Eventos multidimensionales + quest/MCguffin = 4b-2 (FUERA de scope).

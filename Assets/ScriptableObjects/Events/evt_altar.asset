@@ -15,6 +15,7 @@ MonoBehaviour:
   id: evt_altar
   title: Altar misterioso
   body: "Un altar de cart\xF3n craquelado emite un brillo tenue."
+  backgroundSprite: {fileID: 21300000, guid: dbaabffca27ad9c45a203cc740f9b0f4, type: 3}
   choices:
   - label: Rezar ante el altar
     resultText: Una calidez recorre tu cuerpo (+12 HP).

@@ -15,6 +15,7 @@ MonoBehaviour:
   id: evt_merchant
   title: El mercader errante
   body: Un mercader ambulante extiende su manta de trueques frente a ti.
+  backgroundSprite: {fileID: 21300000, guid: da1de6518ae119344808bcd79c754cc1, type: 3}
   choices:
   - label: Comprar una carta
     resultText: Guardas la carta en tu mazo.

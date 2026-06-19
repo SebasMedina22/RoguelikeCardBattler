@@ -17,11 +17,14 @@ namespace RoguelikeCardBattler.Run.Events
         [SerializeField] private string id;
         [SerializeField] private string title;
         [SerializeField, TextArea] private string body;
+        [Header("Fondo del panel (opcional; cae al fondo del pool y luego a color)")]
+        [SerializeField] private Sprite backgroundSprite;
         [SerializeField] private List<EventChoice> choices = new List<EventChoice>();
 
         public string Id => id;
         public string Title => title;
         public string Body => body;
+        public Sprite BackgroundSprite => backgroundSprite;
         public IReadOnlyList<EventChoice> Choices => choices;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
@@ -30,12 +33,13 @@ namespace RoguelikeCardBattler.Run.Events
         /// mismo patrón que <c>CardDefinition.SetDebugData</c>. Permite armar un
         /// EventDefinition sin asset en disco.
         /// </summary>
-        public void SetDebugData(string newId, string newTitle, string newBody, List<EventChoice> newChoices)
+        public void SetDebugData(string newId, string newTitle, string newBody, List<EventChoice> newChoices, Sprite newBackground = null)
         {
             id = newId;
             title = newTitle;
             body = newBody;
             choices = newChoices ?? new List<EventChoice>();
+            backgroundSprite = newBackground;
         }
 #endif
     }

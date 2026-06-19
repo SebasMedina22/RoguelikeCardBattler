@@ -15,6 +15,7 @@ MonoBehaviour:
   id: evt_chest
   title: Cofre del trotamundos
   body: Encuentras un cofre polvoriento junto al sendero.
+  backgroundSprite: {fileID: 21300000, guid: 85818b0641015ba45b1172667ed0e863, type: 3}
   choices:
   - label: Abrir el cofre
     resultText: "El cofre conten\xEDa 30 de oro."

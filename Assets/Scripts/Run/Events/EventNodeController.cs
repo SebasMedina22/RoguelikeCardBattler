@@ -83,10 +83,34 @@ namespace RoguelikeCardBattler.Run.Events
             _resultPanel.gameObject.SetActive(false);
             _choicesPanel.gameObject.SetActive(true);
 
+            ApplyBackground(definition);
             _titleText.text = string.IsNullOrEmpty(definition.Title) ? "Evento" : definition.Title;
             _bodyText.text = definition.Body ?? string.Empty;
 
             BuildChoices();
+        }
+
+        /// <summary>
+        /// Resuelve el fondo del panel para el evento: sprite del propio
+        /// EventDefinition → sprite del pool (fallback compartido) → color de fallback.
+        /// </summary>
+        private void ApplyBackground(EventDefinition definition)
+        {
+            if (_background == null) return;
+
+            Sprite sprite = definition != null ? definition.BackgroundSprite : null;
+            if (sprite == null && _pool != null) sprite = _pool.BackgroundSprite;
+
+            if (sprite != null)
+            {
+                _background.sprite = sprite;
+                _background.color = Color.white;
+            }
+            else
+            {
+                _background.sprite = GetWhiteSprite();
+                _background.color = FallbackBackground;
+            }
         }
 
         /// <summary>
@@ -277,17 +301,10 @@ namespace RoguelikeCardBattler.Run.Events
             bgRect.offsetMin = Vector2.zero;
             bgRect.offsetMax = Vector2.zero;
             _background = bgGo.GetComponent<Image>();
-            Sprite bgSprite = _pool != null ? _pool.BackgroundSprite : null;
-            if (bgSprite != null)
-            {
-                _background.sprite = bgSprite;
-                _background.color = Color.white;
-            }
-            else
-            {
-                _background.sprite = GetWhiteSprite();
-                _background.color = FallbackBackground;
-            }
+            // Fondo inicial = color de fallback. El sprite real se resuelve por-evento
+            // en Show (cada EventDefinition puede traer el suyo).
+            _background.sprite = GetWhiteSprite();
+            _background.color = FallbackBackground;
             _background.raycastTarget = false;
 
             // Título

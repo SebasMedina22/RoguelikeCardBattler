@@ -16,7 +16,7 @@
 > eventos + eventos simples. Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos) +
 > `EventConfigSetup` + `EventTests` (12 casos). `RunFlowController` ramifica `NodeType.Event`;
 > `MapNode.AssignedEvent` + `RunMapGenerator.AssignEvents` por seed; `RunSession` cablea
-> `EventPoolConfig`. Suite EditMode **197 → 209/209**. Cero archivos protegidos.)
+> `EventPoolConfig`. Suite EditMode **197 → 212/212**. Cero archivos protegidos.)
 > **Previa:** 2026-06-18 (4a follow-up: **fix de afinidad en recompensas** —
 > `RunState.AddCardToDeck` ahora rutea por `AffinityResolver`: toda carta ganada/comprada/de-evento
 > durante la run adopta los tipos del jugador. Seam único que cubre recompensas + tienda + futuros
@@ -206,7 +206,7 @@ protegidos.**
       genérico si no hay pool); `MapNode.AssignedEvent` + `RunMapGenerator.AssignEvents`
       (determinista por seed, cableado en `RunSession.GenerateMap`). Consecuencias en
       `EventConsequence.Apply` (static puro): dar/quitar carta, ±oro, ±HP, dar Retazo. Suite
-      EditMode **197 → 209/209**. Cero archivos protegidos. E2E data-path validado en assets
+      EditMode **197 → 212/212**. Cero archivos protegidos. E2E data-path validado en assets
       reales (Unity-MCP); E2E visual en play pendiente de confirmación manual.
 - [ ] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** elección de mundo + variantes
       A/B; `QuestState` en RunState (`StartQuest`/`CompleteQuestIfDestination`); nodo destino
