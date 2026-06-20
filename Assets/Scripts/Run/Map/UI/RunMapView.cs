@@ -127,6 +127,11 @@ namespace RoguelikeCardBattler.Run
         /// </summary>
         public void Refresh(RunState state)
         {
+            // Id del nodo destino del quest activo (-1 si no hay quest).
+            int questDestId = (state.ActiveQuest != null && state.ActiveQuest.Active)
+                ? state.ActiveQuest.DestinationNodeId
+                : -1;
+
             foreach (KeyValuePair<int, RunMapNodeView> kvp in _nodeViews)
             {
                 NodeState newState;
@@ -156,6 +161,10 @@ namespace RoguelikeCardBattler.Run
                         }
                     }
                 }
+
+                // Resaltar nodo destino del quest (ámbar pulsante, persistente entre
+                // redibujos hasta que CompleteQuestIfDestination desactiva ActiveQuest).
+                kvp.Value.SetQuestHighlight(kvp.Key == questDestId);
             }
         }
 

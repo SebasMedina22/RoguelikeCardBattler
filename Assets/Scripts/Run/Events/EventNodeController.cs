@@ -5,31 +5,35 @@ using UnityEngine;
 using UnityEngine.UI;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Run.Quests;
 
 namespace RoguelikeCardBattler.Run.Events
 {
     /// <summary>
-    /// Controlador del nodo Event (4b-1, eventos NO multidimensionales).
-    /// RunFlowController lo crea como hijo en runtime (no requiere setup manual).
-    /// Construye un panel sobre el canvas del run: título + texto narrativo +
-    /// botones de decisión; al elegir aplica las consecuencias y muestra un panel
-    /// de resultado con "Continuar". Espejo estructural de
-    /// <c>CampfireNodeController</c> / <c>ShopNodeController</c> (panel runtime,
-    /// fallback de color sin arte, ClearSpawnedButtons).
+    /// Controlador del nodo Event. Maneja eventos simples (4b-1) y multidimensionales
+    /// (4b-2). RunFlowController lo crea como hijo en runtime (no requiere setup manual).
     ///
-    /// La lógica de consecuencias vive en <see cref="EventConsequence.Apply"/>
-    /// (static puro, testeable sin UI); este controller sólo orquesta la UI.
+    /// Flujo multidimensional: Show → pantalla de elección de mundo (A/B) → variante
+    /// elegida (Body + Choices) → resultado → Continuar. La pantalla de mundo solo
+    /// aparece si <see cref="EventDefinition.IsMultidimensional"/>=true.
+    ///
+    /// StartQuest: al elegir una choice con consecuencia StartQuest, el controller
+    /// resuelve el destino via BFS (<see cref="QuestDestinationResolver"/>) y muestra
+    /// un resultText especial. Apply() no lo maneja porque necesita el mapa.
+    ///
+    /// Espejo estructural de <c>CampfireNodeController</c> (panel runtime, fallback
+    /// de color sin arte, ClearSpawnedButtons).
     /// </summary>
     public class EventNodeController : MonoBehaviour
     {
-        // Color de fallback cuando no hay sprite de fondo: tono morado oscuro que
-        // diferencia el evento de la Hoguera (azul) y la Tienda (marrón).
+        // Color de fallback cuando no hay sprite de fondo
         private static readonly Color FallbackBackground = new Color(0.14f, 0.10f, 0.18f, 1f); // #241A2E
 
         private Canvas _canvas;
         private RunState _state;
         private RelicHookDispatcher _dispatcher;
         private EventPoolConfig _pool;
+        private ActMap _map;
         private Action<int> _onComplete;
         private Font _uiFont;
 
@@ -37,6 +41,7 @@ namespace RoguelikeCardBattler.Run.Events
         private Image _background;
         private Text _titleText;
         private Text _bodyText;
+        private RectTransform _worldChoicePanel;  // pantalla de selección A/B (multidim)
         private RectTransform _choicesPanel;
         private RectTransform _resultPanel;
         private Text _resultText;
@@ -44,6 +49,7 @@ namespace RoguelikeCardBattler.Run.Events
 
         private int _activeNodeId = -1;
         private EventDefinition _activeDef;
+        private int _chosenWorld = -1;  // 0=A / 1=B / -1=no aplica o sin elegir
         private static Sprite _whiteSprite;
 
         public void Initialize(
@@ -51,12 +57,14 @@ namespace RoguelikeCardBattler.Run.Events
             RunState state,
             RelicHookDispatcher dispatcher,
             EventPoolConfig pool,
+            ActMap map,
             Action<int> onComplete)
         {
             _canvas = canvas;
             _state = state;
             _dispatcher = dispatcher;
             _pool = pool;
+            _map = map;
             _onComplete = onComplete;
             _uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
@@ -66,10 +74,8 @@ namespace RoguelikeCardBattler.Run.Events
 
         /// <summary>
         /// Abre el panel para el evento <paramref name="definition"/> del nodo
-        /// <paramref name="nodeId"/>. La definición viaja desde
-        /// <c>MapNode.AssignedEvent</c> (fijada por seed en la generación del mapa);
-        /// el controller no tiene referencia al mapa, así que RunFlowController la
-        /// pasa. Si la definición es nula, el caller hace fallback al panel genérico.
+        /// <paramref name="nodeId"/>. Si el evento es multidimensional, muestra
+        /// primero la pantalla de elección de mundo.
         /// </summary>
         public void Show(int nodeId, EventDefinition definition)
         {
@@ -77,23 +83,64 @@ namespace RoguelikeCardBattler.Run.Events
 
             _activeNodeId = nodeId;
             _activeDef = definition;
+            _chosenWorld = -1;
 
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();
             _resultPanel.gameObject.SetActive(false);
-            _choicesPanel.gameObject.SetActive(true);
+            _choicesPanel.gameObject.SetActive(false);
+            _worldChoicePanel.gameObject.SetActive(false);
 
             ApplyBackground(definition);
             _titleText.text = string.IsNullOrEmpty(definition.Title) ? "Evento" : definition.Title;
-            _bodyText.text = definition.Body ?? string.Empty;
 
-            BuildChoices();
+            if (definition.IsMultidimensional)
+            {
+                ShowWorldChoiceScreen();
+            }
+            else
+            {
+                _bodyText.text = definition.Body ?? string.Empty;
+                _choicesPanel.gameObject.SetActive(true);
+                BuildChoicesFromList(definition.Choices);
+            }
         }
 
-        /// <summary>
-        /// Resuelve el fondo del panel para el evento: sprite del propio
-        /// EventDefinition → sprite del pool (fallback compartido) → color de fallback.
-        /// </summary>
+        // ──────────────────────────────────────────────
+        // Pantalla de elección de mundo (multidimensional)
+        // ──────────────────────────────────────────────
+
+        private void ShowWorldChoiceScreen()
+        {
+            ClearSpawnedButtons();
+            _bodyText.text = "Elige en qué versión del mundo transcurre este encuentro.";
+            _worldChoicePanel.gameObject.SetActive(true);
+
+            Button btnA = CreateButtonRaw(_worldChoicePanel, "WorldA", "Mundo A\n(medieval)", 0.05f, 0.35f, 0.45f, 0.65f, true);
+            btnA.onClick.AddListener(() => OnWorldChosen(0));
+            _spawnedButtons.Add(btnA.gameObject);
+
+            Button btnB = CreateButtonRaw(_worldChoicePanel, "WorldB", "Mundo B\n(futurista)", 0.55f, 0.35f, 0.95f, 0.65f, true);
+            btnB.onClick.AddListener(() => OnWorldChosen(1));
+            _spawnedButtons.Add(btnB.gameObject);
+        }
+
+        private void OnWorldChosen(int world)
+        {
+            _chosenWorld = world;
+            _worldChoicePanel.gameObject.SetActive(false);
+            ClearSpawnedButtons();
+
+            EventVariant variant = EventResolver.ResolveVariantFull(_activeDef, world);
+            _bodyText.text = variant?.Body ?? (_activeDef.Body ?? string.Empty);
+            _choicesPanel.gameObject.SetActive(true);
+            BuildChoicesFromList(variant?.Choices);
+        }
+
+        // ──────────────────────────────────────────────
+        // Fondo
+        // ──────────────────────────────────────────────
+
         private void ApplyBackground(EventDefinition definition)
         {
             if (_background == null) return;
@@ -113,11 +160,10 @@ namespace RoguelikeCardBattler.Run.Events
             }
         }
 
-        /// <summary>
-        /// Una decisión está disponible si el jugador alcanza su requisito de oro.
-        /// Static y sin UI para que los tests lo validen sin instanciar el panel
-        /// (la UI sólo lo consume para deshabilitar el botón).
-        /// </summary>
+        // ──────────────────────────────────────────────
+        // Gate de disponibilidad de choices (static, testeable sin UI)
+        // ──────────────────────────────────────────────
+
         public static bool IsChoiceAvailable(RunState state, EventChoice choice)
         {
             if (state == null || choice == null) return false;
@@ -128,23 +174,19 @@ namespace RoguelikeCardBattler.Run.Events
         // Choices flow
         // ──────────────────────────────────────────────
 
-        private void BuildChoices()
+        private void BuildChoicesFromList(IReadOnlyList<EventChoice> choices)
         {
             ClearSpawnedButtons();
 
-            IReadOnlyList<EventChoice> choices = _activeDef.Choices;
             int count = choices != null ? choices.Count : 0;
             if (count == 0)
             {
-                // Evento sin decisiones autoradas: ofrecer salida para no bloquear.
                 Button leave = CreateButtonRaw(_choicesPanel, "Continue", "Continuar", 0.3f, 0.04f, 0.7f, 0.14f, true);
                 leave.onClick.AddListener(CompleteEvent);
                 _spawnedButtons.Add(leave.gameObject);
                 return;
             }
 
-            // Reparto vertical adaptativo en la franja inferior del panel (el texto
-            // narrativo vive arriba). Mismo enfoque que ShopNodeController.DrawStock.
             const float top = 0.62f;
             const float bottom = 0.04f;
             const float gap = 0.02f;
@@ -174,17 +216,47 @@ namespace RoguelikeCardBattler.Run.Events
         {
             if (choice == null) return;
 
-            // Aplicar todas las consecuencias en orden (los GiveRelic respetan el
-            // AcquisitionOrder por orden de la lista).
             if (choice.Consequences != null)
             {
                 foreach (EventConsequence consequence in choice.Consequences)
                 {
-                    EventConsequence.Apply(_state, _dispatcher, consequence);
+                    if (consequence == null) continue;
+                    if (consequence.Type == ConsequenceType.StartQuest)
+                    {
+                        HandleStartQuest(consequence);
+                    }
+                    else
+                    {
+                        EventConsequence.Apply(_state, _dispatcher, consequence);
+                    }
                 }
             }
 
             ShowResult(choice.ResultText);
+        }
+
+        /// <summary>
+        /// Resuelve el destino del quest via BFS, entrega el Retazo MCguffin y activa
+        /// el quest en RunState. No pasa por Apply() porque necesita el mapa.
+        /// </summary>
+        private void HandleStartQuest(EventConsequence consequence)
+        {
+            if (consequence?.Quest == null) return;
+            QuestData questData = consequence.Quest;
+
+            int dest = QuestDestinationResolver.SelectDestination(_map, _activeNodeId, _state.CompletedNodes);
+
+            if (questData.CarriedRelic != null)
+                _state.AddRelic(questData.CarriedRelic);
+
+            string worldLabel = _chosenWorld == 0 ? "A" : (_chosenWorld == 1 ? "B" : "?");
+            _state.StartQuest(new QuestState
+            {
+                Active = true,
+                DestinationNodeId = dest,
+                FinalRewardGold = questData.FinalRewardGold,
+                SourceWorldLabel = worldLabel
+            });
         }
 
         private void ShowResult(string resultText)
@@ -206,11 +278,12 @@ namespace RoguelikeCardBattler.Run.Events
             int nodeId = _activeNodeId;
             _activeNodeId = -1;
             _activeDef = null;
+            _chosenWorld = -1;
             _onComplete?.Invoke(nodeId);
         }
 
         // ──────────────────────────────────────────────
-        // Label building (reusa CardDisplay para tokens de carta)
+        // Labels (reusa CardDisplay para tokens de carta)
         // ──────────────────────────────────────────────
 
         private string BuildChoiceLabel(EventChoice choice, bool affordable)
@@ -219,17 +292,11 @@ namespace RoguelikeCardBattler.Run.Events
             string summary = BuildConsequenceSummary(choice.Consequences);
 
             if (!affordable && choice.MinGoldRequired > 0)
-            {
                 return $"{title} (necesitas {choice.MinGoldRequired} oro)";
-            }
+
             return string.IsNullOrEmpty(summary) ? title : $"{title}\n<{summary}>";
         }
 
-        /// <summary>
-        /// Resumen legible de las consecuencias para mostrar bajo la etiqueta de la
-        /// decisión. Reusa <c>CardDisplay.CardToken</c> para los tokens de carta
-        /// (tipo coloreado) en vez de duplicar el helper.
-        /// </summary>
         private static string BuildConsequenceSummary(IReadOnlyList<EventConsequence> consequences)
         {
             if (consequences == null || consequences.Count == 0) return string.Empty;
@@ -261,6 +328,9 @@ namespace RoguelikeCardBattler.Run.Events
                             : (string.IsNullOrEmpty(c.Relic.DisplayName) ? c.Relic.name : c.Relic.DisplayName);
                         parts.Add($"+Retazo: {relicName}");
                         break;
+                    case ConsequenceType.StartQuest:
+                        parts.Add("+Quest (pasivo)");
+                        break;
                 }
             }
 
@@ -289,10 +359,10 @@ namespace RoguelikeCardBattler.Run.Events
 
             Image rootImage = rootGo.GetComponent<Image>();
             rootImage.sprite = GetWhiteSprite();
-            rootImage.color = new Color(0f, 0f, 0f, 1f); // tapa el canvas detrás
+            rootImage.color = new Color(0f, 0f, 0f, 1f);
             rootImage.raycastTarget = true;
 
-            // Capa de fondo: sprite del pool si existe, si no color de fallback.
+            // Capa de fondo
             GameObject bgGo = new GameObject("Background", typeof(RectTransform), typeof(Image));
             bgGo.transform.SetParent(_root, false);
             RectTransform bgRect = bgGo.GetComponent<RectTransform>();
@@ -301,8 +371,6 @@ namespace RoguelikeCardBattler.Run.Events
             bgRect.offsetMin = Vector2.zero;
             bgRect.offsetMax = Vector2.zero;
             _background = bgGo.GetComponent<Image>();
-            // Fondo inicial = color de fallback. El sprite real se resuelve por-evento
-            // en Show (cada EventDefinition puede traer el suyo).
             _background.sprite = GetWhiteSprite();
             _background.color = FallbackBackground;
             _background.raycastTarget = false;
@@ -319,6 +387,12 @@ namespace RoguelikeCardBattler.Run.Events
             RectTransform bodyRect = _bodyText.GetComponent<RectTransform>();
             bodyRect.anchorMin = new Vector2(0.12f, 0.66f);
             bodyRect.anchorMax = new Vector2(0.88f, 0.84f);
+
+            // Panel de selección de mundo (multidimensional, inicialmente oculto)
+            _worldChoicePanel = CreateSubPanel("WorldChoicePanel", _root);
+            _worldChoicePanel.anchorMin = new Vector2(0.05f, 0.15f);
+            _worldChoicePanel.anchorMax = new Vector2(0.95f, 0.64f);
+            _worldChoicePanel.gameObject.SetActive(false);
 
             // Panel de decisiones
             _choicesPanel = CreateSubPanel("ChoicesPanel", _root);
@@ -348,7 +422,8 @@ namespace RoguelikeCardBattler.Run.Events
             return rect;
         }
 
-        private Button CreateButtonRaw(RectTransform parent, string name, string label, float xMin, float yMin, float xMax, float yMax, bool interactable)
+        private Button CreateButtonRaw(RectTransform parent, string name, string label,
+            float xMin, float yMin, float xMax, float yMax, bool interactable)
         {
             GameObject buttonGO = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             buttonGO.transform.SetParent(parent, false);

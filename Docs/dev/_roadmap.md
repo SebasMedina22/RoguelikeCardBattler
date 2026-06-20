@@ -212,10 +212,19 @@ protegidos.**
       EditMode **197 → 212/212**. Cero archivos protegidos. E2E data-path validado en assets
       reales (Unity-MCP). E2E visual en play **confirmado por Sebastián 2026-06-18**: eventos +
       fondos por-evento + labels afín/neutra diferenciadas en panel de recompensa.
-- [ ] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** elección de mundo + variantes
-      A/B; `QuestState` en RunState (`StartQuest`/`CompleteQuestIfDestination`); nodo destino
-      resaltado en `RunMapView` (alcanzabilidad en DAG); `RelicCardPlayedBlockEffect`.
-      Depende de 4b-1 mergeado. (DD-021 ya transcripta en DESIGN_DECISIONS.md 2026-06-18.)
+- [x] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** ✅ IMPLEMENTADO 2026-06-19
+      (branch `feat/m4-4b2-events-quests`). Nuevos: `QuestState.cs` + `QuestDestinationResolver.cs`
+      (`Assets/Scripts/Run/Quests/`), `RelicCardPlayedBlockEffect.cs`. Modificados:
+      `EventDefinition` (EventVariant + IsMultidimensional + WorldA/WorldB), `EventConsequence`
+      (StartQuest + QuestData), `EventResolver.ResolveVariant`, `EventNodeController`
+      (pantalla de elección de mundo A/B, maneja StartQuest via BFS forward), `RunState`
+      (ActiveQuest + StartQuest + CompleteQuestIfDestination + Reset), `RunFlowController`
+      (pasa `_map` al EventNodeController, llama CompleteQuestIfDestination en CompleteNode),
+      `RunMapNodeView/RunMapView` (highlight ámbar del nodo destino, SetQuestHighlight).
+      `EventConfigSetup` extendido: 2 Retazos MCguffin (R-MCG-A RelicEndGoldEffect{2} /
+      R-MCG-B RelicCardPlayedBlockEffect{1}) en `Relics/Quest/` + 3 eventos multidim
+      (evt_md_forge, evt_md_relic, evt_md_quest_courier) → pool total 6 eventos.
+      `QuestTests.cs` (casos 8-16). **Validación pendiente en Unity.**
 - Dependencia interna: 4a cerrado (eventos que otorgan mejoras necesitan que
   toda carta sea mejorable) + visor pre-M4 (verificación en playtest)
 

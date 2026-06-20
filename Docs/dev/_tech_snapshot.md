@@ -7,7 +7,28 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
+> **Última actualización:** 2026-06-19 — **M4 bloque 4b-2: eventos multidimensionales + quest/MCguffin**
+> (branch `feat/m4-4b2-events-quests`). Nuevo subsistema `Assets/Scripts/Run/Quests/`
+> (`QuestState.cs` datos del quest activo; `QuestDestinationResolver.cs` BFS forward static puro).
+> `RelicCardPlayedBlockEffect.cs` (MCguffin Mundo B: +1 bloqueo al jugar carta de escudo vía
+> `OnCardPlayed`, incondicional al mundo). Modificaciones: `EventDefinition` (+ `EventVariant`
+> serializable: Body+Choices por mundo; `IsMultidimensional`, `WorldA`, `WorldB`); `EventConsequence`
+> (+ `QuestData` serializable: CarriedRelic + FinalRewardGold; `ConsequenceType.StartQuest` al final del
+> enum); `EventResolver.ResolveVariant(def, world)` / `ResolveVariantFull(def, world)`; `EventNodeController`
+> (+ `ActMap _map` en Initialize; pantalla de elección de mundo A/B antes de mostrar choices multidim;
+> `HandleStartQuest` resuelve destino vía BFS + `state.AddRelic` + `state.StartQuest`); `RunState`
+> (+ `QuestState ActiveQuest`; `StartQuest(quest)`; `CompleteQuestIfDestination(nodeId)→bool` otorga oro
+> y desactiva; `Reset` limpia ActiveQuest); `RunFlowController` (`BuildEventController` pasa `_map`;
+> `CompleteNode` llama `CompleteQuestIfDestination` antes de avanzar el DAG); `RunMapNodeView`
+> (`SetQuestHighlight(bool)` + color ámbar `QuestDestBg` en `ApplyState`; no aplica si completado o
+> durante entrance); `RunMapView.Refresh` resalta nodo destino del quest activo (ámbar pulsante,
+> persistente hasta completar). `EventConfigSetup` extendido: helper `CreateOrUpdateMcguffinRelic`;
+> 2 Retazos MCguffin en `Assets/ScriptableObjects/Relics/Quest/` (R-MCG-A `RelicEndGoldEffect{2}` /
+> R-MCG-B `RelicCardPlayedBlockEffect{1}`); 3 eventos multidim (evt_md_forge/relic/quest_courier);
+> pool total 6 eventos. `QuestTests.cs` (9 casos: 8-16, incluyendo todas las topologías × nodos 1..6).
+> Suite EditMode **212 → 221/221** (pendiente validación en Unity). Cero archivos protegidos.
+>
+> **Última actualización previa:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
 > (branch `feat/m4-4b1-events-engine`). Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos),
 > **sin tocar archivos protegidos**. Datos: `EventDefinition` (SO: Id/Title/Body + `List<EventChoice>`),
 > `EventChoice` (`[Serializable]`: Label/ResultText/MinGoldRequired + `List<EventConsequence>`),

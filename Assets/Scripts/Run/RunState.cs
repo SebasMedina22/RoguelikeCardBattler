@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RoguelikeCardBattler.Gameplay.Cards;
 using RoguelikeCardBattler.Gameplay.Combat;
 using RoguelikeCardBattler.Gameplay.Relics;
+using RoguelikeCardBattler.Run.Quests;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -57,6 +58,32 @@ namespace RoguelikeCardBattler.Run
         // de cada instance (asc = adquirido primero = corre primero en cadena).
         public List<RelicInstance> Relics { get; } = new List<RelicInstance>();
 
+        // Quest activo del run (MCguffin). Solo datos: la BFS de resolución del
+        // destino vive en QuestDestinationResolver (Golden Rule §7). Reset en Reset().
+        public QuestState ActiveQuest { get; private set; } = new QuestState();
+
+        /// <summary>
+        /// Activa el quest. El <paramref name="quest"/> ya tiene el DestinationNodeId
+        /// resuelto por el caller (QuestDestinationResolver); RunState solo almacena.
+        /// </summary>
+        public void StartQuest(QuestState quest)
+        {
+            ActiveQuest = quest ?? new QuestState();
+        }
+
+        /// <summary>
+        /// Si <paramref name="nodeId"/> es el nodo destino del quest activo, otorga
+        /// FinalRewardGold, desactiva el quest y devuelve true. De lo contrario false.
+        /// </summary>
+        public bool CompleteQuestIfDestination(int nodeId)
+        {
+            if (ActiveQuest == null || !ActiveQuest.Active) return false;
+            if (ActiveQuest.DestinationNodeId != nodeId) return false;
+            Gold += ActiveQuest.FinalRewardGold;
+            ActiveQuest.Active = false;
+            return true;
+        }
+
         /// <summary>
         /// Helper para sumar un Retazo al run respetando la convención de
         /// AcquisitionOrder (orden de la lista). Lo usan drops post-victoria
@@ -106,6 +133,7 @@ namespace RoguelikeCardBattler.Run
             PlayerWorldBType = ElementType.Amarillo;
             PendingStarterCard = null;
             Relics.Clear();
+            ActiveQuest = new QuestState();
             EnsureInitialized(map);
         }
 
