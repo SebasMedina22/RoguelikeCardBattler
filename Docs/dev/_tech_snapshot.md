@@ -26,7 +26,12 @@
 > 2 Retazos MCguffin en `Assets/ScriptableObjects/Relics/Quest/` (R-MCG-A `RelicEndGoldEffect{2}` /
 > R-MCG-B `RelicCardPlayedBlockEffect{1}`); 3 eventos multidim (evt_md_forge/relic/quest_courier);
 > pool total 6 eventos. `QuestTests.cs` (9 casos: 8-16, incluyendo todas las topologías × nodos 1..6).
-> Suite EditMode **212 → 221/221** (pendiente validación en Unity). Cero archivos protegidos.
+> Suite EditMode **212 → 221/221**, compilación limpia. Cero archivos protegidos. **Validado en
+> Unity-MCP (2026-06-19):** suite 221/221 verde; menú `Setup Event Config` corrido (2 MCguffin en
+> `Relics/Quest/`: R-MCG-A OnCombatEnd+`RelicEndGoldEffect{2}`, R-MCG-B OnCardPlayed+`RelicCardPlayedBlockEffect{1}`;
+> 6 eventos en el pool; evt_md_quest_courier serializa `isMultidimensional:1` + worldA/worldB con
+> StartQuest (type 6) inline apuntando a su MCguffin + FinalRewardGold 75). E2E visual en RunScene
+> pendiente de confirmación por Sebastián.
 >
 > **Última actualización previa:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
 > (branch `feat/m4-4b1-events-engine`). Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos),

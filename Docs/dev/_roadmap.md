@@ -224,7 +224,9 @@ protegidos.**
       `EventConfigSetup` extendido: 2 Retazos MCguffin (R-MCG-A RelicEndGoldEffect{2} /
       R-MCG-B RelicCardPlayedBlockEffect{1}) en `Relics/Quest/` + 3 eventos multidim
       (evt_md_forge, evt_md_relic, evt_md_quest_courier) → pool total 6 eventos.
-      `QuestTests.cs` (casos 8-16). **Validación pendiente en Unity.**
+      `QuestTests.cs` (casos 8-16). **Validado en Unity-MCP 2026-06-19:** suite EditMode **221/221**,
+      compilación limpia, menú `Setup Event Config` corrido (2 MCguffin + 6 eventos, serialización
+      de StartQuest verificada). E2E visual en RunScene pendiente de confirmación por Sebastián.
 - Dependencia interna: 4a cerrado (eventos que otorgan mejoras necesitan que
   toda carta sea mejorable) + visor pre-M4 (verificación en playtest)
 
