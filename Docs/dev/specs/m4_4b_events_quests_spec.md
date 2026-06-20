@@ -1,8 +1,6 @@
 # Spec — M4 bloque 4b: Eventos + Quests (DD-005, DD-021)
 
-> **ESTADO: PROPUESTA.** (Al implementarse, cambiar a `IMPLEMENTADO — PR #N
-> (YYYY-MM-DD)` por sub-PR. Lo actualiza `/cierre-sesion` al cerrar el spec en
-> código.)
+> **ESTADO: 4b-1 IMPLEMENTADO — PR #125 (2026-06-18). 4b-2 PROPUESTA.**
 >
 > Spec cerrado el 2026-06-18 en sesión `modo:diseno`. Las 4 decisiones abiertas
 > quedaron cerradas por Sebastián (ver §Decisiones cerradas). Dividido en **2
@@ -170,6 +168,14 @@ string SourceWorldLabel;         // "A"/"B" para flavor del resaltado
   destino activo, otorga `FinalRewardGold`, desactiva el quest y devuelve true.
 - `EventNodeController.Initialize(Canvas, RunState, RelicHookDispatcher, EventPoolConfig, Action<int> onComplete)`
   + `Show(int nodeId)` — firma espejo de `CampfireNodeController`.
+  - **Ajuste de firma (implementado en 4b-1, autoritativo para 4b-2):** la firma real
+    es `Show(int nodeId, EventDefinition definition)`. El evento autoritativo vive en
+    `MapNode.AssignedEvent` (fijado por seed al generar el mapa) y el controller no
+    tiene la seed ni referencia al mapa; re-resolverlo internamente arriesgaría divergir
+    del evento ya fijado. Por eso `RunFlowController` le pasa la definición. La analogía
+    con `CampfireNodeController` no transfiere en este punto porque la Hoguera no tiene
+    contenido por-nodo que pasar. 4b-2 hereda `Show(int nodeId, EventDefinition)` (la
+    pantalla de elección de mundo opera sobre esa misma definición).
 
 ### Eventos / Hooks
 - **Sin hooks nuevos en TurnManager.** El MCguffin Mundo A reusa

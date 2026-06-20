@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319b0164a650064dac7df34b4e37e50, type: 3}
+  m_Name: evt_chest
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Events.EventDefinition
+  id: evt_chest
+  title: Cofre del trotamundos
+  body: Encuentras un cofre polvoriento junto al sendero.
+  backgroundSprite: {fileID: 21300000, guid: 85818b0641015ba45b1172667ed0e863, type: 3}
+  choices:
+  - label: Abrir el cofre
+    resultText: "El cofre conten\xEDa 30 de oro."
+    minGoldRequired: 0
+    consequences:
+    - type: 2
+      amount: 30
+      card: {fileID: 0}
+      relic: {fileID: 0}
+  - label: Quemar una carta gastada
+    resultText: Echas una carta vieja a la hoguera del campamento.
+    minGoldRequired: 0
+    consequences:
+    - type: 1
+      amount: 0
+      card: {fileID: 11400000, guid: 3fe0f3064d148024389c15328f3635e0, type: 2}
+      relic: {fileID: 0}
+  - label: Dejarlo cerrado
+    resultText: Dejas el cofre intacto.
+    minGoldRequired: 0
+    consequences: []

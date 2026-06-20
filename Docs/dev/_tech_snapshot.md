@@ -7,7 +7,44 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-18 — **M4 4a follow-up: fix de afinidad en recompensas** —
+> **Última actualización:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
+> (branch `feat/m4-4b1-events-engine`). Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos),
+> **sin tocar archivos protegidos**. Datos: `EventDefinition` (SO: Id/Title/Body + `List<EventChoice>`),
+> `EventChoice` (`[Serializable]`: Label/ResultText/MinGoldRequired + `List<EventConsequence>`),
+> `EventConsequence` (`[Serializable]`: enum `ConsequenceType` {GiveCard, RemoveCard, GiveGold,
+> LoseGold, ModifyHP, GiveRelic} + payloads card/relic/amount), `EventPoolConfig` (SO: pool de
+> eventos + sprite de fondo opcional). Lógica static pura (testeable sin UI, espejo de
+> `ShopNodeController.BuildStock`/`TryPurchase`): `EventConsequence.Apply(state, dispatcher, c)`
+> muta RunState reusando `AddCardToDeck`/`RemoveCardFromDeck`/`AddRelic` (clamps: oro ≥0, HP en
+> [0, MaxHP]; RemoveCard quita por referencia de `CardDefinition`); `EventResolver.SelectEvent(pool,
+> nodeId, seed)` elige determinista por `(seed, nodeId)`; `EventNodeController.IsChoiceAvailable(state,
+> choice)` (gate de oro). Presentación: `EventNodeController` (MonoBehaviour, panel runtime sobre
+> RunScene auto-creado por `RunFlowController.BuildEventController`, espejo de `CampfireNodeController`:
+> título + texto + botones de decisión → panel de resultado + "Continuar"; fallback de color sin arte;
+> reusa `CardDisplay.CardToken` para los resúmenes de consecuencia). `Show(int nodeId, EventDefinition
+> def)` recibe la definición desde `MapNode.AssignedEvent` (el controller no tiene referencia al mapa).
+> Flujo: `RunFlowController.EnterNode` ramifica `NodeType.Event` → `ShowEventPanel` → `OnEventComplete`
+> (sin el +10 oro genérico; las consecuencias ya mutaron el estado); fallback al panel genérico si el
+> nodo no tiene evento asignado. Determinismo por seed: `MapNode.AssignedEvent` (paralelo a
+> `SpecificEnemy`) lo fija `RunMapGenerator.AssignEvents(map, pool, seed)` (espejo de `AssignEnemies`),
+> cableado en `RunSession.GenerateMap` con la MISMA seed + `[SerializeField] eventPoolConfig` (expuesto
+> vía `EventPoolConfig` y heredado en `TryInheritBossFrom`; asignado en RunScene). Editor:
+> `Assets/Editor/EventConfigSetup.cs` (menú `Roguelike > Setup Event Config`, idempotente, patrón
+> `ShopConfigSetup`): crea `EventPoolConfig.asset` + 3 EventDefinitions placeholder
+> (`evt_merchant`/`evt_altar`/`evt_chest` en `Assets/ScriptableObjects/Events/`) que cubren las 6
+> consecuencias. Nuevo `Assets/Tests/EditMode/EventTests.cs` (12 casos, cubre 1-7 del spec +
+> bordes de RemoveCard: rama dual y carta ausente). **Fondo por-evento:** `backgroundSprite` vive en
+> `EventDefinition` (no en `EventPoolConfig`, que queda como fallback); `EventNodeController.ApplyBackground`
+> resuelve por-Show (def → pool → color); `EventConfigSetup` asigna `Assets/Art/Events/fondo_<id>.png` a
+> cada evento (3 fondos importados como Sprite Single). **Label de recompensa:** `CardDisplay.RewardToken`
+> previsualiza la afinidad — una recompensa afín (None hasta resolverse) muestra los 2 tipos de mundo que
+> adoptará ("[A] Golpe / [B] Golpe"), distinguiéndose de una neutra homónima; `RunFlowController` lo consume
+> en el panel de recompensa (+3 casos en `DeckViewerTests`). Suite EditMode **197 → 212/212**, compilación limpia. **Validado en Unity-MCP:** menú corrido (pool + 3
+> eventos), datos serializados verificados, E2E data-path en assets reales (SelectEvent → choice
+> "Comprar carta" → oro -20 + mazo +1). E2E visual en play **confirmado por Sebastián 2026-06-18**: eventos, fondos por-evento y labels afín/neutra diferenciadas en recompensa.
+> Eventos multidimensionales + quest/MCguffin = 4b-2 (FUERA de scope).
+>
+> **Última actualización previa:** 2026-06-18 — **M4 4a follow-up: fix de afinidad en recompensas** —
 > `RunState.AddCardToDeck` ahora rutea por `AffinityResolver` → toda carta ganada/comprada/de-evento
 > adopta los tipos del jugador (afín→dual runtime; neutra/dual pasan sin cambios). Seam único:
 > cubre recompensas + tienda + eventos de 4b. `RunCombatConfig.EditorPopulateRewardPool`

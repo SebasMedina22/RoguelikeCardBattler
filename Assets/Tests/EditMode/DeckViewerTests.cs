@@ -419,4 +419,53 @@ public class DeckViewerTests
         StringAssert.Contains("Mejorada", tooltip);
         StringAssert.Contains("Enhanced", tooltip);
     }
+
+    // ────────────────────────────────────────
+    // TEST 16-18 — CardDisplay.RewardToken (previsualización de afinidad)
+    // ────────────────────────────────────────
+
+    private static CardDefinition MakeAffineCard(string id, string name)
+    {
+        var c = ScriptableObject.CreateInstance<CardDefinition>();
+        c.SetDebugData(id, name, $"Desc {name}", 1, CardType.Attack, CardRarity.Common, CardTarget.SingleEnemy,
+                       new List<string>(), new List<EffectRef>(), ElementType.None, null, true); // newAffinity = true
+        return c;
+    }
+
+    [Test]
+    public void RewardToken_AffineSingle_PreviewsBothWorldTypes()
+    {
+        // Una afín (None hasta resolverse) debe mostrar los DOS tipos del jugador,
+        // para distinguirse de una neutra del mismo nombre.
+        var entry = SingleEntry(MakeAffineCard("s", "Golpe"));
+
+        string token = CardDisplay.RewardToken(entry, ElementType.Amarillo, ElementType.Morado);
+
+        StringAssert.Contains("Golpe", token);
+        StringAssert.Contains(" / ", token); // ambos lados
+        Assert.AreNotEqual("Golpe", token, "Una afín no debe verse igual que una neutra del mismo nombre.");
+    }
+
+    [Test]
+    public void RewardToken_NeutralSingle_FallsBackToPlainName()
+    {
+        // Neutra None (affinity = false) → solo el nombre, sin token de tipo.
+        var entry = SingleEntry(MakeCard("n", "Golpe", 1, CardType.Attack, ElementType.None));
+
+        string token = CardDisplay.RewardToken(entry, ElementType.Amarillo, ElementType.Morado);
+
+        Assert.AreEqual("Golpe", token);
+    }
+
+    [Test]
+    public void RewardToken_AffineSingle_SameWorldTypes_Collapses()
+    {
+        // Si ambos mundos comparten tipo, no se duplica el token.
+        var entry = SingleEntry(MakeAffineCard("s", "Golpe"));
+
+        string token = CardDisplay.RewardToken(entry, ElementType.Rojo, ElementType.Rojo);
+
+        StringAssert.DoesNotContain(" / ", token);
+        StringAssert.Contains("Golpe", token);
+    }
 }

@@ -11,6 +11,7 @@ using RoguelikeCardBattler.Gameplay.Cards.UI;
 using RoguelikeCardBattler.Gameplay.Relics.UI;
 using RoguelikeCardBattler.Run.Campfire;
 using RoguelikeCardBattler.Run.Shop;
+using RoguelikeCardBattler.Run.Events;
 
 namespace RoguelikeCardBattler.Run
 {
@@ -59,6 +60,7 @@ namespace RoguelikeCardBattler.Run
         private bool _rewardConfigErrorLogged;
         private CampfireNodeController _campfireController;
         private ShopNodeController _shopController;
+        private EventNodeController _eventController;
 
         private void Awake()
         {
@@ -156,6 +158,7 @@ namespace RoguelikeCardBattler.Run
             BuildActoCompletedPanel();
             BuildCampfireController();
             BuildShopController();
+            BuildEventController();
 
             // Visor de mazo: sub-Canvas overlay, flota sobre paneles opacos (Tienda/Hoguera).
             _deckViewer = new DeckViewerView(_canvas, uiFont);
@@ -178,6 +181,19 @@ namespace RoguelikeCardBattler.Run
             _shopController = go.AddComponent<ShopNodeController>();
             RelicHookDispatcher dispatcher = RunSession.GetOrCreate().RelicDispatcher;
             _shopController.Initialize(_canvas, _state, dispatcher, shopConfig, OnShopComplete);
+        }
+
+        private void BuildEventController()
+        {
+            GameObject go = new GameObject("EventController");
+            go.transform.SetParent(transform, false);
+            _eventController = go.AddComponent<EventNodeController>();
+            RunSession session = RunSession.GetOrCreate();
+            // El pool vive en RunSession (lo usa también la generación del mapa) →
+            // fuente única, sin doble cableado en el inspector. Aquí sólo lo lee para
+            // el fondo del panel; el evento concreto de cada nodo viaja en
+            // MapNode.AssignedEvent.
+            _eventController.Initialize(_canvas, _state, session.RelicDispatcher, session.EventPoolConfig, OnEventComplete);
         }
 
         private void EnsureEventSystem()
@@ -305,6 +321,12 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
+            if (node != null && node.Type == NodeType.Event && node.AssignedEvent != null && _eventController != null)
+            {
+                ShowEventPanel(index, node.AssignedEvent);
+                return;
+            }
+
             ShowResolvePanel(index);
         }
 
@@ -347,6 +369,25 @@ namespace RoguelikeCardBattler.Run
             // "eliminar carta" usa ShopsCompleted como tiendas previas, así que
             // se incrementa después de armar el stock de esta tienda.
             _state.ShopsCompleted++;
+            CompleteNode(nodeId);
+            _state.CurrentNodeId = -1;
+            ShowMap();
+        }
+
+        private void ShowEventPanel(int index, EventDefinition definition)
+        {
+            _mapPanel.gameObject.SetActive(false);
+            _resolvePanel.gameObject.SetActive(false);
+            _rewardPanel.gameObject.SetActive(false);
+            _actoCompletedPanel.gameObject.SetActive(false);
+            _defeatPanel.gameObject.SetActive(false);
+            _eventController.Show(index, definition);
+        }
+
+        private void OnEventComplete(int nodeId)
+        {
+            // Las consecuencias de la decisión ya mutaron RunState (oro/HP/mazo/
+            // Retazos); el nodo Event NO otorga el +10 oro genérico del placeholder.
             CompleteNode(nodeId);
             _state.CurrentNodeId = -1;
             ShowMap();
@@ -807,11 +848,14 @@ namespace RoguelikeCardBattler.Run
                 }
 
                 CardDeckEntry entry = _rewardOptions[i];
-                CardDefinition card = entry != null ? entry.GetActiveCard(TurnManager.WorldSide.A) : null;
                 Text label = button.GetComponentInChildren<Text>();
                 if (label != null)
                 {
-                    label.text = card != null ? card.CardName : "Carta";
+                    // Previsualiza la afinidad: una recompensa afín muestra los tipos
+                    // de mundo que adoptará al recogerla, así dos cartas del mismo
+                    // nombre (afín vs neutra) no se ven idénticas en el panel.
+                    string token = CardDisplay.RewardToken(entry, _state.PlayerWorldAType, _state.PlayerWorldBType);
+                    label.text = string.IsNullOrEmpty(token) ? "Carta" : token;
                 }
             }
 

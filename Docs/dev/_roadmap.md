@@ -7,12 +7,20 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-17). Bloque 4a: ✅ CERRADO (2026-06-17).
+> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-17). Bloque 4a: ✅ CERRADO (2026-06-17). Bloque 4b-1: ✅ CERRADO (2026-06-18).
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
-> **Próximo bloque:** M4 bloque 4b — Eventos + Quests. **Spec ✅ CERRADO (2026-06-18)** →
-> `Docs/dev/specs/m4_4b_events_quests_spec.md`, dividido en 2 sub-PRs (4b-1 motor + simples,
-> 4b-2 multidim + quest). Próximo paso: implementar 4b-1 con `modo:implementacion`.
-> **Última actualización:** 2026-06-18 (4a follow-up: **fix de afinidad en recompensas** —
+> **Próximo bloque:** M4 bloque **4b-2** — Eventos multidimensionales + quest/MCguffin. **Spec ✅ CERRADO (2026-06-18)** →
+> `Docs/dev/specs/m4_4b_events_quests_spec.md` (§Sub-PR 4b-2). Depende de 4b-1 mergeado.
+> Próximo paso: implementar 4b-2 con `modo:implementacion`.
+> **Última actualización:** 2026-06-18 (`modo:implementacion`: **Sub-PR 4b-1 CERRADO** — motor de
+> eventos + eventos simples. Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos) +
+> `EventConfigSetup` + `EventTests` (12 casos). `RunFlowController` ramifica `NodeType.Event`;
+> `MapNode.AssignedEvent` + `RunMapGenerator.AssignEvents` por seed; `RunSession` cablea
+> `EventPoolConfig`. Extras: fondos por-evento (`EventDefinition.backgroundSprite`, chain
+> def→pool→color) + `CardDisplay.RewardToken` (previsualiza afinidad en recompensa, +3 tests).
+> Suite EditMode **197 → 212/212**. Cero archivos protegidos. **E2E visual confirmado por Sebastián
+> 2026-06-18**: eventos funcionando + fondos por-evento + labels afín/neutra diferenciadas.)
+> **Previa:** 2026-06-18 (4a follow-up: **fix de afinidad en recompensas** —
 > `RunState.AddCardToDeck` ahora rutea por `AffinityResolver`: toda carta ganada/comprada/de-evento
 > durante la run adopta los tipos del jugador. Seam único que cubre recompensas + tienda + futuros
 > eventos de 4b. `RunCombatConfig.EditorPopulateRewardPool` (#if UNITY_EDITOR) + `StarterDeckSetup`
@@ -193,11 +201,17 @@ Las 4 decisiones abiertas se cerraron: 2 sub-PRs · MCguffin = Retazo + quest tr
 pasivo Mundo B = `RelicCardPlayedBlockEffect` nuevo sobre `OnCardPlayed`. **Cero archivos
 protegidos.**
 
-- [ ] **Sub-PR 4b-1 — Motor de eventos + eventos simples:** `EventDefinition`/`EventChoice`/
+- [x] **Sub-PR 4b-1 — Motor de eventos + eventos simples:** ✅ CERRADO 2026-06-18
+      (branch `feat/m4-4b1-events-engine`). `EventDefinition`/`EventChoice`/
       `EventConsequence`/`EventResolver`/`EventNodeController`/`EventPoolConfig` +
-      `EventConfigSetup` (menú) + `EventTests`. `RunFlowController` ramifica `NodeType.Event`
-      (hoy stub: "Contenido placeholder" en `ShowResolvePanel`); `MapNode.AssignedEvent` +
-      `RunMapGenerator.AssignEvents`. Consecuencias: dar/quitar carta, ±oro, ±HP, dar Retazo.
+      `EventConfigSetup` (menú `Roguelike > Setup Event Config`) + `EventTests` (12 casos).
+      `RunFlowController` ramifica `NodeType.Event` → `EventNodeController` (fallback al panel
+      genérico si no hay pool); `MapNode.AssignedEvent` + `RunMapGenerator.AssignEvents`
+      (determinista por seed, cableado en `RunSession.GenerateMap`). Consecuencias en
+      `EventConsequence.Apply` (static puro): dar/quitar carta, ±oro, ±HP, dar Retazo. Suite
+      EditMode **197 → 212/212**. Cero archivos protegidos. E2E data-path validado en assets
+      reales (Unity-MCP). E2E visual en play **confirmado por Sebastián 2026-06-18**: eventos +
+      fondos por-evento + labels afín/neutra diferenciadas en panel de recompensa.
 - [ ] **Sub-PR 4b-2 — Multidimensionales + quest/MCguffin:** elección de mundo + variantes
       A/B; `QuestState` en RunState (`StartQuest`/`CompleteQuestIfDestination`); nodo destino
       resaltado en `RunMapView` (alcanzabilidad en DAG); `RelicCardPlayedBlockEffect`.

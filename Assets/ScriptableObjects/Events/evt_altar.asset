@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319b0164a650064dac7df34b4e37e50, type: 3}
+  m_Name: evt_altar
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Events.EventDefinition
+  id: evt_altar
+  title: Altar misterioso
+  body: "Un altar de cart\xF3n craquelado emite un brillo tenue."
+  backgroundSprite: {fileID: 21300000, guid: dbaabffca27ad9c45a203cc740f9b0f4, type: 3}
+  choices:
+  - label: Rezar ante el altar
+    resultText: Una calidez recorre tu cuerpo (+12 HP).
+    minGoldRequired: 0
+    consequences:
+    - type: 4
+      amount: 12
+      card: {fileID: 0}
+      relic: {fileID: 0}
+  - label: Profanar el altar
+    resultText: Arrancas el Retazo incrustado, pero una astilla te hiere (-8 HP).
+    minGoldRequired: 0
+    consequences:
+    - type: 5
+      amount: 0
+      card: {fileID: 0}
+      relic: {fileID: 11400000, guid: de6bce18941a74a4b9cecd63bac0b3ec, type: 2}
+    - type: 4
+      amount: -8
+      card: {fileID: 0}
+      relic: {fileID: 0}
+  - label: Ignorarlo
+    resultText: Te alejas del altar en silencio.
+    minGoldRequired: 0
+    consequences: []
