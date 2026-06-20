@@ -270,10 +270,12 @@ namespace RoguelikeCardBattler.Tests.EditMode
             rs.Relics.Add(new RelicInstance(relicDef, 0));
             RelicHookDispatcher dispatcher = new RelicHookDispatcher(rs);
 
-            // Carta con EffectType.Block
+            // Carta con EffectType.Block. La "carta de escudo" se detecta por
+            // EffectType.Block en Effects (no por CardType); las cartas defensivas
+            // son CardType.Skill en este codebase (no existe CardType.Defense).
             CardDefinition blockCard = ScriptableObject.CreateInstance<CardDefinition>();
             blockCard.SetDebugData("test_block", "Block", "desc", 1,
-                CardType.Defense, CardRarity.Common, CardTarget.Self, null,
+                CardType.Skill, CardRarity.Common, CardTarget.Self, null,
                 new List<EffectRef> { new EffectRef { effectType = EffectType.Block, value = 5 } });
 
             // Carta sin EffectType.Block
@@ -282,24 +284,24 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 CardType.Attack, CardRarity.Common, CardTarget.SingleEnemy, null,
                 new List<EffectRef> { new EffectRef { effectType = EffectType.Damage, value = 5 } });
 
-            int blockBefore = manager.Player.CurrentBlock;
+            int blockBefore = manager.PlayerBlock;
 
             // Disparar OnCardPlayed con carta Block
             var hookBlock = new CardPlayedHookData(rs, manager, dispatcher,
                 blockCard, TurnManager.WorldSide.A, 1);
             dispatcher.Dispatch(RelicHook.OnCardPlayed, hookBlock);
 
-            Assert.AreEqual(blockBefore + 1, manager.Player.CurrentBlock,
+            Assert.AreEqual(blockBefore + 1, manager.PlayerBlock,
                 "Carta Block debe dar +1 bloqueo");
 
-            int blockAfterBlock = manager.Player.CurrentBlock;
+            int blockAfterBlock = manager.PlayerBlock;
 
             // Disparar OnCardPlayed con carta no-Block: sin cambio
             var hookAttack = new CardPlayedHookData(rs, manager, dispatcher,
                 attackCard, TurnManager.WorldSide.A, 1);
             dispatcher.Dispatch(RelicHook.OnCardPlayed, hookAttack);
 
-            Assert.AreEqual(blockAfterBlock, manager.Player.CurrentBlock,
+            Assert.AreEqual(blockAfterBlock, manager.PlayerBlock,
                 "Carta no-Block NO debe cambiar el bloqueo");
 
             Object.DestroyImmediate(relicDef);

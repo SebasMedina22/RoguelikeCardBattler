@@ -57,7 +57,10 @@ namespace RoguelikeCardBattler.Run.Events
         [Tooltip("Retazo para GiveRelic.")]
         [SerializeField] private RelicDefinition relic;
         [Tooltip("Payload para StartQuest (4b-2).")]
-        [SerializeReference] private QuestData quest;
+        // QuestData es una clase [Serializable] plana (no polimórfica) → SerializeField
+        // inline, consistente con card/relic arriba. Evita el acoplamiento al type-name
+        // de SerializeReference (que rompería referencias en assets si se renombra el tipo).
+        [SerializeField] private QuestData quest;
 
         public ConsequenceType Type => type;
         public int Amount => amount;
