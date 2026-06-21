@@ -25,10 +25,16 @@ MonoBehaviour:
       amount: 20
       card: {fileID: 0}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
     - type: 0
       amount: 0
       card: {fileID: 11400000, guid: 3d528c055ad84181a6d0bfaae6a0c97c, type: 2}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Pedir indicaciones
     resultText: "El mercader agradece tu compa\xF1\xEDa y te da 15 de oro."
     minGoldRequired: 0
@@ -37,7 +43,17 @@ MonoBehaviour:
       amount: 15
       card: {fileID: 0}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Seguir tu camino
     resultText: "Contin\xFAas tu viaje."
     minGoldRequired: 0
     consequences: []
+  isMultidimensional: 0
+  worldA:
+    body: 
+    choices: []
+  worldB:
+    body: 
+    choices: []

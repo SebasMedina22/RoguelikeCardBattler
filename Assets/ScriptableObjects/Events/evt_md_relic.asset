@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319b0164a650064dac7df34b4e37e50, type: 3}
+  m_Name: evt_md_relic
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Events.EventDefinition
+  id: evt_md_relic
+  title: El relicario sellado
+  body: Algo antiguo espera ser abierto.
+  backgroundSprite: {fileID: 0}
+  choices: []
+  isMultidimensional: 1
+  worldA:
+    body: Un relicario de hierro descansa sobre un altar agrietado. Un susurro promete
+      poder a quien se atreva a abrirlo.
+    choices:
+    - label: Romper el sello
+      resultText: "Arrancas la reliquia; las p\xFAas del relicario te hieren (-8
+        HP)."
+      minGoldRequired: 0
+      consequences:
+      - type: 5
+        amount: 0
+        card: {fileID: 0}
+        relic: {fileID: 11400000, guid: de6bce18941a74a4b9cecd63bac0b3ec, type: 2}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+      - type: 4
+        amount: -8
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+    - label: Llevarte las ofrendas
+      resultText: Recoges 30 de oro de entre las ofrendas.
+      minGoldRequired: 0
+      consequences:
+      - type: 2
+        amount: 30
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+    - label: No arriesgarte
+      resultText: Retrocedes sin tocar el altar.
+      minGoldRequired: 0
+      consequences: []
+  worldB:
+    body: "Una c\xE1psula de contenci\xF3n parpadea en rojo. Una voz sint\xE9tica
+      ofrece su carga a quien acepte el riesgo."
+    choices:
+    - label: "Forzar la c\xE1psula"
+      resultText: "Extraes el n\xFAcleo; una descarga te recorre (-6 HP)."
+      minGoldRequired: 0
+      consequences:
+      - type: 5
+        amount: 0
+        card: {fileID: 0}
+        relic: {fileID: 11400000, guid: de6bce18941a74a4b9cecd63bac0b3ec, type: 2}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+      - type: 4
+        amount: -6
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+    - label: Vaciar la reserva
+      resultText: "Transfieres 35 cr\xE9ditos de la reserva."
+      minGoldRequired: 0
+      consequences:
+      - type: 2
+        amount: 35
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+    - label: No arriesgarte
+      resultText: "Te apartas de la c\xE1psula parpadeante."
+      minGoldRequired: 0
+      consequences: []

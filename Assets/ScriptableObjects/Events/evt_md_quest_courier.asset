@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2319b0164a650064dac7df34b4e37e50, type: 3}
+  m_Name: evt_md_quest_courier
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Run.Events.EventDefinition
+  id: evt_md_quest_courier
+  title: Un encargo en el camino
+  body: Alguien necesita tu ayuda para llevar algo al otro lado del mapa.
+  backgroundSprite: {fileID: 0}
+  choices: []
+  isMultidimensional: 1
+  worldA:
+    body: "Un hombre moribundo, con las ropas ra\xEDdas de la legi\xF3n de magos,
+      te aferra el brazo. Te ruega llevar un objeto m\xEDstico hasta un punto lejano
+      del mapa; si lo logras, promete recompensarte."
+    choices:
+    - label: Aceptar el encargo
+      resultText: "El mago te conf\xEDa un c\xE1liz lacrado. Un punto del mapa queda
+        resaltado."
+      minGoldRequired: 0
+      consequences:
+      - type: 6
+        amount: 0
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 11400000, guid: 3582e637a00dc9a44a445461492a8f05, type: 2}
+          FinalRewardGold: 75
+    - label: Robar al moribundo
+      resultText: "Le arrebatas la bolsa y huyes. El objeto se hace a\xF1icos. +100
+        de oro."
+      minGoldRequired: 0
+      consequences:
+      - type: 2
+        amount: 100
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0
+  worldB:
+    body: "Un robot con las piezas rotas chisporrotea en el suelo. Dice pertenecer
+      a una facci\xF3n revolucionaria y te pide llevar un disco duro con informaci\xF3n
+      vital hasta un punto lejano del mapa."
+    choices:
+    - label: Aceptar el encargo
+      resultText: El robot te transfiere un disco sellado. Un punto del mapa queda
+        resaltado.
+      minGoldRequired: 0
+      consequences:
+      - type: 6
+        amount: 0
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 11400000, guid: e05e7267d08eb0e469dca14eef712352, type: 2}
+          FinalRewardGold: 75
+    - label: Robar al robot
+      resultText: "Le arrancas el disco y sus cr\xE9ditos. El disco se desintegra.
+        +100 de oro."
+      minGoldRequired: 0
+      consequences:
+      - type: 2
+        amount: 100
+        card: {fileID: 0}
+        relic: {fileID: 0}
+        quest:
+          CarriedRelic: {fileID: 0}
+          FinalRewardGold: 0

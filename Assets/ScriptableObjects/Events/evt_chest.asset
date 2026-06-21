@@ -25,6 +25,9 @@ MonoBehaviour:
       amount: 30
       card: {fileID: 0}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Quemar una carta gastada
     resultText: Echas una carta vieja a la hoguera del campamento.
     minGoldRequired: 0
@@ -33,7 +36,17 @@ MonoBehaviour:
       amount: 0
       card: {fileID: 11400000, guid: 3fe0f3064d148024389c15328f3635e0, type: 2}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Dejarlo cerrado
     resultText: Dejas el cofre intacto.
     minGoldRequired: 0
     consequences: []
+  isMultidimensional: 0
+  worldA:
+    body: 
+    choices: []
+  worldB:
+    body: 
+    choices: []

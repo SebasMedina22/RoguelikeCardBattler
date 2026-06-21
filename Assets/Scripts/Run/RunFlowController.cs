@@ -189,11 +189,9 @@ namespace RoguelikeCardBattler.Run
             go.transform.SetParent(transform, false);
             _eventController = go.AddComponent<EventNodeController>();
             RunSession session = RunSession.GetOrCreate();
-            // El pool vive en RunSession (lo usa también la generación del mapa) →
-            // fuente única, sin doble cableado en el inspector. Aquí sólo lo lee para
-            // el fondo del panel; el evento concreto de cada nodo viaja en
-            // MapNode.AssignedEvent.
-            _eventController.Initialize(_canvas, _state, session.RelicDispatcher, session.EventPoolConfig, OnEventComplete);
+            // _map se pasa para que el controller resuelva el destino del quest via
+            // QuestDestinationResolver.SelectDestination (necesita el grafo de nodos).
+            _eventController.Initialize(_canvas, _state, session.RelicDispatcher, session.EventPoolConfig, _map, OnEventComplete);
         }
 
         private void EnsureEventSystem()
@@ -507,6 +505,11 @@ namespace RoguelikeCardBattler.Run
             {
                 return;
             }
+
+            // Si este nodo es el destino del quest activo, otorga FinalRewardGold
+            // y desactiva el quest (RunState.CompleteQuestIfDestination). El refresh
+            // visual del mapa ocurre en ShowMap() que sigue al CompleteNode.
+            _state.CompleteQuestIfDestination(nodeId);
 
             _state.CompletedNodes.Add(nodeId);
             _state.AvailableNodes.Clear();

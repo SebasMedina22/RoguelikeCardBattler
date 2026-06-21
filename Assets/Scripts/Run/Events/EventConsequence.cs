@@ -11,9 +11,8 @@ namespace RoguelikeCardBattler.Run.Events
     /// aplicación vive en <see cref="EventConsequence.Apply"/> (static puro,
     /// testeable sin UI).
     ///
-    /// 4b-1 cubre las consecuencias de eventos simples. El tipo <c>StartQuest</c>
-    /// (quest/MCguffin) se AGREGA en 4b-2 al final del enum para no renumerar los
-    /// valores ya serializados.
+    /// StartQuest va AL FINAL del enum (4b-2) para no renumerar los valores ya
+    /// serializados de 4b-1.
     /// </summary>
     public enum ConsequenceType
     {
@@ -22,7 +21,23 @@ namespace RoguelikeCardBattler.Run.Events
         GiveGold,
         LoseGold,
         ModifyHP,
-        GiveRelic
+        GiveRelic,
+        StartQuest     // 4b-2 — al final del enum, no renumera los 6 anteriores
+    }
+
+    /// <summary>
+    /// Payload del tipo <see cref="ConsequenceType.StartQuest"/>: el Retazo entregado
+    /// al aceptar (pasivo durante el trayecto) y la recompensa final en oro. El nodo
+    /// destino NO se autora aquí — se resuelve en runtime por BFS forward al aceptar
+    /// (ver <c>QuestDestinationResolver</c>).
+    /// </summary>
+    [Serializable]
+    public class QuestData
+    {
+        [Tooltip("Retazo entregado al aceptar el quest (pasivo durante el trayecto).")]
+        [SerializeField] public RelicDefinition CarriedRelic;
+        [Tooltip("Oro otorgado al llegar al nodo destino.")]
+        [SerializeField] public int FinalRewardGold;
     }
 
     /// <summary>
@@ -41,11 +56,17 @@ namespace RoguelikeCardBattler.Run.Events
         [SerializeField] private CardDefinition card;
         [Tooltip("Retazo para GiveRelic.")]
         [SerializeField] private RelicDefinition relic;
+        [Tooltip("Payload para StartQuest (4b-2).")]
+        // QuestData es una clase [Serializable] plana (no polimórfica) → SerializeField
+        // inline, consistente con card/relic arriba. Evita el acoplamiento al type-name
+        // de SerializeReference (que rompería referencias en assets si se renombra el tipo).
+        [SerializeField] private QuestData quest;
 
         public ConsequenceType Type => type;
         public int Amount => amount;
         public CardDefinition Card => card;
         public RelicDefinition Relic => relic;
+        public QuestData Quest => quest;
 
         public EventConsequence() { }
 
@@ -53,12 +74,14 @@ namespace RoguelikeCardBattler.Run.Events
             ConsequenceType type,
             int amount = 0,
             CardDefinition card = null,
-            RelicDefinition relic = null)
+            RelicDefinition relic = null,
+            QuestData quest = null)
         {
             this.type = type;
             this.amount = amount;
             this.card = card;
             this.relic = relic;
+            this.quest = quest;
         }
 
         /// <summary>
@@ -103,6 +126,12 @@ namespace RoguelikeCardBattler.Run.Events
 
                 case ConsequenceType.GiveRelic:
                     if (c.relic != null) state.AddRelic(c.relic);
+                    break;
+
+                case ConsequenceType.StartQuest:
+                    // StartQuest NO se resuelve aquí: necesita el mapa (BFS forward)
+                    // que la firma static no tiene. Lo maneja EventNodeController al
+                    // detectar este tipo en la choice (spec §Wiring de StartQuest).
                     break;
             }
         }

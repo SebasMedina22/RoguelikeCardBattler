@@ -7,7 +7,35 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
+> **Última actualización:** 2026-06-19 — **M4 bloque 4b-2: eventos multidimensionales + quest/MCguffin**
+> (branch `feat/m4-4b2-events-quests`, **PR #126** → **bloque 4b COMPLETO**). Nuevo subsistema `Assets/Scripts/Run/Quests/`
+> (`QuestState.cs` datos del quest activo; `QuestDestinationResolver.cs` BFS forward static puro).
+> `RelicCardPlayedBlockEffect.cs` (MCguffin Mundo B: +1 bloqueo al jugar carta de escudo vía
+> `OnCardPlayed`, incondicional al mundo). Modificaciones: `EventDefinition` (+ `EventVariant`
+> serializable: Body+Choices por mundo; `IsMultidimensional`, `WorldA`, `WorldB`); `EventConsequence`
+> (+ `QuestData` serializable: CarriedRelic + FinalRewardGold; `ConsequenceType.StartQuest` al final del
+> enum); `EventResolver.ResolveVariant(def, world)` / `ResolveVariantFull(def, world)`; `EventNodeController`
+> (+ `ActMap _map` en Initialize; pantalla de elección de mundo A/B antes de mostrar choices multidim;
+> `HandleStartQuest` resuelve destino vía BFS + `state.AddRelic` + `state.StartQuest`); `RunState`
+> (+ `QuestState ActiveQuest`; `StartQuest(quest)`; `CompleteQuestIfDestination(nodeId)→bool` otorga oro
+> y desactiva; `Reset` limpia ActiveQuest); `RunFlowController` (`BuildEventController` pasa `_map`;
+> `CompleteNode` llama `CompleteQuestIfDestination` antes de avanzar el DAG); `RunMapNodeView`
+> (`SetQuestHighlight(bool)` + color ámbar `QuestDestBg` en `ApplyState`; no aplica si completado o
+> durante entrance); `RunMapView.Refresh` resalta nodo destino del quest activo (ámbar pulsante,
+> persistente hasta completar). `EventConfigSetup` extendido: helper `CreateOrUpdateMcguffinRelic`;
+> 2 Retazos MCguffin en `Assets/ScriptableObjects/Relics/Quest/` (R-MCG-A `RelicEndGoldEffect{2}` /
+> R-MCG-B `RelicCardPlayedBlockEffect{1}`); 3 eventos multidim (evt_md_forge/relic/quest_courier);
+> pool total 6 eventos. `QuestTests.cs` (9 casos: 8-16, incluyendo todas las topologías × nodos 1..6).
+> Suite EditMode **212 → 221/221**, compilación limpia. Cero archivos protegidos. **Validado en
+> Unity-MCP (2026-06-19):** suite 221/221 verde; menú `Setup Event Config` corrido (2 MCguffin en
+> `Relics/Quest/`: R-MCG-A OnCombatEnd+`RelicEndGoldEffect{2}`, R-MCG-B OnCardPlayed+`RelicCardPlayedBlockEffect{1}`;
+> 6 eventos en el pool; evt_md_quest_courier serializa `isMultidimensional:1` + worldA/worldB con
+> StartQuest (type 6) inline apuntando a su MCguffin + FinalRewardGold 75). Merge a main aprobado por
+> Sebastián sobre la validación Unity-MCP (suite + assets); arte de los 3 fondos multidim diferido a un
+> PR de pulido aparte (el fallback de color #241A2E es funcional, no bloqueante). Conteos refrescados:
+> **120 scripts C#** en `Assets/Scripts` (era 109), **28 archivos de test** EditMode (era 26).
+>
+> **Última actualización previa:** 2026-06-18 — **M4 bloque 4b-1: motor de eventos + eventos simples**
 > (branch `feat/m4-4b1-events-engine`). Nuevo subsistema `Assets/Scripts/Run/Events/` (6 archivos),
 > **sin tocar archivos protegidos**. Datos: `EventDefinition` (SO: Id/Title/Body + `List<EventChoice>`),
 > `EventChoice` (`[Serializable]`: Label/ResultText/MinGoldRequired + `List<EventConsequence>`),
@@ -354,7 +382,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 26 archivos de test en `Assets/Tests/EditMode/` (suite 197/197)
+- 28 archivos de test en `Assets/Tests/EditMode/` (suite 221/221)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -448,7 +476,7 @@ Exclusivamente vía `RunSession.State` (= `RunState`). Flags principales:
 
 ## Estructura de archivos
 
-### Scripts (`Assets/Scripts/`) — 109 archivos C#
+### Scripts (`Assets/Scripts/`) — 120 archivos C#
 
 ```
 Core/
@@ -479,6 +507,16 @@ Run/
     ShopNodeController.cs, ShopConfig.cs, ShopItem.cs
   Campfire/                      ← Sub-PR 3C — Hoguera
     CampfireNodeController.cs, CampfireConfig.cs, CampfireOption.cs
+  Events/                        ← M4 4b-1/4b-2 — eventos (simples + multidimensionales)
+    EventDefinition.cs           ← SO: Id/Title/Body + Choices; 4b-2: EventVariant + IsMultidimensional + WorldA/WorldB
+    EventChoice.cs               ← [Serializable]: Label/ResultText/MinGoldRequired + consecuencias
+    EventConsequence.cs          ← [Serializable]: enum ConsequenceType (+ StartQuest, 4b-2) + QuestData; Apply static puro
+    EventResolver.cs             ← static puro: SelectEvent(pool,nodeId,seed) + ResolveVariant(def,world) (4b-2)
+    EventNodeController.cs        ← MonoBehaviour: panel runtime; 4b-2: pantalla de elección A/B + HandleStartQuest (BFS)
+    EventPoolConfig.cs           ← SO: pool de eventos + backgroundSprite fallback
+  Quests/                        ← M4 4b-2 — quest/MCguffin
+    QuestState.cs                ← datos del quest activo (Active/DestinationNodeId/FinalRewardGold)
+    QuestDestinationResolver.cs  ← static puro: BFS forward desde el nodo del quest (más lejano no-Boss; fallback Boss)
   Map/
     ActMap.cs, MapNode.cs, NodeState.cs, NodeType.cs
     RunMapGenerator.cs
@@ -583,7 +621,7 @@ EditorCardAuthoring.cs                ← 4a: helper compartido (CloneEffectsBoo
 NewRunConfigSetup.cs / ShopConfigSetup.cs  ← menús de config (3E / 3D)
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 25 archivos (suite EditMode 193/193)
+### Tests (`Assets/Tests/EditMode/`) — 28 archivos (suite EditMode 221/221)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -642,6 +680,13 @@ CardUpgradeCoverageTests.cs      ← M4 4a guard DD-023, editor-only #if UNITY_E
 RunStateAffinityTests.cs         ← M4 4a follow-up: afinidad en AddCardToDeck (4 casos: afín→dual
                                    tipada por mundo, neutra→None, dual ya-tipada pasa sin cambios,
                                    sin aliasing de entry)
+EventTests.cs                    ← M4 4b-1 (12 casos: SelectEvent determinista por seed, las 6
+                                   consecuencias de Apply, gate de oro IsChoiceAvailable, bordes de
+                                   RemoveCard —rama dual y carta ausente—)
+QuestTests.cs                    ← M4 4b-2 (casos 8-16: ResolveVariant A≠B, SelectDestination en las
+                                   3 topologías × nodos 1..6, CompleteQuestIfDestination hit/miss,
+                                   Robar=+100 sin quest, Reset limpia quest, RelicCardPlayedBlockEffect,
+                                   fallback al Boss, determinismo del BFS)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)

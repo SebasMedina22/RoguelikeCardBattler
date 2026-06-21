@@ -19,6 +19,8 @@ namespace RoguelikeCardBattler.Run
         private static readonly Color CompletedBg = new Color(0.2f, 0.45f, 0.25f, 1f);
         private static readonly Color BossAvailableBg = new Color(0.55f, 0.12f, 0.12f, 1f);
         private static readonly Color BossLockedBg = new Color(0.3f, 0.1f, 0.1f, 0.6f);
+        // Color ámbar para nodo destino del quest activo (diferenciado de Available=azul)
+        private static readonly Color QuestDestBg = new Color(0.70f, 0.52f, 0.08f, 1f);
 
         public int NodeId { get; }
         public NodeType Type { get; }
@@ -30,6 +32,7 @@ namespace RoguelikeCardBattler.Run
         private readonly Text _label;
         private readonly CanvasGroup _canvasGroup;
         private bool _entrancePlaying;
+        private bool _questHighlighted;
 
         public RunMapNodeView(int nodeId, NodeType type, RectTransform parent,
             Vector2 position, Vector2 size, Font font, Sprite whiteSprite,
@@ -117,6 +120,16 @@ namespace RoguelikeCardBattler.Run
                 return;
             }
 
+            // Quest destination: ámbar pulsante sobre el estado normal.
+            // Solo si no está completado (completar = verde con punch, más informativo).
+            if (_questHighlighted && state != NodeState.Completed)
+            {
+                _bgImage.color = QuestDestBg;
+                UIAnimationHelper.StopPulse(Rect);
+                UIAnimationHelper.PulseLoop(Rect, 1.10f, 0.6f);
+                return;
+            }
+
             if (previous == NodeState.Available && state == NodeState.Completed)
             {
                 UIAnimationHelper.StopPulse(Rect);
@@ -130,6 +143,17 @@ namespace RoguelikeCardBattler.Run
             {
                 UIAnimationHelper.StopPulse(Rect);
             }
+        }
+
+        /// <summary>
+        /// Marca o desmarca el nodo como destino del quest activo (ámbar pulsante).
+        /// El Refresh del mapa llama esto cada vez que vuelve al mapa.
+        /// </summary>
+        public void SetQuestHighlight(bool highlight)
+        {
+            _questHighlighted = highlight;
+            // Re-aplicar estado para que el color y animación se actualicen.
+            if (!_entrancePlaying) ApplyState(CurrentState);
         }
 
         /// <summary>
