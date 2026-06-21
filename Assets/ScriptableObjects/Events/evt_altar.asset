@@ -25,6 +25,9 @@ MonoBehaviour:
       amount: 12
       card: {fileID: 0}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Profanar el altar
     resultText: Arrancas el Retazo incrustado, pero una astilla te hiere (-8 HP).
     minGoldRequired: 0
@@ -33,11 +36,24 @@ MonoBehaviour:
       amount: 0
       card: {fileID: 0}
       relic: {fileID: 11400000, guid: de6bce18941a74a4b9cecd63bac0b3ec, type: 2}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
     - type: 4
       amount: -8
       card: {fileID: 0}
       relic: {fileID: 0}
+      quest:
+        CarriedRelic: {fileID: 0}
+        FinalRewardGold: 0
   - label: Ignorarlo
     resultText: Te alejas del altar en silencio.
     minGoldRequired: 0
     consequences: []
+  isMultidimensional: 0
+  worldA:
+    body: 
+    choices: []
+  worldB:
+    body: 
+    choices: []
