@@ -1,9 +1,19 @@
-# ART_NEEDS.md — Auditoría de arte (placeholders IA)
+# ART_NEEDS.md — Inventario + estilo madre de arte
 
-> **Qué es este archivo:** doc vivo que recoge TODO lugar del juego que consume o
-> debería consumir un sprite, su estado actual, y si el código ya lo soporta. Es el
-> checklist de integración de arte para ambos devs. Generado en la auditoría de
-> arte post-M3 (2026-06-05, `modo:diseno`).
+> **Qué es este archivo (dos funciones):**
+> 1. **Inventario / checklist de arte** — recoge TODO lugar del juego que consume o
+>    debería consumir un sprite, su estado actual (✔ cubierto / pendiente), su gancho
+>    de código y dónde va el PNG. **Este es el registro vivo del arte hecho y del que
+>    falta** — si querés saber "qué arte llevamos", se mira acá.
+> 2. **§Fase 2 — Estilo madre** (más abajo) — el bloque `STYLE:` + variantes Mundo A/B.
+>    **Es la fuente única de verdad del estilo** que el skill `/art-prompt` copia
+>    textualmente en cada prompt. ⚠ **No borrar ni parafrasear** — si cambia, todos los
+>    prompts futuros derivan; si se borra, el skill se queda sin estilo.
+>
+> **Relación con el resto:** el skill `/art-prompt` orquesta la *generación* de prompts
+> (reglas + ritual); el estilo madre vive acá; `ART_PROMPTS.md` guarda solo *plantillas
+> de formato por tipo de asset* (no prompts one-off). Generado en la auditoría de arte
+> post-M3 (2026-06-05, `modo:diseno`); inventario mantenido al día conforme se cubre arte.
 >
 > **No es arte final.** Todo lo marcado `placeholder-IA` se cubre con imágenes
 > generadas por IA como puente. El arte definitivo llegará después; estos son
@@ -89,6 +99,22 @@ asignado**. El panorama real es más chico de lo que asumía el plan:
 | # | Asset | Dónde se usa | Estado actual | Proporción / formato | ¿Código lo soporta? | Prioridad | Marca |
 |---|-------|--------------|---------------|----------------------|---------------------|-----------|-------|
 | H1 | Íconos de HUD (energía / oro / bloqueo / intent) | `CombatHudView` / `CardHandView` / `RunFlowController` (status) | todo texto | ~64×64, PNG transparente | 🔶 Mixto: render de Image junto a cada label | P3 | `placeholder-IA` |
+
+### Eventos (paneles de nodo) — M4 4b
+
+> Gancho: `EventDefinition.backgroundSprite` → render full-panel en
+> `EventNodeController.ApplyBackground` con cadena de fallback **def → pool
+> (`EventPoolConfig.backgroundSprite`) → color #241A2E**. Convención de ruta:
+> `Assets/Art/Events/fondo_<id>.png`; el menú `Roguelike > Setup Event Config` carga el
+> sprite por esa convención y lo asigna solo. Formato: **16:9, 1920×1080, sin alpha,
+> full-panel estirado**; UI encima en casi toda la superficie → centro/zonas de texto
+> calmas y oscuras, interés visual en los bordes. Los eventos multidim muestran el MISMO
+> fondo para Mundo A y B (un solo sprite por evento; fondo por-mundo = scope nuevo, no hecho).
+
+| # | Asset | Dónde se usa | Estado actual | Proporción / formato | ¿Código lo soporta? | Prioridad | Marca |
+|---|-------|--------------|---------------|----------------------|---------------------|-----------|-------|
+| E1 | Fondos de evento simple (`fondo_evt_altar` / `fondo_evt_chest` / `fondo_evt_merchant`) | `EventDefinition.backgroundSprite` | **✔ asignados** (4b-1) | 16:9 1920×1080, sin alpha | ✅ Drop-in (campo `backgroundSprite`) | P2 | ✔ hecho |
+| E2 | Fondos de evento multidim (`fondo_evt_md_forge` / `fondo_evt_md_relic` / `fondo_evt_md_quest_courier`) | `EventDefinition.backgroundSprite` | **✔ asignados** (4b-2) — dual-world neutral, mismo fondo para A y B | 16:9 1920×1080, sin alpha | ✅ Drop-in | P2 | ✔ hecho |
 
 ---
 
