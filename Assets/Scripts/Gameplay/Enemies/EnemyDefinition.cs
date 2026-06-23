@@ -20,6 +20,11 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         [SerializeField] private float avatarScale = 1f;
         [SerializeField] private Vector2 avatarOffset = Vector2.zero;
         [SerializeField] private ElementType elementType = ElementType.None;
+        // Tipo en Mundo B. Solo significativo si el enemigo es transdimensional
+        // (typeWorldB != None && !isAnchor). Para tipo-único y ancla queda en None.
+        [SerializeField] private ElementType typeWorldB = ElementType.None;
+        // Si true, el tipo NO reacciona al cambio de mundo (ancla). Precede a typeWorldB.
+        [SerializeField] private bool isAnchor = false;
         [SerializeField] private Sprite avatar = null;
 
         public string Id => id;
@@ -32,6 +37,13 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         public float AvatarScale => avatarScale;
         public Vector2 AvatarOffset => avatarOffset;
         public ElementType ElementType => elementType;
+        public ElementType TypeWorldB => typeWorldB;
+        public bool IsAnchor => isAnchor;
+
+        // Derivada: un enemigo es transdimensional si tiene un tipo de Mundo B
+        // distinto y NO es ancla. No es un flag serializado (evita superficie de
+        // autoría redundante) — se computa de los otros dos campos.
+        public bool IsTransdimensional => !isAnchor && typeWorldB != ElementType.None;
         public Sprite Avatar => avatar;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
@@ -45,7 +57,9 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             List<EnemyMove> newMoves,
             float newAvatarScale = 1f,
             Vector2? newAvatarOffset = null,
-            ElementType newElementType = ElementType.None)
+            ElementType newElementType = ElementType.None,
+            ElementType newTypeWorldB = ElementType.None,
+            bool newIsAnchor = false)
         {
             id = newId;
             enemyName = newName;
@@ -57,6 +71,8 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             avatarScale = Mathf.Max(0.1f, newAvatarScale);
             avatarOffset = newAvatarOffset ?? Vector2.zero;
             elementType = newElementType;
+            typeWorldB = newTypeWorldB;
+            isAnchor = newIsAnchor;
         }
 #endif
     }

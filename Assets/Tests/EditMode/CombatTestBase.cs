@@ -122,7 +122,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
             int maxHp,
             EnemyAIPattern pattern,
             List<EnemyMove> moves,
-            ElementType elementType = ElementType.None)
+            ElementType elementType = ElementType.None,
+            ElementType typeWorldB = ElementType.None,
+            bool isAnchor = false)
         {
             var enemy = ScriptableObject.CreateInstance<EnemyDefinition>();
             enemy.SetDebugData(
@@ -135,7 +137,9 @@ namespace RoguelikeCardBattler.Tests.EditMode
                 moves ?? new List<EnemyMove>(),
                 1f,
                 null,
-                elementType);
+                elementType,
+                typeWorldB,
+                isAnchor);
 
             _createdAssets.Add(enemy);
             return enemy;

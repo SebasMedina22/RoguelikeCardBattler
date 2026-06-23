@@ -76,11 +76,17 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         /// (ReadableOnDark). Fuente única de verdad del patrón que antes vivía inline en
         /// CardHandView.BuildCardLabel. Devuelve string.Empty para ElementType.None (sin
         /// prefijo). NO incluye espacio final ni separador — el caller decide el formato.
+        ///
+        /// <paramref name="brightness"/> &lt; 1 atenúa el color con <see cref="Dim"/>
+        /// (4c: ficha transdimensional renderiza el tipo del mundo inactivo apagado).
+        /// El default 1f mantiene el comportamiento original a color pleno.
         /// </summary>
-        public static string TypePrefix(ElementType type)
+        public static string TypePrefix(ElementType type, float brightness = 1f)
         {
             if (type == ElementType.None) return string.Empty;
-            string hex = ColorUtility.ToHtmlStringRGB(ReadableOnDark(type));
+            Color c = ReadableOnDark(type);
+            if (brightness < 1f) c = Dim(c, brightness);
+            string hex = ColorUtility.ToHtmlStringRGB(c);
             return $"<color=#{hex}>[{type}]</color>";
         }
 
