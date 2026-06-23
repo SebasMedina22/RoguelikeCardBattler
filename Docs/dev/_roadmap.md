@@ -11,7 +11,13 @@
 > **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
 > **Próximo bloque:** M4 bloque **4c** — Transdimensionales + Ancla (mecánico, patrón para M5). **ÚNICO bloque de M4 que toca archivos protegidos** (TurnManager). Arranca con sesión `modo:diseno` para su spec.
 > Próximo paso: spec de 4c con `modo:diseno` (campo `TypeWorldB` + flag `IsAnchor` en `EnemyDefinition`, resolución de tipo activo por mundo, ficha del enemigo con ambos tipos).
-> **Última actualización:** 2026-06-19 (`modo:implementacion` + `/cierre-sesion`: **Sub-PR 4b-2 CERRADO → bloque 4b COMPLETO** —
+> **Última actualización:** 2026-06-23 (sesión de arte + docs — `/cierre-sesion`): **Arte eventos multidim ✅ — PR #127.**
+> Fondos `evt_md_forge`/`evt_md_relic`/`evt_md_quest_courier` generados (dual-world neutral) y asignados a
+> `backgroundSprite` (antes caían al color #241A2E). `ART_PROMPTS.md` adelgazado a plantillas de formato por tipo
+> (A avatar / B cara carta / C fondo). `ART_NEEDS.md` registra slots E1 (3 simples ✔) + E2 (3 multidim ✔).
+> Diagnóstico MCP: `ping` es tool deshabilitada (parte de las ~36 del audit; panel 38/73) — canario correcto =
+> `assets-refresh`. 3 fondos verificados en AssetDatabase vía `assets-get-data`.
+> **Previa:** 2026-06-19 (`modo:implementacion` + `/cierre-sesion`: **Sub-PR 4b-2 CERRADO → bloque 4b COMPLETO** —
 > eventos multidimensionales + quest/MCguffin (branch `feat/m4-4b2-events-quests`, **PR #126**). Nuevo subsistema
 > `Assets/Scripts/Run/Quests/` (`QuestState` + `QuestDestinationResolver` BFS forward static puro) +
 > `RelicCardPlayedBlockEffect` (MCguffin Mundo B, `OnCardPlayed`). `EventDefinition` gana `EventVariant`
