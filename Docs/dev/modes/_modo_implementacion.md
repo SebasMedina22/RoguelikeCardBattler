@@ -132,3 +132,24 @@ disponible, verificá: (1) compilación limpia (zero console errors), (2) tests
 EditMode nuevos + suite completa en verde, (3) el flujo jugable end-to-end de la
 feature en su escena. Reportá el resultado real — si algo falla, decilo con el
 output, no lo maquilles.
+
+### Prompt de handoff a `modo:revision` (OBLIGATORIO al cerrar la implementación)
+
+Al terminar TODA la implementación de un spec/sub-PR (código aplicado, validado y
+commiteado), el último paso es emitir un **prompt de handoff para `modo:revision`**
+pensado para correrse en **otra sesión** (el costo de Opus explota con historial
+largo — ver el feedback de "conversación nueva por sesión"). El handoff:
+
+- Se pega **inline en el chat**, en un bloque de código ```text```, completo y
+  paste-ready (mismo patrón que el handoff de `modo:diseno` → `modo:implementacion`).
+  Sebastián lo copia/pega para arrancar la revisión.
+- Debe incluir, como mínimo:
+  1. La línea `modo:revision` al inicio.
+  2. Qué se implementó (spec/sub-PR + número de PR/branch).
+  3. La lista exacta de archivos tocados (con marca de cuáles son protegidos).
+  4. Contra qué auditar: el spec, `GOLDEN_RULES.md`, arquitectura de combate, y
+     los criterios de aceptación del spec (tests, E2E, cero errores).
+  5. Puntos de atención específicos (decisiones de diseño sensibles, cambios en
+     archivos protegidos, deudas/contradicciones fuera de scope que NO debe tocar).
+- Si la implementación quedó SIN validar (MCP caído), decilo en el handoff para
+  que la revisión arranque corriendo la validación pendiente primero.
