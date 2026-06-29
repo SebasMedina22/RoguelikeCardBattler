@@ -312,11 +312,16 @@ el patrón para futuros bosses.
   ataque
 - Debuff Virus (DD-019, exclusivo del boss cyberpunk): bloqueo al 80%
   efectividad
-- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad)
+- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad) — **la maquinaria
+  de "2 tipos, uno por mundo" YA EXISTE** (4c): `EnemyDefinition.typeWorldB` + getter
+  `TurnManager.EnemyElementType` resuelto por mundo + ficha de dos tipos en
+  `CombatHudView`. M5 reusa esto; el boss es un transdim con comportamiento de fase encima.
 - Retazo único de boss vinculado narrativamente
 
 **Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
-post-ProcessAll y mutación de mundo desde IA).
+post-ProcessAll y mutación de mundo desde IA). **Nota 4c:** el comportamiento
+dimensional del boss (cambio de mundo forzado/automático desde la IA) quedó FUERA
+de scope de 4c — es trabajo de M5.
 
 **Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado — en
 particular el bloque 4c (transdim/ancla establecen el patrón de tipos
@@ -349,6 +354,18 @@ toca TurnManager).
 ---
 
 ## Completados
+
+### M4 — Resto del Acto 1 según GDD v2
+**Fecha cierre:** 2026-06-23 (bloque 4c transdim+ancla cierra el milestone)
+**Resumen:** completa el Acto 1 sobre la base de M3. Pre-M4 visor de mazo (PR #123)
++ 4 bloques: **4a** integridad de cartas (afinidad DD-022 opción A + cobertura de
+mejoras DD-023, sin tocar protegidos), **4b** eventos + quests (4b-1 motor + eventos
+simples PR #125; 4b-2 multidimensionales + quest/MCguffin PR #126; arte de fondos
+PR #127), **4c** enemigos transdimensionales + ancla (PR #130, ÚNICO bloque que tocó
+TurnManager). El getter `EnemyElementType` resuelto por mundo/ancla + la ficha de dos
+tipos son el patrón que **M5** (boss Acto 1, DD-004) reutiliza. Detalle por bloque
+arriba (histórico de implementación). Suite EditMode 230/230 al cierre.
+**Pendiente de confirmación de Sebastián:** GOLDEN_RULES §2 + §6 (transdim/ancla ✓).
 
 ### M3 — Personalización del run
 **Fecha cierre:** 2026-06-05 (mapa horizontal 3F como último sub-PR cierra el milestone)
