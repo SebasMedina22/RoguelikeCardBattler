@@ -7,7 +7,28 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-23 — **M4 bloque 4c: enemigos transdimensionales + ancla → M4 COMPLETO**
+> **Última actualización:** 2026-06-30 — **M5 Sub-PR A: boss del Acto 1 (SO + fases PhaseBased + ficha dos tipos)**
+> (branch `feat/m5-boss-a-so-fases`, sobre `origin/main` con #130/4c ya mergeado). Arranque de menor riesgo de M5:
+> **NO toca archivos protegidos ni los contratos 4c** (consume `EnemyDefinition.typeWorldB`/`isAnchor`/`IsTransdimensional`
+> y el getter `TurnManager.EnemyElementType` tal cual). **NINGÚN campo nuevo de SO** — la maquinaria existente alcanza:
+> `EnemyAIPattern.PhaseBased` (ya implementado) filtra moves por `EnemyMove.MinHpPercent`/`MaxHpPercent`, y la
+> transdimensionalidad ya vive en `EnemyDefinition`. Nuevo `Assets/Editor/BossConfigSetup.cs` (MenuItem
+> `Roguelike/Setup Boss Act 1 (M5 A)`, molde espejo de `EnemyConfigSetup`, idempotente) → autoría
+> `Assets/ScriptableObjects/Enemies/BossAct1_CosturaMaldita.asset`: **Costura Maldita / UNIT-RB7**, `aiPattern=PhaseBased`,
+> transdim **Blanco (Mundo A) / Azul (Mundo B)** (`isAnchor=false`), `maxHP=140` (D4), 4 moves etiquetados por HP% →
+> fase 1 `[51,100]` (Puntada=Damage 10 / Tejido Protector=Block 8), fase 2 `[0,50]` endurecida (Puntada Frenética=Damage 14 /
+> Tejido Reforzado=Block 12). Tipos elegidos por la matriz de `ElementEffectiveness` en CÓDIGO (DC2, no la tabla §3):
+> ambos SuperEficaz contra el jugador de REFERENCIA = defaults del TurnManager (Mundo A Rojo / Mundo B Amarillo).
+> Nuevo `Assets/Tests/EditMode/BossAct1Tests.cs` (5 casos: selección de move por fase >50% / ≤50% / 50% exacto en fase 2;
+> el boss conmuta tipo activo con el mundo; los dos tipos son SuperEficaz vs jugador de ref. por la matriz). **No** se
+> extendió `CombatTestBase` (las factories `CreateEnemyDefinition`/`CreateEnemyMove` ya cubren tipos/ancla + HP%).
+> **Validado Unity-MCP (2026-06-30):** compilación limpia (zero errors), MenuItem corrido (asset con campos correctos),
+> suite EditMode **230 → 235/235**. **FUERA de scope de A (B/C/D):** Desfase Dimensional (contador de cartas + cambio de
+> mundo forzado por IA, toca TurnManager), debuffs Sangrado/Virus (toca TurnManager), Retazo de boss + pulido. El "umbral
+> del Desfase 3→2 por fase" (caso 2 del spec) se difiere a Sub-PR C junto con sus campos de SO. Eyeball visual en
+> BattleScene pendiente de confirmación de Sebastián (asignar el boss como DefaultEnemy / SpecificEnemy del nodo de boss).
+>
+> **Última actualización previa:** 2026-06-23 — **M4 bloque 4c: enemigos transdimensionales + ancla → M4 COMPLETO**
 > (branch `feat/m4-4c-transdim-ancla`). `EnemyDefinition` gana `typeWorldB` (ElementType, tipo en Mundo B) +
 > `isAnchor` (bool) + getters + **propiedad derivada `IsTransdimensional`** (`!isAnchor && typeWorldB != None`,
 > NO serializada); `SetDebugData` extendido con ambos params opcionales. **`TurnManager.cs` (PROTEGIDO)** —
@@ -402,7 +423,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 28 archivos de test en `Assets/Tests/EditMode/` (suite 221/221)
+- 30 archivos de test en `Assets/Tests/EditMode/` (suite 235/235)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -639,9 +660,14 @@ CardUpgradeSetup.cs                   ← MenuItem "Roguelike/Setup Placeholder 
 EditorCardAuthoring.cs                ← 4a: helper compartido (CloneEffectsBoostingFirst /
                                         FirstEffectValue) que consumen StarterDeckSetup y CardUpgradeSetup
 NewRunConfigSetup.cs / ShopConfigSetup.cs  ← menús de config (3E / 3D)
+EnemyConfigSetup.cs                   ← 4c: MenuItem "Roguelike/Setup Enemy Test Data (4c)"
+                                        (TransdimTestEnemy Rojo/Azul + AnchorTestEnemy Morado)
+BossConfigSetup.cs                    ← M5 A: MenuItem "Roguelike/Setup Boss Act 1 (M5 A)"
+                                        autoría BossAct1_CosturaMaldita (PhaseBased, transdim
+                                        Blanco/Azul, moves por fase HP%). Idempotente.
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 28 archivos (suite EditMode 221/221)
+### Tests (`Assets/Tests/EditMode/`) — 30 archivos (suite EditMode 235/235)
 
 ```
 CombatTestBase.cs                ← helper compartido
@@ -707,6 +733,13 @@ QuestTests.cs                    ← M4 4b-2 (casos 8-16: ResolveVariant A≠B, 
                                    3 topologías × nodos 1..6, CompleteQuestIfDestination hit/miss,
                                    Robar=+100 sin quest, Reset limpia quest, RelicCardPlayedBlockEffect,
                                    fallback al Boss, determinismo del BFS)
+EnemyTransdimTests.cs            ← M4 4c (6 casos: defaults/derivada IsTransdimensional, resolución
+                                   de EnemyElementType por mundo/ancla/tipo-único, daño orgánico que
+                                   conmuta con el mundo)
+BossAct1Tests.cs                 ← M5 Sub-PR A (5 casos: selección de move PhaseBased por fase
+                                   >50% / ≤50% / 50% exacto en fase 2, el boss conmuta tipo activo
+                                   con el mundo, los dos tipos son SuperEficaz vs jugador de ref. por
+                                   la matriz de CÓDIGO — DC2)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
