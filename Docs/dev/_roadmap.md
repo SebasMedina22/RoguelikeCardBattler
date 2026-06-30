@@ -365,7 +365,7 @@ PR #127), **4c** enemigos transdimensionales + ancla (PR #130, ÚNICO bloque que
 TurnManager). El getter `EnemyElementType` resuelto por mundo/ancla + la ficha de dos
 tipos son el patrón que **M5** (boss Acto 1, DD-004) reutiliza. Detalle por bloque
 arriba (histórico de implementación). Suite EditMode 230/230 al cierre.
-**Pendiente de confirmación de Sebastián:** GOLDEN_RULES §2 + §6 (transdim/ancla ✓).
+GOLDEN_RULES §2 + §6 (transdim/ancla ✓) confirmados y commiteados 2026-06-29 (PR #130).
 
 ### M3 — Personalización del run
 **Fecha cierre:** 2026-06-05 (mapa horizontal 3F como último sub-PR cierra el milestone)
