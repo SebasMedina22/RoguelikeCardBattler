@@ -167,10 +167,20 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _playerHpLabel.text = $"{_turnManager.PlayerHP}/{_turnManager.PlayerMaxHP}";
             _enemyHpLabel.text = $"{_turnManager.EnemyHP}/{_turnManager.EnemyMaxHP}";
             _enemyTypeLabel.text = BuildEnemyTypeLabel();
-            ElementType enemyType = _turnManager.EnemyElementType;
-            _enemyTypeLabel.color = enemyType == ElementType.None
-                ? Color.white
-                : ElementTypeColors.ReadableOnDark(enemyType);
+            EnemyDefinition enemyDef = _turnManager.CurrentEnemyDefinition;
+            if (enemyDef != null && enemyDef.IsTransdimensional)
+            {
+                // Dos tipos: el color lo aporta el rich-text inline por tipo, así que
+                // el label debe ir en blanco (un único Text no puede tener dos .color).
+                _enemyTypeLabel.color = Color.white;
+            }
+            else
+            {
+                ElementType enemyType = _turnManager.EnemyElementType;
+                _enemyTypeLabel.color = enemyType == ElementType.None
+                    ? Color.white
+                    : ElementTypeColors.ReadableOnDark(enemyType);
+            }
             _drawPileText.text = $"Draw: {_turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {_turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();
@@ -262,15 +272,33 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             };
         }
 
+        // Factor de atenuación del tipo del mundo inactivo en la ficha transdim.
+        private const float TransdimDimFactor = 0.45f;
+
         private string BuildEnemyTypeLabel()
         {
-            if (_turnManager == null)
+            EnemyDefinition def = _turnManager?.CurrentEnemyDefinition;
+            if (_turnManager == null || def == null)
             {
                 return "Type: —";
             }
 
-            ElementType type = _turnManager.EnemyElementType;
-            return type == ElementType.None ? "Type: —" : $"Type: {type}";
+            if (!def.IsTransdimensional)
+            {
+                // Tipo único o ancla → un solo tipo (resuelto por el getter).
+                ElementType type = _turnManager.EnemyElementType;
+                return type == ElementType.None ? "Type: —" : $"Type: {type}";
+            }
+
+            // Transdimensional → dos tipos: el del mundo activo a color pleno, el otro atenuado.
+            bool activeIsA = _turnManager.CurrentWorld == TurnManager.WorldSide.A;
+            string prefixA = activeIsA
+                ? ElementTypeColors.TypePrefix(def.ElementType)
+                : ElementTypeColors.TypePrefix(def.ElementType, TransdimDimFactor);
+            string prefixB = activeIsA
+                ? ElementTypeColors.TypePrefix(def.TypeWorldB, TransdimDimFactor)
+                : ElementTypeColors.TypePrefix(def.TypeWorldB);
+            return $"Type: {prefixA} / {prefixB}";
         }
 
         private void UpdateBlockVisuals(Text label, Image overlay, int blockValue)

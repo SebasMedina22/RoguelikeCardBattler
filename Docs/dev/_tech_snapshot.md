@@ -7,7 +7,27 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-19 — **M4 bloque 4b-2: eventos multidimensionales + quest/MCguffin**
+> **Última actualización:** 2026-06-23 — **M4 bloque 4c: enemigos transdimensionales + ancla → M4 COMPLETO**
+> (branch `feat/m4-4c-transdim-ancla`). `EnemyDefinition` gana `typeWorldB` (ElementType, tipo en Mundo B) +
+> `isAnchor` (bool) + getters + **propiedad derivada `IsTransdimensional`** (`!isAnchor && typeWorldB != None`,
+> NO serializada); `SetDebugData` extendido con ambos params opcionales. **`TurnManager.cs` (PROTEGIDO)** —
+> 3 ediciones, todas canalizadas por un punto único: el getter `EnemyElementType` pasa de leer directo
+> `enemyDefinition.ElementType` a **resolver por mundo/ancla** (ancla → ElementType siempre; transdim en Mundo B →
+> TypeWorldB; Mundo A o tipo único → ElementType); los 2 read-sites de daño (enemigo atacante / defensor) ahora
+> consumen el getter. Cambio de **semántica**, firma idéntica — sin campos/eventos/métodos nuevos en TurnManager.
+> `ElementTypeColors.TypePrefix` gana param opcional `brightness=1f` (atenúa con `Dim` si `<1`; los callers
+> existentes con un arg quedan idénticos). `CombatHudView.BuildEnemyTypeLabel` renderiza **dos tipos** `[A] / [B]`
+> cuando el enemigo es transdim (activo a color pleno, inactivo atenuado a 0.45) + tinte del label a blanco en ese
+> caso (el color lo aporta el rich-text inline). Nuevo `Assets/Editor/EnemyConfigSetup.cs` (MenuItem
+> `Roguelike/Setup Enemy Test Data (4c)`, molde `EventConfigSetup`, idempotente) → `TransdimTestEnemy` (Rojo/Azul) +
+> `AnchorTestEnemy` (Morado fijo) en `Assets/ScriptableObjects/Enemies/`. Tests: `CombatTestBase.CreateEnemyDefinition`
+> +typeWorldB/isAnchor opcionales; nuevo `EnemyTransdimTests.cs` (6 casos: defaults, derivada, resolución por mundo,
+> ancla, tipo único, combate orgánico) + 3 casos `TypePrefix` brightness en `ElementTypeColorsTests`. **Validado
+> Unity-MCP (2026-06-23):** suite EditMode **230/230**, compilación limpia, MenuItem corrido (2 SOs con campos
+> correctos). FUERA de scope (no tocado): discrepancia tabla efectividad §3 vs código, comportamiento dimensional
+> del BOSS (M5). Pendiente confirmación de Sebastián: GOLDEN_RULES §2 + §6.
+>
+> **Última actualización previa:** 2026-06-19 — **M4 bloque 4b-2: eventos multidimensionales + quest/MCguffin**
 > (branch `feat/m4-4b2-events-quests`, **PR #126** → **bloque 4b COMPLETO**). Nuevo subsistema `Assets/Scripts/Run/Quests/`
 > (`QuestState.cs` datos del quest activo; `QuestDestinationResolver.cs` BFS forward static puro).
 > `RelicCardPlayedBlockEffect.cs` (MCguffin Mundo B: +1 bloqueo al jugar carta de escudo vía

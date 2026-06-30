@@ -63,8 +63,8 @@
 - ✓ Cambiar de mundo afecta:
   - Que lado de las cartas duales esta activo
   - El tipo activo del jugador (= tipo asignado al mundo)
-  - El tipo activo de enemigos transdimensionales (ver §6) — ⏳ pendiente
-  - NO afecta enemigos ancla (ver §6) — ⏳ pendiente
+  - El tipo activo de enemigos transdimensionales (ver §6) — ✓ implementado (M4 4c, PR #130)
+  - NO afecta enemigos ancla (ver §6) — ✓ implementado (M4 4c, PR #130)
 
 ---
 
@@ -188,7 +188,7 @@
 - Sequence: cicla por movimientos en orden
 - PhaseBased: declarado, no implementado aun (pendiente en M2)
 
-### Categorias dimensionales (⏳ DD-014)
+### Categorias dimensionales (✓ DD-014 — implementado M4 4c, PR #130)
 - **Estandar**: 1 o mas tipos elementales. El tipo activo cambia instantaneamente con el cambio de mundo del jugador. La ficha muestra ambos tipos cuando aplica
 - **Ancla**: tipo elemental fijo e invariable. No reacciona al cambio de mundo. Funcion estrategica: forzar al jugador a resolver con el mundo actual o construir mazo versatil
 

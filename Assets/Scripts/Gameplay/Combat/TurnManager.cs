@@ -109,7 +109,26 @@ namespace RoguelikeCardBattler.Gameplay.Combat
 
         public float CurrentEnemyAvatarScale => enemyDefinition != null ? Mathf.Max(0.1f, enemyDefinition.AvatarScale) : 1f;
         public Vector2 CurrentEnemyAvatarOffset => enemyDefinition != null ? enemyDefinition.AvatarOffset : Vector2.zero;
-        public ElementType EnemyElementType => enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
+        /// <summary>
+        /// Tipo elemental ACTIVO del enemigo, resuelto por mundo/ancla (M4 4c).
+        /// Punto único de verdad: las lecturas de daño (atacante y defensor) y el
+        /// HUD lo consumen. Firma sin cambios respecto al getter original; solo
+        /// cambia la semántica (antes devolvía siempre enemyDefinition.ElementType).
+        /// - Ancla: ignora el mundo (precede a typeWorldB aunque esté seteado).
+        /// - Transdimensional en Mundo B: usa TypeWorldB.
+        /// - Mundo A o tipo único: tipo base (elementType).
+        /// </summary>
+        public ElementType EnemyElementType
+        {
+            get
+            {
+                if (enemyDefinition == null) return ElementType.None;
+                if (enemyDefinition.IsAnchor) return enemyDefinition.ElementType;
+                if (currentWorld == WorldSide.B && enemyDefinition.TypeWorldB != ElementType.None)
+                    return enemyDefinition.TypeWorldB;
+                return enemyDefinition.ElementType;
+            }
+        }
         public EnemyDefinition CurrentEnemyDefinition => enemyDefinition;
         public int StyleCharges => _styleCharges;
         // Refs read-only para que IRelicEffect (Sub-PR 3B) pueda invocar la API
@@ -413,7 +432,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _plannedEnemyMove = null;
             if (move != null)
             {
-                QueueEffects(move.Effects, _enemy, _player, enemyDefinition?.ElementType ?? ElementType.None);
+                QueueEffects(move.Effects, _enemy, _player, EnemyElementType);
                 _actionQueue.ProcessAll();
             }
 
@@ -621,7 +640,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 return neutralAmount;
             }
 
-            ElementType defenderType = enemyDefinition != null ? enemyDefinition.ElementType : ElementType.None;
+            ElementType defenderType = EnemyElementType;
             Effectiveness effectiveness = ElementEffectiveness.GetEffectiveness(attackerType, defenderType);
             float multiplier = EffectivenessMultipliers.For(effectiveness);
             int finalAmount = Math.Max(0, Mathf.RoundToInt(baseAmount * multiplier));

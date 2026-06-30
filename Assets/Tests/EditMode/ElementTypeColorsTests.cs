@@ -126,5 +126,42 @@ namespace RoguelikeCardBattler.Tests.EditMode
                     $"{type} debe incluir su nombre entre corchetes");
             }
         }
+
+        // ── TypePrefix brightness overload (M4 4c) ────────────────────────────
+
+        [Test]
+        public void TypePrefix_BrightnessOne_EqualsDefault()
+        {
+            // brightness == 1 no atenúa: idéntico al overload sin parámetro.
+            Assert.AreEqual(
+                ElementTypeColors.TypePrefix(ElementType.Rojo),
+                ElementTypeColors.TypePrefix(ElementType.Rojo, 1f),
+                "brightness=1 debe igualar el comportamiento a color pleno.");
+        }
+
+        [Test]
+        public void TypePrefix_BrightnessBelowOne_DimsHexTowardBlack()
+        {
+            // brightness < 1 aplica Dim → el hex resultante debe ser el de Dim(ReadableOnDark).
+            const float dim = 0.45f;
+            Color expectedColor = ElementTypeColors.Dim(
+                ElementTypeColors.ReadableOnDark(ElementType.Azul), dim);
+            string expectedHex = ColorUtility.ToHtmlStringRGB(expectedColor);
+
+            string dimmed = ElementTypeColors.TypePrefix(ElementType.Azul, dim);
+            StringAssert.Contains(expectedHex, dimmed,
+                "El hex atenuado debe coincidir con Dim(ReadableOnDark, factor).");
+            Assert.AreNotEqual(
+                ElementTypeColors.TypePrefix(ElementType.Azul),
+                dimmed,
+                "El prefijo atenuado debe diferir del pleno.");
+        }
+
+        [Test]
+        public void TypePrefix_BrightnessOnNone_StillReturnsEmpty()
+        {
+            Assert.AreEqual(string.Empty, ElementTypeColors.TypePrefix(ElementType.None, 0.45f),
+                "None no genera prefijo aunque se pida atenuado.");
+        }
     }
 }

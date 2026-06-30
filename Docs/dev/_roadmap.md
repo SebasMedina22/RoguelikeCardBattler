@@ -7,11 +7,17 @@
 > En `modo:implementacion` se lee al inicio para saber qué milestone está activo
 > y qué sub-tareas quedan.
 >
-> **Fase actual:** M4 activo. Pre-M4 visor de mazo: ✅ CERRADO (2026-06-17). Bloque 4a: ✅ CERRADO (2026-06-17). Bloque 4b-1: ✅ CERRADO (2026-06-18). Bloque 4b-2: ✅ CERRADO (2026-06-19). **Bloque 4b COMPLETO.**
-> **Milestone activo:** M4 — Resto del Acto 1 (bloques: 4a integridad de cartas, 4b eventos+quests, 4c transdim+ancla)
-> **Próximo bloque:** M4 bloque **4c** — Transdimensionales + Ancla (mecánico, patrón para M5). **ÚNICO bloque de M4 que toca archivos protegidos** (TurnManager). Arranca con sesión `modo:diseno` para su spec.
-> Próximo paso: spec de 4c con `modo:diseno` (campo `TypeWorldB` + flag `IsAnchor` en `EnemyDefinition`, resolución de tipo activo por mundo, ficha del enemigo con ambos tipos).
-> **Última actualización:** 2026-06-23 (sesión de arte + docs — `/cierre-sesion`): **Arte eventos multidim ✅ — PR #127.**
+> **Fase actual:** **M4 ✅ COMPLETO (2026-06-23).** Pre-M4 visor de mazo: ✅ (2026-06-17). Bloque 4a: ✅ (2026-06-17). Bloque 4b: ✅ (4b-1 2026-06-18 + 4b-2 2026-06-19). Bloque 4c: ✅ (2026-06-23). **Todos los bloques de M4 cerrados.**
+> **Milestone activo:** ninguno — M4 cerrado. **Próximo milestone: M5** (boss del Acto 1, DD-004 — reutiliza el patrón transdim de 4c).
+> **Próximo bloque:** arrancar M5 con sesión `modo:gdd`/`modo:diseno`. El boss de 2 tipos (uno por mundo) reutiliza el getter `EnemyElementType` resuelto por mundo + la ficha de dos tipos de 4c.
+> Próximo paso: definir el alcance de M5 (comportamiento dimensional del boss quedó FUERA de scope de 4c).
+> **Última actualización:** 2026-06-23 (`modo:implementacion`): **Bloque 4c CERRADO → M4 COMPLETO.**
+> Branch `feat/m4-4c-transdim-ancla`. `EnemyDefinition` +`typeWorldB`/`isAnchor`/`IsTransdimensional`;
+> `TurnManager.EnemyElementType` (PROTEGIDO) resuelve tipo activo por mundo/ancla (getter = punto único, 3 ediciones);
+> `ElementTypeColors.TypePrefix(type, brightness)` para el tipo atenuado; `CombatHudView` ficha de dos tipos;
+> `EnemyConfigSetup` (MenuItem `Roguelike/Setup Enemy Test Data (4c)`). Suite EditMode **230/230**, cero errores.
+> Pendiente para Sebastián: confirmar GOLDEN_RULES §2 (transdim/ancla ✓) y §6 (categorías dimensionales).
+> **Previa:** 2026-06-23 (sesión de arte + docs — `/cierre-sesion`): **Arte eventos multidim ✅ — PR #127.**
 > Fondos `evt_md_forge`/`evt_md_relic`/`evt_md_quest_courier` generados (dual-world neutral) y asignados a
 > `backgroundSprite` (antes caían al color #241A2E). `ART_PROMPTS.md` adelgazado a plantillas de formato por tipo
 > (A avatar / B cara carta / C fondo). `ART_NEEDS.md` registra slots E1 (3 simples ✔) + E2 (3 multidim ✔).
@@ -249,12 +255,18 @@ protegidos.**
 - Dependencia interna: 4a cerrado (eventos que otorgan mejoras necesitan que
   toda carta sea mejorable) + visor pre-M4 (verificación en playtest)
 
-#### Bloque 4c — Transdimensionales + Ancla (mecánico, patrón para M5)
-- [ ] Enemigos transdimensionales (DD-014): campo `TypeWorldB` en
-      `EnemyDefinition`, resolución de tipo activo según mundo actual
-- [ ] Enemigos ancla (DD-014): flag `IsAnchor` en `EnemyDefinition`, bypass
-      del cambio de mundo
-- [ ] Ficha del enemigo muestra ambos tipos (GOLDEN_RULES §6)
+#### Bloque 4c — Transdimensionales + Ancla (mecánico, patrón para M5) ✅ CERRADO (2026-06-23)
+**Spec** `Docs/dev/specs/m4_4c_transdim_ancla_spec.md` (IMPLEMENTADO). Branch
+`feat/m4-4c-transdim-ancla`. **Cierra M4.**
+- [x] Enemigos transdimensionales (DD-014): campo `typeWorldB` en
+      `EnemyDefinition` + derivada `IsTransdimensional`, resolución de tipo activo
+      según mundo actual en `TurnManager.EnemyElementType` (getter, único punto de verdad)
+- [x] Enemigos ancla (DD-014): flag `isAnchor` en `EnemyDefinition`, bypass
+      del cambio de mundo (precede a `typeWorldB`)
+- [x] Ficha del enemigo muestra ambos tipos (GOLDEN_RULES §6): `CombatHudView.BuildEnemyTypeLabel`
+      renderiza `[A] / [B]` con el inactivo atenuado (overload `ElementTypeColors.TypePrefix(type, brightness)`)
+- **Validación:** suite EditMode 230/230 (6 `EnemyTransdimTests` + 3 `TypePrefix` brightness),
+      `Roguelike/Setup Enemy Test Data (4c)` genera `TransdimTestEnemy`/`AnchorTestEnemy`. Cero errores.
 - **Nota de scope:** el GDD ubica transdim/ancla como contenido de Actos 2-3
   (DD-011). Entran a M4 porque el BOSS del Acto 1 (DD-004: 2 tipos, uno por
   mundo) ES la mecánica transdim estándar → M5 depende de este bloque. El
@@ -300,11 +312,16 @@ el patrón para futuros bosses.
   ataque
 - Debuff Virus (DD-019, exclusivo del boss cyberpunk): bloqueo al 80%
   efectividad
-- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad)
+- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad) — **la maquinaria
+  de "2 tipos, uno por mundo" YA EXISTE** (4c): `EnemyDefinition.typeWorldB` + getter
+  `TurnManager.EnemyElementType` resuelto por mundo + ficha de dos tipos en
+  `CombatHudView`. M5 reusa esto; el boss es un transdim con comportamiento de fase encima.
 - Retazo único de boss vinculado narrativamente
 
 **Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
-post-ProcessAll y mutación de mundo desde IA).
+post-ProcessAll y mutación de mundo desde IA). **Nota 4c:** el comportamiento
+dimensional del boss (cambio de mundo forzado/automático desde la IA) quedó FUERA
+de scope de 4c — es trabajo de M5.
 
 **Dependencias:** M2 cerrado (cambio de mundo robusto), M4 cerrado — en
 particular el bloque 4c (transdim/ancla establecen el patrón de tipos
@@ -337,6 +354,18 @@ toca TurnManager).
 ---
 
 ## Completados
+
+### M4 — Resto del Acto 1 según GDD v2
+**Fecha cierre:** 2026-06-23 (bloque 4c transdim+ancla cierra el milestone)
+**Resumen:** completa el Acto 1 sobre la base de M3. Pre-M4 visor de mazo (PR #123)
++ 4 bloques: **4a** integridad de cartas (afinidad DD-022 opción A + cobertura de
+mejoras DD-023, sin tocar protegidos), **4b** eventos + quests (4b-1 motor + eventos
+simples PR #125; 4b-2 multidimensionales + quest/MCguffin PR #126; arte de fondos
+PR #127), **4c** enemigos transdimensionales + ancla (PR #130, ÚNICO bloque que tocó
+TurnManager). El getter `EnemyElementType` resuelto por mundo/ancla + la ficha de dos
+tipos son el patrón que **M5** (boss Acto 1, DD-004) reutiliza. Detalle por bloque
+arriba (histórico de implementación). Suite EditMode 230/230 al cierre.
+GOLDEN_RULES §2 + §6 (transdim/ancla ✓) confirmados y commiteados 2026-06-29 (PR #130).
 
 ### M3 — Personalización del run
 **Fecha cierre:** 2026-06-05 (mapa horizontal 3F como último sub-PR cierra el milestone)
