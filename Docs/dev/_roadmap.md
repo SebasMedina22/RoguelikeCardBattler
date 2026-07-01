@@ -311,7 +311,9 @@ Dimensional, toca TurnManager) → **D** (Retazo de boss + pulido).
 
 **Sub-tareas (desagregar al activar):**
 - [x] Sistema de fases en bosses (Fase 2 obligatoria al 50% HP) — **Sub-PR A ✅**
-  (PhaseBased + moves etiquetados por HP% [51,100]/[0,50]).
+  (PhaseBased + moves etiquetados por HP% [51,100]/[0,50]). ⚠ El **latch sticky de fase
+  (DC12)** —Fase 2 irreversible aunque el boss recupere HP— queda para **Sub-PR C**: el
+  selector PhaseBased es stateless; en A no es observable (el boss no tiene move de curación).
 - Mecánica "Desfase Dimensional": contador de cartas jugadas en turno, cambio
   automático cada 3 cartas (2 en Fase 2) — **Sub-PR C (pendiente)**.
 - Debuff Sangrado (DD-019, exclusivo del boss medieval): pérdida de HP al jugar

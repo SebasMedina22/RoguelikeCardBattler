@@ -12,14 +12,15 @@ namespace RoguelikeCardBattler.Tests.EditMode
     /// con HP > 50% el boss solo planea moves de fase 1 ([51,100]); con HP ≤ 50%
     /// solo de fase 2 ([0,50], DC3 obligatoria al 50%). No re-asierta el selector
     /// PhaseBased (ya está implementado y cubierto) — asierta que el move PLANEADO
-    /// pertenece a la fase correcta según el HP% del boss. Además valida DC2 (los
-    /// dos tipos del boss son SuperEficaz contra el jugador de referencia) contra la
-    /// matriz de ElementEffectiveness en CÓDIGO.
+    /// pertenece a la fase correcta según el HP% del boss. Además valida la regla
+    /// ASIMÉTRICA de tipos del boss (DC2/§6) contra la matriz de ElementEffectiveness
+    /// en CÓDIGO: el boss pega SuperEficaz en ambos mundos, pero el jugador solo
+    /// devuelve SuperEficaz en Mundo A (Mundo B favorece al boss).
     ///
     /// Plantilla: EnemyTransdimTests (mismo CreateTurnManager con SetTestConfig +
-    /// SetTestData + InitializeCombat). No extiende CombatTestBase: las factories
-    /// CreateEnemyDefinition (tipos/ancla) y CreateEnemyMove (HP% + intent) ya
-    /// soportan todo lo que el boss necesita.
+    /// SetTestData + InitializeCombat). Extiende CombatTestBase; no hizo falta
+    /// agregarle factories nuevas — CreateEnemyDefinition (tipos/ancla) y
+    /// CreateEnemyMove (HP% + intent) ya cubren todo lo que el boss necesita.
     ///
     /// FUERA de scope de A: el "umbral del Desfase 3→2 por fase" (caso 2 del spec)
     /// es parte del Desfase Dimensional (Sub-PR C), que todavía no existe; sus
@@ -153,19 +154,35 @@ namespace RoguelikeCardBattler.Tests.EditMode
             Assert.AreEqual(ElementType.Azul, manager.EnemyElementType, "Mundo B → tipo de B (Azul).");
         }
 
-        // ── DC2: los dos tipos del boss son SuperEficaz contra el jugador de
-        //     referencia, validado contra la matriz de CÓDIGO (no la tabla §3) ───
-        // Espeja los tipos que autoría BossConfigSetup (Blanco A / Azul B) y el
-        // jugador de referencia = defaults del TurnManager (Rojo A / Amarillo B).
+        // ── DC2 / §6 (regla ASIMÉTRICA del boss) ────────────────────────────────
+        // §6/DD-004 pide dos tipos: 1 SuperEficaz CONTRA el jugador + 1 que sea
+        // DEBILIDAD del jugador. La elección (Blanco A / Azul B vs jugador de ref.
+        // Rojo A / Amarillo B) lo cumple, pero la asimetría vive en el eje
+        // JUGADOR→BOSS, no en el ofensivo del boss:
+        //   - El boss pega SuperEficaz al jugador en AMBOS mundos (boss letal).
+        //   - PERO el jugador solo devuelve SuperEficaz en Mundo A (Rojo→Blanco) →
+        //     Mundo A es EXPLOTABLE; en Mundo B pega PocoEficaz (Amarillo→Azul) →
+        //     Mundo B FAVORECE al boss = la "debilidad del jugador" de §6.
+        // Validado contra la matriz de CÓDIGO (no la tabla §3). Espeja los tipos de
+        // BossConfigSetup y los defaults de jugador del TurnManager.
         [Test]
-        public void BossTypes_AreSuperEffectiveVsReferencePlayer_PerCodeMatrix()
+        public void BossTypeChoice_SatisfiesAsymmetricBossRule_PerCodeMatrix()
         {
+            // Eje BOSS→JUGADOR: el boss es SuperEficaz atacando al jugador en ambos mundos.
             Assert.AreEqual(Effectiveness.SuperEficaz,
                 ElementEffectiveness.GetEffectiveness(ElementType.Blanco, ElementType.Rojo),
-                "Mundo A: Blanco debe ser SuperEficaz contra el jugador de referencia (Rojo).");
+                "Mundo A: el boss (Blanco) pega SuperEficaz al jugador de referencia (Rojo).");
             Assert.AreEqual(Effectiveness.SuperEficaz,
                 ElementEffectiveness.GetEffectiveness(ElementType.Azul, ElementType.Amarillo),
-                "Mundo B: Azul debe ser SuperEficaz contra el jugador de referencia (Amarillo).");
+                "Mundo B: el boss (Azul) pega SuperEficaz al jugador de referencia (Amarillo).");
+
+            // Eje JUGADOR→BOSS: acá vive la asimetría (la mitad "debilidad" de §6).
+            Assert.AreEqual(Effectiveness.SuperEficaz,
+                ElementEffectiveness.GetEffectiveness(ElementType.Rojo, ElementType.Blanco),
+                "Mundo A es EXPLOTABLE: el jugador de ref. (Rojo) pega SuperEficaz al tipo A del boss (Blanco).");
+            Assert.AreEqual(Effectiveness.PocoEficaz,
+                ElementEffectiveness.GetEffectiveness(ElementType.Amarillo, ElementType.Azul),
+                "Mundo B FAVORECE al boss: el jugador de ref. (Amarillo) solo pega PocoEficaz al tipo B del boss (Azul).");
         }
     }
 }

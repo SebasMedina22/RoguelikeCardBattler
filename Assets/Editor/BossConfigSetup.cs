@@ -11,10 +11,16 @@ namespace RoguelikeCardBattler.Editor
     /// M5 Sub-PR A — autoría del boss del Acto 1 "Costura Maldita / UNIT-RB7":
     /// un <see cref="EnemyDefinition"/> transdimensional (dos tipos, uno por mundo)
     /// con IA <c>PhaseBased</c>. Mundo A (Costura Maldita) = Blanco; Mundo B
-    /// (UNIT-RB7) = Azul. Ambos tipos son SuperEficaz contra el jugador de
-    /// REFERENCIA (defaults del TurnManager: Mundo A Rojo / Mundo B Amarillo) según
-    /// la matriz de <see cref="ElementEffectiveness"/> en CÓDIGO (DC2 — la tabla §3
-    /// del doc está desfasada y NO es la fuente de verdad).
+    /// (UNIT-RB7) = Azul, contra el jugador de REFERENCIA (defaults del TurnManager:
+    /// Mundo A Rojo / Mundo B Amarillo), elegidos por la matriz de
+    /// <see cref="ElementEffectiveness"/> en CÓDIGO (DC2 — la tabla §3 del doc está
+    /// desfasada y NO es la fuente de verdad). La regla §6/DD-004 es ASIMÉTRICA
+    /// (1 tipo SuperEficaz contra el jugador + 1 que sea debilidad del jugador), y
+    /// se cumple por el eje JUGADOR→BOSS, NO porque el boss domine ambos mundos:
+    ///   - Mundo A: el boss (Blanco) pega SuperEficaz a Rojo, PERO Rojo también pega
+    ///     SuperEficaz a Blanco → Mundo A es EXPLOTABLE (el jugador pelea de vuelta).
+    ///   - Mundo B: el boss (Azul) pega SuperEficaz a Amarillo y el jugador solo
+    ///     devuelve PocoEficaz → Mundo B FAVORECE al boss (la "debilidad" de §6).
     ///
     /// Moves etiquetados por HP% para el selector PhaseBased: fase 1 en [51,100],
     /// fase 2 (obligatoria al 50%, DC3) en [0,50] con números endurecidos. El boss

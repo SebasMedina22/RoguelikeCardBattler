@@ -359,6 +359,13 @@ debe seguir 100% verde. Suite total parte de **230** y debe subir, sin regresion
 - **[D6 — verificar]** `ActionQueue` **no** debería tocarse (la cola ya soporta
   encolar acciones sin modificarse). Confirmar durante la implementación; si resultara
   necesario tocarla, **parar y pedir OK** a Sebastián antes.
+- **[DC12 — pendiente Sub-PR C]** La **fase latcheada/sticky** (al cruzar 50% HP queda
+  irreversible en Fase 2 aunque el boss recupere HP) **NO está implementada tras Sub-PR
+  A**: el selector `PhaseBased` de `TurnManager` es *stateless* (filtra por HP%
+  instantáneo). En A no es observable (el kit del boss no tiene move de curación → el HP
+  solo baja) y el latch pertenece al behavior object de B/C (toca `TurnManager`). Al
+  construir ese objeto en B/C: agregar el latch de fase + un **test de regresión** (boss
+  recupera HP > 50% → sigue en Fase 2).
 
 > **[CONTRADICCIÓN — informativa, no bloquea]** GOLDEN_RULES §9 ata "bosses interactúan
 > con el cambio de mundo" al **Acto 3**, pero DD-004/GDD describen al boss del **Acto 1**
@@ -385,6 +392,9 @@ debe seguir 100% verde. Suite total parte de **230** y debe subir, sin regresion
   + telegrafía, contador en HUD, refresco de mano al forzar el switch. **Toca
   `TurnManager` (PROTEGIDO).** Depende de A (independiente de B; B y C pueden
   intercambiarse — quien entre primero crea el scaffold del behavior object).
+  **Incluye el latch de fase (DC12/D5):** el selector `PhaseBased` es stateless, así que
+  la fase sticky (Fase 2 irreversible tras cruzar 50% HP) se implementa en el behavior
+  object aquí, con test de regresión (boss recupera HP > 50% → sigue en Fase 2).
 - **Sub-PR D — Retazo de boss + pulido/feedback.** Confirmar/cablear el drop de
   R-BOSS-1, label de intent "cargando Desfase", juice de telegrafía. Contenido +
   feel. Depende de C.

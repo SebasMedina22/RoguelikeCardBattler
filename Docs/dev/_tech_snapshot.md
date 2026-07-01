@@ -20,8 +20,9 @@
 > Tejido Reforzado=Block 12). Tipos elegidos por la matriz de `ElementEffectiveness` en CÓDIGO (DC2, no la tabla §3):
 > ambos SuperEficaz contra el jugador de REFERENCIA = defaults del TurnManager (Mundo A Rojo / Mundo B Amarillo).
 > Nuevo `Assets/Tests/EditMode/BossAct1Tests.cs` (5 casos: selección de move por fase >50% / ≤50% / 50% exacto en fase 2;
-> el boss conmuta tipo activo con el mundo; los dos tipos son SuperEficaz vs jugador de ref. por la matriz). **No** se
-> extendió `CombatTestBase` (las factories `CreateEnemyDefinition`/`CreateEnemyMove` ya cubren tipos/ancla + HP%).
+> el boss conmuta tipo activo con el mundo; y la regla ASIMÉTRICA de tipos DC2/§6 por la matriz de CÓDIGO —el boss pega
+> SuperEficaz en ambos mundos pero el jugador solo devuelve SuperEficaz en Mundo A, Mundo B favorece al boss). **No hizo
+> falta agregar factories nuevas a** `CombatTestBase` (`CreateEnemyDefinition`/`CreateEnemyMove` ya cubren tipos/ancla + HP%).
 > **Validado Unity-MCP (2026-06-30):** compilación limpia (zero errors), MenuItem corrido (asset con campos correctos),
 > suite EditMode **230 → 235/235**. **FUERA de scope de A (B/C/D):** Desfase Dimensional (contador de cartas + cambio de
 > mundo forzado por IA, toca TurnManager), debuffs Sangrado/Virus (toca TurnManager), Retazo de boss + pulido. El "umbral
@@ -423,7 +424,7 @@
 
 ### Tests
 - **Unity Test Framework** (NUnit) en EditMode
-- 30 archivos de test en `Assets/Tests/EditMode/` (suite 235/235)
+- 29 archivos de test en `Assets/Tests/EditMode/` (suite 235/235)
 - Helper compartido: `CombatTestBase.cs`
 
 ---
@@ -667,7 +668,7 @@ BossConfigSetup.cs                    ← M5 A: MenuItem "Roguelike/Setup Boss A
                                         Blanco/Azul, moves por fase HP%). Idempotente.
 ```
 
-### Tests (`Assets/Tests/EditMode/`) — 30 archivos (suite EditMode 235/235)
+### Tests (`Assets/Tests/EditMode/`) — 29 archivos (suite EditMode 235/235)
 
 ```
 CombatTestBase.cs                ← helper compartido
