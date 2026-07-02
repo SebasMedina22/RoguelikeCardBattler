@@ -114,7 +114,7 @@ asignado**. El panorama real es más chico de lo que asumía el plan:
 | # | Asset | Dónde se usa | Estado actual | Proporción / formato | ¿Código lo soporta? | Prioridad | Marca |
 |---|-------|--------------|---------------|----------------------|---------------------|-----------|-------|
 | E1 | Fondos de evento simple (`fondo_evt_altar` / `fondo_evt_chest` / `fondo_evt_merchant`) | `EventDefinition.backgroundSprite` | **✔ asignados** (4b-1) | 16:9 1920×1080, sin alpha | ✅ Drop-in (campo `backgroundSprite`) | P2 | ✔ hecho |
-| E2 | Fondos de evento multidim (`fondo_evt_md_forge` / `fondo_evt_md_relic` / `fondo_evt_md_quest_courier`) | `EventDefinition.backgroundSprite` | **✔ asignados** (4b-2) — dual-world neutral, mismo fondo para A y B | 16:9 1920×1080, sin alpha | ✅ Drop-in | P2 | ✔ hecho |
+| E2 | Fondos de evento multidim (`fondo_evt_md_forge` / `fondo_evt_md_relic` / `fondo_evt_md_quest_courier`) | `EventDefinition.backgroundSprite` | **✔ asignados** (4b-2) — dual-world neutral, mismo fondo para A y B. **Fix 2026-07-01:** venían importados como Sprite **Multiple** pero referenciados con el fileID Single (`21300000`) → resolvían a null (fallback morado); forzados a **Single** + reimport (bug hallado en el eyeball de M5-A). | 16:9 1920×1080, sin alpha | ✅ Drop-in | P2 | ✔ hecho |
 
 ---
 
