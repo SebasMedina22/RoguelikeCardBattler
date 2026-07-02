@@ -327,6 +327,14 @@ Dimensional, toca TurnManager) → **D** (Retazo de boss + pulido).
   con comportamiento de fase encima; tipos elegidos por la matriz de `ElementEffectiveness`
   en CÓDIGO (DC2) como SuperEficaz contra el jugador de referencia (Rojo/Amarillo).
 - Retazo único de boss vinculado narrativamente — **Sub-PR D (pendiente)**.
+- **Swap de avatar por mundo** (nuevo, hallado en el eyeball de A): hoy `EnemyDefinition.avatar`
+  es UN solo Sprite y el render NO conmuta el sprite al cambiar de mundo — el boss muestra la
+  misma cara (Costura Maldita) en Mundo A y B, aunque la ficha de tipos sí conmuta. El arte de
+  Mundo B (`personaje_unit_rb7.png`) ya existe pero falta código. Cierra la **deuda C4** y
+  **generaliza a C5** (héroe Mundo B, misma limitación). **Pulido de presentación, NO toca
+  protegidos** (campo `avatarWorldB` en `EnemyDefinition` + swap en el render del avatar al
+  disparar el cambio de mundo). **Independiente de B/C** (solo depende de A); agrupable con
+  **Sub-PR D** o standalone. **Requiere spec** (`modo:diseno`) antes de implementar.
 
 **Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
 post-ProcessAll y mutación de mundo desde IA). **Nota 4c:** el comportamiento

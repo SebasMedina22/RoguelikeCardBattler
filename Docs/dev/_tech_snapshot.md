@@ -26,8 +26,14 @@
 > **Validado Unity-MCP (2026-06-30):** compilación limpia (zero errors), MenuItem corrido (asset con campos correctos),
 > suite EditMode **230 → 235/235**. **FUERA de scope de A (B/C/D):** Desfase Dimensional (contador de cartas + cambio de
 > mundo forzado por IA, toca TurnManager), debuffs Sangrado/Virus (toca TurnManager), Retazo de boss + pulido. El "umbral
-> del Desfase 3→2 por fase" (caso 2 del spec) se difiere a Sub-PR C junto con sus campos de SO. Eyeball visual en
-> BattleScene pendiente de confirmación de Sebastián (asignar el boss como DefaultEnemy / SpecificEnemy del nodo de boss).
+> del Desfase 3→2 por fase" (caso 2 del spec) se difiere a Sub-PR C junto con sus campos de SO.
+> **Eyeball ✅ (2026-07-01):** avatar Mundo A (`personaje_costura_maldita.png`, Sprite Multiple, ref por internalID) asignado
+> al SO y confirmado en BattleScene (ficha dos tipos + moves por fase). El **swap de avatar por mundo** (mostrar
+> `personaje_unit_rb7.png` en Mundo B) NO existe: `EnemyDefinition.avatar` es un solo Sprite y el render no conmuta →
+> deuda **C4** (generaliza a **C5** héroe Mundo B), agregada al roadmap de M5 como pulido (requiere `avatarWorldB` + swap,
+> no protegido; requiere spec). **Fix aparte (bug wiring 4b-2):** los 3 fondos de eventos multidim
+> (`fondo_evt_md_*`) estaban importados como Sprite **Multiple** pero referenciados con el fileID Single (`21300000`) →
+> `EventDefinition.BackgroundSprite` = null → fallback morado; forzados a **Single** + reimport (los 6 eventos ahora resuelven).
 >
 > **Última actualización previa:** 2026-06-23 — **M4 bloque 4c: enemigos transdimensionales + ancla → M4 COMPLETO**
 > (branch `feat/m4-4c-transdim-ancla`). `EnemyDefinition` gana `typeWorldB` (ElementType, tipo en Mundo B) +
