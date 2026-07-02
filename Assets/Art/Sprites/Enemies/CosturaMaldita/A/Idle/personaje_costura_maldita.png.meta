@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: a1236e2e0b3a628498e08da5602fa0d4
+guid: f5759469f223575439c939c47d8db628
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2319750366558497341
-    second: fondo_evt_md_quest_courier_0
+      213: 7188927015664018431
+    second: personaje_costura_maldita_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: fondo_evt_md_quest_courier_0
+      name: personaje_costura_maldita_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1672
-        height: 941
+        x: 63
+        y: 57
+        width: 849
+        height: 911
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d3a2d46faa8613020800000000000000
-      internalID: 2319750366558497341
+      spriteID: ff3ecdc380334c360800000000000000
+      internalID: 7188927015664018431
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      fondo_evt_md_quest_courier_0: 2319750366558497341
+      personaje_costura_maldita_0: 7188927015664018431
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

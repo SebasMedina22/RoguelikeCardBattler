@@ -304,19 +304,37 @@ pre-M4 visor → 4a → 4b → 4c.
 DD-004 con fases, debuffs únicos y mecánica "Desfase Dimensional". Establecer
 el patrón para futuros bosses.
 
+**Spec cerrado:** `Docs/dev/specs/m5_boss_acto1_spec.md` (DC1-DC15 cerradas).
+Desagregado en 4 Sub-PRs: **A** (boss SO + fases + ficha dos tipos, NO toca
+protegidos) → **B** (debuffs Sangrado/Virus, toca TurnManager) → **C** (Desfase
+Dimensional, toca TurnManager) → **D** (Retazo de boss + pulido).
+
 **Sub-tareas (desagregar al activar):**
-- Sistema de fases en bosses (Fase 2 obligatoria al 50% HP)
+- [x] Sistema de fases en bosses (Fase 2 obligatoria al 50% HP) — **Sub-PR A ✅**
+  (PhaseBased + moves etiquetados por HP% [51,100]/[0,50]). ⚠ El **latch sticky de fase
+  (DC12)** —Fase 2 irreversible aunque el boss recupere HP— queda para **Sub-PR C**: el
+  selector PhaseBased es stateless; en A no es observable (el boss no tiene move de curación).
 - Mecánica "Desfase Dimensional": contador de cartas jugadas en turno, cambio
-  automático cada 3 cartas (2 en Fase 2)
+  automático cada 3 cartas (2 en Fase 2) — **Sub-PR C (pendiente)**.
 - Debuff Sangrado (DD-019, exclusivo del boss medieval): pérdida de HP al jugar
-  ataque
+  ataque — **Sub-PR B (pendiente)**.
 - Debuff Virus (DD-019, exclusivo del boss cyberpunk): bloqueo al 80%
-  efectividad
-- 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad) — **la maquinaria
-  de "2 tipos, uno por mundo" YA EXISTE** (4c): `EnemyDefinition.typeWorldB` + getter
-  `TurnManager.EnemyElementType` resuelto por mundo + ficha de dos tipos en
-  `CombatHudView`. M5 reusa esto; el boss es un transdim con comportamiento de fase encima.
-- Retazo único de boss vinculado narrativamente
+  efectividad — **Sub-PR B (pendiente)**.
+- [x] 2 tipos por boss (1 SuperEficaz contra el jugador, 1 debilidad) — **Sub-PR A ✅**.
+  **La maquinaria de "2 tipos, uno por mundo" YA EXISTE** (4c): `EnemyDefinition.typeWorldB`
+  + getter `TurnManager.EnemyElementType` resuelto por mundo + ficha de dos tipos en
+  `CombatHudView`. El boss `Costura Maldita / UNIT-RB7` es un transdim Blanco(A)/Azul(B)
+  con comportamiento de fase encima; tipos elegidos por la matriz de `ElementEffectiveness`
+  en CÓDIGO (DC2) como SuperEficaz contra el jugador de referencia (Rojo/Amarillo).
+- Retazo único de boss vinculado narrativamente — **Sub-PR D (pendiente)**.
+- **Swap de avatar por mundo** (nuevo, hallado en el eyeball de A): hoy `EnemyDefinition.avatar`
+  es UN solo Sprite y el render NO conmuta el sprite al cambiar de mundo — el boss muestra la
+  misma cara (Costura Maldita) en Mundo A y B, aunque la ficha de tipos sí conmuta. El arte de
+  Mundo B (`personaje_unit_rb7.png`) ya existe pero falta código. Cierra la **deuda C4** y
+  **generaliza a C5** (héroe Mundo B, misma limitación). **Pulido de presentación, NO toca
+  protegidos** (campo `avatarWorldB` en `EnemyDefinition` + swap en el render del avatar al
+  disparar el cambio de mundo). **Independiente de B/C** (solo depende de A); agrupable con
+  **Sub-PR D** o standalone. **Requiere spec** (`modo:diseno`) antes de implementar.
 
 **Toca archivos protegidos:** sí (TurnManager + ActionQueue para hook
 post-ProcessAll y mutación de mundo desde IA). **Nota 4c:** el comportamiento

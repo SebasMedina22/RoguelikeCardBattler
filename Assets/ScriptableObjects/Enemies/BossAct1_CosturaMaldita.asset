@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 338b6c04c3364f30af226f884a2d4f1d, type: 3}
+  m_Name: BossAct1_CosturaMaldita
+  m_EditorClassIdentifier: RoguelikeCardBattler::RoguelikeCardBattler.Gameplay.Enemies.EnemyDefinition
+  id: boss_act1_costura_maldita
+  enemyName: Costura Maldita
+  maxHP: 140
+  baseBlock: 0
+  aiPattern: 2
+  tags:
+  - boss
+  moves:
+  - id: mv_p1_attack
+    moveName: Puntada
+    description: Una puntada que perfora.
+    effects:
+    - effectType: 0
+      value: 10
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: -1
+    intentType: 1
+    minHpPercent: 51
+    maxHpPercent: 100
+  - id: mv_p1_defend
+    moveName: Tejido Protector
+    description: Refuerza su trama.
+    effects:
+    - effectType: 1
+      value: 8
+      target: 0
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: -1
+    intentType: 2
+    minHpPercent: 51
+    maxHpPercent: 100
+  - id: mv_p2_attack
+    moveName: "Puntada Fren\xE9tica"
+    description: Cose con furia.
+    effects:
+    - effectType: 0
+      value: 14
+      target: 1
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: -1
+    intentType: 1
+    minHpPercent: 0
+    maxHpPercent: 50
+  - id: mv_p2_defend
+    moveName: Tejido Reforzado
+    description: Trama impenetrable.
+    effects:
+    - effectType: 1
+      value: 12
+      target: 0
+      statusType: 0
+      extraParams: []
+    weight: 1
+    sequenceIndex: -1
+    intentType: 2
+    minHpPercent: 0
+    maxHpPercent: 50
+  avatarScale: 1
+  avatarOffset: {x: 0, y: 0}
+  elementType: 6
+  typeWorldB: 3
+  isAnchor: 0
+  avatar: {fileID: 7188927015664018431, guid: f5759469f223575439c939c47d8db628, type: 3}
