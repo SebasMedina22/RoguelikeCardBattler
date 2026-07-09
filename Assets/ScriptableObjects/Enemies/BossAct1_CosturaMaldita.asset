@@ -82,3 +82,4 @@ MonoBehaviour:
   typeWorldB: 3
   isAnchor: 0
   avatar: {fileID: 7188927015664018431, guid: f5759469f223575439c939c47d8db628, type: 3}
+  avatarWorldB: {fileID: 395986400478528396, guid: e4471009e990c45488c5df23c50b4c49, type: 3}

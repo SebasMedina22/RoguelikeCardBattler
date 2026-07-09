@@ -145,6 +145,17 @@ namespace RoguelikeCardBattler.Tests.EditMode
             return enemy;
         }
 
+        // Sprite dummy 2x2 para tests que necesitan una referencia de Sprite no-null
+        // (p.ej. avatares de EnemyDefinition). La textura y el sprite se limpian en TearDown.
+        protected Sprite CreateDummySprite()
+        {
+            var texture = new Texture2D(2, 2);
+            _createdAssets.Add(texture);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(0.5f, 0.5f));
+            _createdAssets.Add(sprite);
+            return sprite;
+        }
+
         protected GameObject CreateGameObject(string name = "TestObject")
         {
             var go = new GameObject(name);

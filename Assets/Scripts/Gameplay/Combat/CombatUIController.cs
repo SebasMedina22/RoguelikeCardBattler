@@ -517,6 +517,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                 _playerAvatarImage, _enemyAvatarImage,
                 energyPanelImage, worldPanelImage,
                 _feedbackView, _cardHandView,
+                _enemyAnimator,
                 blockOverlayColor);
         }
         private Text CreateCornerCounter(RectTransform parent, Vector2 anchorMin, Vector2 size, string label)
