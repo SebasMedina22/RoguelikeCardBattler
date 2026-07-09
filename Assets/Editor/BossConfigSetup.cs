@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using RoguelikeCardBattler.Gameplay.Cards;
@@ -38,6 +39,13 @@ namespace RoguelikeCardBattler.Editor
     {
         private const string EnemiesFolder = "Assets/ScriptableObjects/Enemies";
 
+        // Arte del boss (idle por mundo). El avatar A ya suele estar asignado desde M5
+        // Sub-PR A; el swap por mundo (C4) agrega el de Mundo B (personaje_unit_rb7).
+        private const string AvatarAPath =
+            "Assets/Art/Sprites/Enemies/CosturaMaldita/A/Idle/personaje_costura_maldita.png";
+        private const string AvatarBPath =
+            "Assets/Art/Sprites/Enemies/CosturaMaldita/B/Idle/personaje_unit_rb7.png";
+
         // Rangos de fase. El selector PhaseBased de TurnManager filtra cada move por
         // [MinHpPercent, MaxHpPercent] contra el HP% actual del boss. El 50% exacto
         // cae en fase 2 (≤ 50), cumpliendo "Fase 2 obligatoria al 50%" (DC3).
@@ -59,11 +67,13 @@ namespace RoguelikeCardBattler.Editor
                 elementType: ElementType.Blanco,  // Mundo A — SuperEficaz vs Rojo (jugador ref.)
                 typeWorldB: ElementType.Azul);    // Mundo B — SuperEficaz vs Amarillo (jugador ref.)
 
+            AssignAvatars(boss);   // C4 — cara por mundo (A ya asignada; agrega la de B)
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             Debug.Log($"[BossConfigSetup] Boss listo: {boss.name} (transdim Blanco/Azul, " +
-                      $"PhaseBased, {boss.Moves.Count} moves). Carpeta: {EnemiesFolder}. " +
+                      $"PhaseBased, {boss.Moves.Count} moves, avatar A+B). Carpeta: {EnemiesFolder}. " +
                       "Para el eyeball: asignalo como DefaultEnemy del RunCombatConfig " +
                       "(o al SpecificEnemy del nodo de boss) y entrá a BattleScene.");
         }
@@ -164,6 +174,62 @@ namespace RoguelikeCardBattler.Editor
                 newMinHpPercent: minHp,
                 newMaxHpPercent: maxHp);
             return move;
+        }
+
+        // Asigna los avatares por path (SerializedObject), idempotente (C4 — swap por mundo):
+        //   - avatarWorldB (Mundo B): (re)asigna siempre el sub-sprite del personaje.
+        //   - avatar (Mundo A): solo si está null → no pisa la referencia ya existente
+        //     (M5 Sub-PR A lo dejó apuntando al sub-sprite del PNG Multiple, y funciona).
+        // Espejo del patrón EventConfigSetup.FindBackground + SerializedObject. NADA manual.
+        private static void AssignAvatars(EnemyDefinition boss)
+        {
+            var so = new SerializedObject(boss);
+
+            SerializedProperty avatarB = so.FindProperty("avatarWorldB");
+            Sprite spriteB = LoadCharacterSprite(AvatarBPath);
+            if (avatarB != null && spriteB != null)
+            {
+                avatarB.objectReferenceValue = spriteB;
+            }
+            else if (spriteB == null)
+            {
+                Debug.LogWarning($"[BossConfigSetup] No se resolvió el avatar de Mundo B en {AvatarBPath}.");
+            }
+
+            SerializedProperty avatarA = so.FindProperty("avatar");
+            if (avatarA != null && avatarA.objectReferenceValue == null)
+            {
+                // A no asignado (p.ej. asset recién creado) → resolverlo por path.
+                avatarA.objectReferenceValue = LoadCharacterSprite(AvatarAPath);
+            }
+
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(boss);
+        }
+
+        // Resuelve el sprite del PERSONAJE dentro del PNG. El arte entra como Sprite Multiple
+        // (auto-slice) y el personaje es el sub-sprite de mayor área; se ignoran las "motas"
+        // que el slicer detecta como sub-sprites espurios (p.ej. personaje_unit_rb7_1 de 16x18).
+        // Residual R1 del spec resuelto por la ALTERNATIVA: referenciar el sub-sprite recortado
+        // (mismo criterio que el avatar A), NO forzar Single — el canvas completo dejaría al
+        // personaje con padding y más chico/descentrado que la cara A. Si el PNG fuera Single,
+        // LoadAllAssetsAtPath devuelve un único sprite y se usa ese (fallback grácil).
+        private static Sprite LoadCharacterSprite(string pngPath)
+        {
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(pngPath).OfType<Sprite>().ToList();
+            if (sprites.Count == 0)
+            {
+                return AssetDatabase.LoadAssetAtPath<Sprite>(pngPath);
+            }
+            Sprite best = sprites[0];
+            foreach (var s in sprites)
+            {
+                if (s.rect.width * s.rect.height > best.rect.width * best.rect.height)
+                {
+                    best = s;
+                }
+            }
+            return best;
         }
 
         private static void EnsureFolder(string parent, string newFolder, string fullPath)

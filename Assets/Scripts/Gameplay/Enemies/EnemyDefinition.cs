@@ -26,6 +26,9 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         // Si true, el tipo NO reacciona al cambio de mundo (ancla). Precede a typeWorldB.
         [SerializeField] private bool isAnchor = false;
         [SerializeField] private Sprite avatar = null;
+        // Avatar de Mundo B. Solo significativo si el enemigo es transdimensional; para
+        // tipo-único / ancla queda null y se usa el avatar base (cero regresión).
+        [SerializeField] private Sprite avatarWorldB = null;
 
         public string Id => id;
         public string EnemyName => enemyName;
@@ -45,6 +48,16 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
         // autoría redundante) — se computa de los otros dos campos.
         public bool IsTransdimensional => !isAnchor && typeWorldB != ElementType.None;
         public Sprite Avatar => avatar;
+        public Sprite AvatarWorldB => avatarWorldB;
+
+        /// <summary>
+        /// Avatar activo según el mundo. Conmuta SOLO para transdimensionales con arte de
+        /// Mundo B asignado; tipo-único / ancla / B sin asignar → avatar base (cero
+        /// regresión). El caller pasa un bool (no WorldSide) para no acoplar este SO al
+        /// enum de combate.
+        /// </summary>
+        public Sprite ResolveAvatar(bool worldBActive)
+            => (IsTransdimensional && worldBActive && avatarWorldB != null) ? avatarWorldB : avatar;
 
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
         public void SetDebugData(
@@ -73,6 +86,14 @@ namespace RoguelikeCardBattler.Gameplay.Enemies
             elementType = newElementType;
             typeWorldB = newTypeWorldB;
             isAnchor = newIsAnchor;
+        }
+
+        // Seam dedicado para poblar los sprites de avatar en tests (SetDebugData no los
+        // acepta). Setter honesto y localizado en vez de sobrecargar la firma de SetDebugData.
+        public void SetAvatarsForTest(Sprite avatarA, Sprite avatarB)
+        {
+            avatar = avatarA;
+            avatarWorldB = avatarB;
         }
 #endif
     }

@@ -57,6 +57,14 @@ namespace RoguelikeCardBattler.Gameplay.Combat
         private CombatFeedbackView _feedbackView;
         private CardHandView _cardHandView;
 
+        // Animator del avatar del enemigo: se le actualiza el "resting sprite" al conmutar
+        // el mundo (swap de cara por mundo, C4). Puede ser null si el enemigo no tiene
+        // sprite (no se crea el hijo _Sprite) → el guard != null lo cubre.
+        private SpriteFrameAnimatorUI _enemyAnimator;
+        // Centinela del swap de avatar por mundo. null → resuelve en el primer Sync();
+        // luego solo se reasigna el sprite cuando el mundo cambia (no cada frame).
+        private bool? _lastEnemyWorldBActive;
+
         // Constantes de estilo (movidas desde CombatUIController)
         private static readonly Color DisabledLabelColor = new Color(0.75f, 0.75f, 0.75f, 0.7f);
         private static readonly Color WarningLabelColor = new Color(1f, 0.6f, 0.6f, 1f);
@@ -93,6 +101,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             // Refs cruzadas
             CombatFeedbackView feedbackView,
             CardHandView cardHandView,
+            SpriteFrameAnimatorUI enemyAnimator,
             // Constante
             Color blockOverlayColor)
         {
@@ -122,6 +131,7 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _worldPanelImage = worldPanelImage;
             _feedbackView = feedbackView;
             _cardHandView = cardHandView;
+            _enemyAnimator = enemyAnimator;
             _blockOverlayColor = blockOverlayColor;
 
             // Capturamos el color base de los avatares aquí — antes vivía en CombatUIController.
@@ -181,6 +191,26 @@ namespace RoguelikeCardBattler.Gameplay.Combat
                     ? Color.white
                     : ElementTypeColors.ReadableOnDark(enemyType);
             }
+
+            // Swap de avatar por mundo (C4): solo para transdim con arte de Mundo B.
+            // Mismo patrón polling+centinela que CombatBackgroundView: reasigna el sprite
+            // en reposo del animator del enemigo solo cuando el mundo cambia, no cada frame.
+            // Como es por polling, cualquier origen del cambio de mundo (botón Change World
+            // o el Desfase Dimensional forzado por IA en M5) lo dispara sin acoplamiento.
+            if (_enemyAnimator != null && enemyDef != null && enemyDef.IsTransdimensional)
+            {
+                bool worldBActive = _turnManager.CurrentWorld == TurnManager.WorldSide.B;
+                if (_lastEnemyWorldBActive != worldBActive)
+                {
+                    _lastEnemyWorldBActive = worldBActive;
+                    Sprite worldAvatar = enemyDef.ResolveAvatar(worldBActive);
+                    if (worldAvatar != null)
+                    {
+                        _enemyAnimator.SetRestingSprite(worldAvatar);
+                    }
+                }
+            }
+
             _drawPileText.text = $"Draw: {_turnManager.PlayerDrawPileCount}";
             _discardPileText.text = $"Discard: {_turnManager.PlayerDiscardPileCount}";
             _enemyIntentText.text = BuildEnemyIntentLabel();

@@ -33,6 +33,21 @@ namespace RoguelikeCardBattler.Gameplay.Combat
             _restingSprite = targetImage != null ? targetImage.sprite : null;
         }
 
+        /// <summary>
+        /// Actualiza el sprite "en reposo" (p.ej. al conmutar el avatar del enemigo por
+        /// mundo). Lo aplica de inmediato al Image y queda como el sprite a restaurar tras
+        /// el próximo flash de ataque. Si un flash está en curso, sigue reproduciéndose y
+        /// al terminar restaura este nuevo resting sprite.
+        /// </summary>
+        public void SetRestingSprite(Sprite sprite)
+        {
+            _restingSprite = sprite;
+            if (targetImage != null)
+            {
+                targetImage.sprite = sprite;
+            }
+        }
+
         public void PlayIdleLoop()
         {
             if (idleFrames == null || idleFrames.Count == 0 || targetImage == null)

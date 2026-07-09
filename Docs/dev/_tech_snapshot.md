@@ -7,7 +7,28 @@
 > En `modo:implementacion` se lee OBLIGATORIAMENTE antes de cualquier cambio que
 > afecte arquitectura o componentes críticos.
 >
-> **Última actualización:** 2026-06-30 — **M5 Sub-PR A: boss del Acto 1 (SO + fases PhaseBased + ficha dos tipos)**
+> **Última actualización:** 2026-07-07 — **Swap de avatar del enemigo por mundo (cierra deuda de arte C4)**
+> (branch `feat/avatar-swap-por-mundo`, sobre `origin/main` = PR #132/M5-A). **Pulido de presentación puro: NO toca
+> protegidos ni los contratos 4c** (consume `IsTransdimensional` + `CurrentWorld` tal cual). `EnemyDefinition` gana
+> `[SerializeField] Sprite avatarWorldB` + getter `AvatarWorldB` + `ResolveAvatar(bool worldBActive)` (devuelve
+> `avatarWorldB` SOLO si transdim + Mundo B + B asignado; en cualquier otro caso el `avatar` base → cero regresión) +
+> seam de test `SetAvatarsForTest(Sprite, Sprite)` (gated `#if UNITY_EDITOR || UNITY_INCLUDE_TESTS`). Nuevo
+> `SpriteFrameAnimatorUI.SetRestingSprite(Sprite)` (setea `_restingSprite` + `targetImage.sprite` → cubre display
+> inmediato y restauración post-flash del fix #103). El **swap vive en `CombatHudView.Sync()`** por polling con
+> centinela `bool? _lastEnemyWorldBActive` (gated en `IsTransdimensional`) — reasigna el resting sprite del animator del
+> enemigo solo al cambiar de mundo, mismo molde que `CombatBackgroundView`; como es polling, cualquier origen del cambio
+> de mundo (botón Change World hoy; Desfase Dimensional de M5 Sub-PR C mañana) lo dispara sin acoplamiento.
+> `CombatUIController.InitializeExtractedViews` **solo wiring** (`_enemyAnimator` como arg nuevo de `hudView.Initialize`,
+> sin métodos nuevos — respeta la regla del directorio). `BossConfigSetup` (MenuItem `Roguelike/Setup Boss Act 1 (M5 A)`)
+> asigna ambos avatares idempotente vía `SerializedObject`: `avatarWorldB` = sub-sprite del personaje (mayor área del PNG
+> Multiple, `personaje_unit_rb7_0`; NO Single/canvas completo → evita padding vs la cara A, Residual R1 resuelto por la
+> alternativa del sub-sprite), y `avatar` (A) solo si null. Tests: nuevo `EnemyAvatarByWorldTests.cs` (5 casos de
+> `ResolveAvatar`: transdim A/B, transdim sin B, tipo-único, ancla) + helper `CombatTestBase.CreateDummySprite()`. Suite
+> EditMode **240/240** (era 235), validado Unity-MCP (compilación limpia, MenuItem corrido → `.asset` con A+B poblados).
+> **Eyeball interactivo (swap en play + flash Mundo B + enemigo común) = validación manual pendiente de Sebastián.**
+> **C5** (héroe por mundo, dos secuencias idle+attack) sigue como extensión pendiente (apéndice del spec).
+>
+> **Última actualización previa:** 2026-06-30 — **M5 Sub-PR A: boss del Acto 1 (SO + fases PhaseBased + ficha dos tipos)**
 > (branch `feat/m5-boss-a-so-fases`, sobre `origin/main` con #130/4c ya mergeado). Arranque de menor riesgo de M5:
 > **NO toca archivos protegidos ni los contratos 4c** (consume `EnemyDefinition.typeWorldB`/`isAnchor`/`IsTransdimensional`
 > y el getter `TurnManager.EnemyElementType` tal cual). **NINGÚN campo nuevo de SO** — la maquinaria existente alcanza:
@@ -747,6 +768,9 @@ BossAct1Tests.cs                 ← M5 Sub-PR A (5 casos: selección de move Ph
                                    >50% / ≤50% / 50% exacto en fase 2, el boss conmuta tipo activo
                                    con el mundo, los dos tipos son SuperEficaz vs jugador de ref. por
                                    la matriz de CÓDIGO — DC2)
+EnemyAvatarByWorldTests.cs       ← C4 swap de avatar por mundo (5 casos de EnemyDefinition.ResolveAvatar:
+                                   transdim Mundo A / Mundo B, transdim sin arte de B → fallback, tipo-único
+                                   y ancla nunca conmutan)
 ```
 
 ### ScriptableObjects (`Assets/ScriptableObjects/`)
