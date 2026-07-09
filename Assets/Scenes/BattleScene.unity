@@ -429,7 +429,7 @@ MonoBehaviour:
     dualCard: {fileID: 11400000, guid: ce1ce5bd21da4478861f66b51d98d240, type: 2}
   - singleCard: {fileID: 0}
     dualCard: {fileID: 11400000, guid: dc5f57a1b1114ca3bce64dbe9843de30, type: 2}
-  enemyDefinition: {fileID: 11400000, guid: a5f86b9e5ecb4de5bf5dfbcfbcff3577, type: 2}
+  enemyDefinition: {fileID: 11400000, guid: b3a6968103f39af45bed93e7f1fba717, type: 2}
   playerDisplayName: Test Pilot
   playerMaxHP: 60
   energyPerTurn: 3
